@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
@@ -17,14 +17,8 @@ interface Course {
   description: string;
   code: string;
   credits: number;
-  duration: number;
   isActive: boolean;
   createdAt: string;
-  teacher?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
 }
 
 interface CoursesResponse {
@@ -40,9 +34,7 @@ const CoursesPage = () => {
     title: '',
     description: '',
     code: '',
-    credits: 3,
-    duration: 12,
-    isActive: true
+    credits: 3
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -68,9 +60,7 @@ const CoursesPage = () => {
       title: '',
       description: '',
       code: '',
-      credits: 3,
-      duration: 12,
-      isActive: true
+      credits: 3
     });
     setFormErrors({});
     setShowModal(true);
@@ -82,23 +72,21 @@ const CoursesPage = () => {
       title: course.title,
       description: course.description,
       code: course.code,
-      credits: course.credits,
-      duration: course.duration,
-      isActive: course.isActive
+      credits: course.credits
     });
     setFormErrors({});
     setShowModal(true);
   };
 
   const handleDelete = async (course: Course) => {
-    const result = await showDeleteConfirmDialog(`"${course.title}"`);
+    const result = await showDeleteConfirmDialog(course.title);
     
     if (result.isConfirmed) {
       try {
         await coursesAPI.delete(course.id);
         showSuccessAlert(
           'Course Deleted', 
-          `"${course.title}" has been successfully deleted.`
+          `${course.title} has been successfully deleted.`
         );
         fetchCourses();
       } catch (error) {
@@ -116,8 +104,7 @@ const CoursesPage = () => {
     if (!formData.title.trim()) errors.title = 'Title is required';
     if (!formData.description.trim()) errors.description = 'Description is required';
     if (!formData.code.trim()) errors.code = 'Course code is required';
-    if (formData.credits < 1) errors.credits = 'Credits must be at least 1';
-    if (formData.duration < 1) errors.duration = 'Duration must be at least 1';
+    if (formData.credits <= 0) errors.credits = 'Credits must be greater than 0';
 
     if (Object.keys(errors).length > 0) {
       showFormErrorAlert(errors);
@@ -130,20 +117,19 @@ const CoursesPage = () => {
         await coursesAPI.update(editingCourse.id, formData);
         showSuccessAlert(
           'Course Updated', 
-          `"${formData.title}" has been successfully updated.`
+          `${formData.title} has been successfully updated.`
         );
       } else {
         await coursesAPI.create(formData);
         showSuccessAlert(
           'Course Created', 
-          `"${formData.title}" has been successfully created.`
+          `${formData.title} has been successfully created.`
         );
       }
       setShowModal(false);
       fetchCourses();
     } catch (error: any) {
       if (error.response?.data?.errors) {
-        // Handle field-specific errors from server
         const serverErrors: Record<string, string> = {};
         error.response.data.errors.forEach((err: any) => {
           if (err.field) {
@@ -162,18 +148,24 @@ const CoursesPage = () => {
     {
       key: 'title',
       label: 'Title',
-      render: (title: string, course: Course) => (
-        <div>
-          <div className="text-sm font-medium text-gray-900">{title}</div>
-          <div className="text-sm text-gray-500">{course.code}</div>
-        </div>
+      sortable: true,
+      render: (title: string) => (
+        <div className="text-sm font-medium text-gray-900">{title}</div>
+      )
+    },
+    {
+      key: 'code',
+      label: 'Code',
+      sortable: true,
+      render: (code: string) => (
+        <div className="text-sm text-gray-900 font-mono">{code}</div>
       )
     },
     {
       key: 'description',
       label: 'Description',
       render: (description: string) => (
-        <div className="text-sm text-gray-900 max-w-xs truncate">
+        <div className="text-sm text-gray-600 truncate max-w-xs">
           {description}
         </div>
       )
@@ -181,6 +173,7 @@ const CoursesPage = () => {
     {
       key: 'credits',
       label: 'Credits',
+      sortable: true,
       render: (credits: number) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
           {credits} credits
@@ -188,15 +181,9 @@ const CoursesPage = () => {
       )
     },
     {
-      key: 'duration',
-      label: 'Duration',
-      render: (duration: number) => (
-        <span className="text-sm text-gray-900">{duration} weeks</span>
-      )
-    },
-    {
       key: 'isActive',
       label: 'Status',
+      sortable: true,
       render: (isActive: boolean) => (
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
           isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -208,17 +195,18 @@ const CoursesPage = () => {
     {
       key: 'createdAt',
       label: 'Created',
+      sortable: true,
       render: (date: string) => new Date(date).toLocaleDateString()
     }
   ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Courses Management</h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Courses Management</h1>
         <button
           onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
         >
           Add Course
         </button>
@@ -227,36 +215,41 @@ const CoursesPage = () => {
       <DataTable
         columns={columns}
         data={courses}
+        loading={loading}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        loading={loading}
+        title="Courses"
+        subtitle="Manage academic courses and their details"
+        searchable={true}
+        filterable={true}
+        pagination={true}
+        itemsPerPage={10}
       />
 
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        title={editingCourse ? 'Edit Course' : 'Create Course'}
-        size="lg"
+        title={editingCourse ? 'Edit Course' : 'Add Course'}
       >
         <Form onSubmit={handleSubmit}>
           <FormField
             label="Title"
             name="title"
+            type="text"
             value={formData.title}
             onChange={(value) => setFormData({ ...formData, title: value as string })}
             error={formErrors.title}
             required
           />
-
           <FormField
             label="Course Code"
             name="code"
+            type="text"
             value={formData.code}
             onChange={(value) => setFormData({ ...formData, code: value as string })}
             error={formErrors.code}
             required
           />
-
           <FormField
             label="Description"
             name="description"
@@ -265,47 +258,19 @@ const CoursesPage = () => {
             onChange={(value) => setFormData({ ...formData, description: value as string })}
             error={formErrors.description}
             required
-            rows={4}
           />
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              label="Credits"
-              name="credits"
-              type="number"
-              value={formData.credits}
-              onChange={(value) => setFormData({ ...formData, credits: value as number })}
-              error={formErrors.credits}
-              required
-            />
-
-            <FormField
-              label="Duration (weeks)"
-              name="duration"
-              type="number"
-              value={formData.duration}
-              onChange={(value) => setFormData({ ...formData, duration: value as number })}
-              error={formErrors.duration}
-              required
-            />
-          </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActive"
-              checked={formData.isActive}
-              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-              Active
-            </label>
-          </div>
-
+          <FormField
+            label="Credits"
+            name="credits"
+            type="number"
+            value={formData.credits}
+            onChange={(value) => setFormData({ ...formData, credits: value as number })}
+            error={formErrors.credits}
+            required
+          />
           <FormActions
             onCancel={() => setShowModal(false)}
-            submitText={editingCourse ? 'Update' : 'Create'}
+            submitText={editingCourse ? 'Update Course' : 'Create Course'}
           />
         </Form>
       </Modal>

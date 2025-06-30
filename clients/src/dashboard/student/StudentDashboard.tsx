@@ -196,7 +196,7 @@ const StudentDashboard = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="w-full flex flex-col h-screen">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Fixed Topbar */}
         <header className="flex-shrink-0 bg-white shadow-sm border-b border-gray-200 z-30">
           {/* Mobile Header */}
@@ -222,7 +222,7 @@ const StudentDashboard = () => {
         </header>
 
         {/* Scrollable Content Area */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="p-4 lg:p-8">
             <Routes>
               <Route path="/" element={<Navigate to="/student/courses" />} />

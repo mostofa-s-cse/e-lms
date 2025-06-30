@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { intakesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
@@ -227,6 +227,8 @@ const IntakesPage = () => {
 
       <DataTable
         columns={columns}
+        title="Intakes"
+        subtitle="Manage academic intakes and their details"
         data={intakes}
         onEdit={handleEdit}
         onDelete={handleDelete}

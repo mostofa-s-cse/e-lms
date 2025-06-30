@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { notesAPI, coursesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
@@ -254,6 +254,8 @@ const NotesPage = () => {
 
       <DataTable
         columns={columns}
+        title="Notes"
+        subtitle="Manage academic notes and their details"
         data={notes}
         onEdit={handleEdit}
         onDelete={handleDelete}

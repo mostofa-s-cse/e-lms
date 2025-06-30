@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { questionsAPI, quizzesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
@@ -265,6 +265,8 @@ const QuestionsPage = () => {
 
       <DataTable
         columns={columns}
+        title="Questions"
+        subtitle="Manage questions and their details"
         data={questions}
         onEdit={handleEdit}
         onDelete={handleDelete}
