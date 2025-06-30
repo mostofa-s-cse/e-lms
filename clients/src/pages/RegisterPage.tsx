@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { Form, FormField, FormActions } from '../components/Form';
 import { Navigation, Footer } from '../components';
+import { showSuccessAlert, showErrorAlert, showFormErrorAlert } from '../utils/sweetAlert';
 
 interface RegisterFormData {
   firstName: string;
@@ -21,6 +22,7 @@ interface FormErrors {
   confirmPassword?: string;
   role?: string;
   general?: string;
+  [key: string]: string | undefined;
 }
 
 const RegisterPage = () => {
@@ -90,6 +92,10 @@ const RegisterPage = () => {
     e.preventDefault();
     
     if (!validateForm()) {
+      const filteredErrors = Object.fromEntries(
+        Object.entries(formErrors).filter(([_, value]) => value !== undefined)
+      ) as Record<string, string>;
+      showFormErrorAlert(filteredErrors);
       return;
     }
 
@@ -100,16 +106,20 @@ const RegisterPage = () => {
       const { confirmPassword, ...registerData } = formData;
       await authAPI.register(registerData);
       
-      // Registration successful - redirect to login
-      navigate('/login', { 
-        state: { 
-          message: 'Registration successful! Please log in with your new account.' 
-        } 
-      });
+      // Registration successful - show success message and redirect
+      showSuccessAlert(
+        'Registration Successful!', 
+        'Your account has been created successfully. Please log in with your new account.'
+      );
+      
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (error: any) {
       console.error('Registration failed:', error);
       if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+        showErrorAlert('Registration Failed', error.response.data.message);
       } else if (error.response?.data?.errors) {
         // Handle field-specific errors from server
         const serverErrors: FormErrors = {};
@@ -118,9 +128,12 @@ const RegisterPage = () => {
             serverErrors[err.field as keyof FormErrors] = err.message;
           }
         });
-        setFormErrors(serverErrors);
+        const filteredServerErrors = Object.fromEntries(
+          Object.entries(serverErrors).filter(([_, value]) => value !== undefined)
+        ) as Record<string, string>;
+        showFormErrorAlert(filteredServerErrors);
       } else {
-        setFormErrors({ general: 'Registration failed. Please try again.' });
+        showErrorAlert('Registration Failed', 'An error occurred during registration. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -153,12 +166,6 @@ const RegisterPage = () => {
           </div>
 
           <Form onSubmit={handleSubmit}>
-            {formErrors.general && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {formErrors.general}
-              </div>
-            )}
-
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 label="First Name"

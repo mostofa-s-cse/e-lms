@@ -3,6 +3,13 @@ import { evaluationsAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showDeleteConfirmDialog,
+  showFormErrorAlert,
+  handleApiError
+} from '../../../utils/sweetAlert';
 
 interface Evaluation {
   id: string;
@@ -54,7 +61,7 @@ const EvaluationsPage = () => {
       const response = await evaluationsAPI.getAll();
       setEvaluations((response.data as EvaluationsResponse).data);
     } catch (error) {
-      console.error('Failed to fetch evaluations:', error);
+      handleApiError(error, 'Failed to fetch evaluations');
     } finally {
       setLoading(false);
     }
@@ -91,12 +98,14 @@ const EvaluationsPage = () => {
   };
 
   const handleDelete = async (evaluation: Evaluation) => {
-    if (window.confirm(`Are you sure you want to delete "${evaluation.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${evaluation.title}"`);
+    if (result.isConfirmed) {
       try {
         await evaluationsAPI.delete(evaluation.id);
+        showSuccessAlert('Evaluation Deleted', `"${evaluation.title}" has been successfully deleted.`);
         fetchEvaluations();
       } catch (error) {
-        console.error('Failed to delete evaluation:', error);
+        handleApiError(error, 'Failed to delete evaluation');
       }
     }
   };
@@ -115,7 +124,6 @@ const EvaluationsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
-
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Title is required';
     if (!formData.description.trim()) errors.description = 'Description is required';
@@ -126,29 +134,37 @@ const EvaluationsPage = () => {
     if (formData.score > formData.maxScore) {
       errors.score = 'Score cannot exceed maximum score';
     }
-
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
-
     try {
       const submitData = {
         ...formData,
         evaluationDate: new Date().toISOString()
       };
-
       if (editingEvaluation) {
         await evaluationsAPI.update(editingEvaluation.id, submitData);
+        showSuccessAlert('Evaluation Updated', `"${formData.title}" has been successfully updated.`);
       } else {
         await evaluationsAPI.create(submitData);
+        showSuccessAlert('Evaluation Created', `"${formData.title}" has been successfully created.`);
       }
       setShowModal(false);
       fetchEvaluations();
     } catch (error: any) {
-      console.error('Failed to save evaluation:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save evaluation');
       }
     }
   };

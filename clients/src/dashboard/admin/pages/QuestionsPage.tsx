@@ -3,6 +3,13 @@ import { questionsAPI, quizzesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import { 
+  showErrorAlert, 
+  showSuccessAlert, 
+  showDeleteConfirmDialog, 
+  showFormErrorAlert,
+  handleApiError 
+} from '../../../utils/sweetAlert';
 
 interface Question {
   id: string;
@@ -66,7 +73,7 @@ const QuestionsPage = () => {
       const response = await questionsAPI.getAll();
       setQuestions((response.data as QuestionsResponse).data);
     } catch (error) {
-      console.error('Failed to fetch questions:', error);
+      handleApiError(error, 'Failed to fetch questions');
     } finally {
       setLoading(false);
     }
@@ -77,7 +84,7 @@ const QuestionsPage = () => {
       const response = await quizzesAPI.getAll();
       setQuizzes((response.data as QuizzesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch quizzes:', error);
+      handleApiError(error, 'Failed to fetch quizzes');
     }
   };
 
@@ -112,12 +119,14 @@ const QuestionsPage = () => {
   };
 
   const handleDelete = async (question: Question) => {
-    if (window.confirm(`Are you sure you want to delete "${question.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${question.title}"`);
+    if (result.isConfirmed) {
       try {
         await questionsAPI.delete(question.id);
+        await showSuccessAlert('Success', 'Question deleted successfully');
         fetchQuestions();
       } catch (error) {
-        console.error('Failed to delete question:', error);
+        handleApiError(error, 'Failed to delete question');
       }
     }
   };
@@ -146,6 +155,7 @@ const QuestionsPage = () => {
     }
 
     if (Object.keys(errors).length > 0) {
+      await showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -158,16 +168,15 @@ const QuestionsPage = () => {
 
       if (editingQuestion) {
         await questionsAPI.update(editingQuestion.id, submitData);
+        await showSuccessAlert('Success', 'Question updated successfully');
       } else {
         await questionsAPI.create(submitData);
+        await showSuccessAlert('Success', 'Question created successfully');
       }
       setShowModal(false);
       fetchQuestions();
     } catch (error: any) {
-      console.error('Failed to save question:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
-      }
+      handleApiError(error, 'Failed to save question');
     }
   };
 
@@ -269,12 +278,6 @@ const QuestionsPage = () => {
         size="xl"
       >
         <Form onSubmit={handleSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="Title"
             name="title"

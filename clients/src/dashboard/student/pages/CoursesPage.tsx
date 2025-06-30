@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
+import { handleApiError } from '../../../utils/sweetAlert';
 
 interface Course {
   id: string;
@@ -36,7 +37,7 @@ const CoursesPage = () => {
       const response = await coursesAPI.getAll();
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
+      handleApiError(error, 'Failed to fetch courses');
     } finally {
       setLoading(false);
     }

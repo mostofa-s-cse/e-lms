@@ -3,6 +3,13 @@ import { intakesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import { 
+  showSuccessAlert, 
+  showErrorAlert, 
+  showDeleteConfirmDialog, 
+  showFormErrorAlert,
+  handleApiError 
+} from '../../../utils/sweetAlert';
 
 interface Intake {
   id: string;
@@ -44,7 +51,7 @@ const IntakesPage = () => {
       const response = await intakesAPI.getAll();
       setIntakes((response.data as IntakesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch intakes:', error);
+      handleApiError(error, 'Failed to fetch intakes');
     } finally {
       setLoading(false);
     }
@@ -79,12 +86,18 @@ const IntakesPage = () => {
   };
 
   const handleDelete = async (intake: Intake) => {
-    if (window.confirm(`Are you sure you want to delete "${intake.name}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${intake.name}"`);
+    
+    if (result.isConfirmed) {
       try {
         await intakesAPI.delete(intake.id);
+        showSuccessAlert(
+          'Intake Deleted', 
+          `"${intake.name}" has been successfully deleted.`
+        );
         fetchIntakes();
       } catch (error) {
-        console.error('Failed to delete intake:', error);
+        handleApiError(error, 'Failed to delete intake');
       }
     }
   };
@@ -105,6 +118,7 @@ const IntakesPage = () => {
     }
 
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -112,15 +126,32 @@ const IntakesPage = () => {
     try {
       if (editingIntake) {
         await intakesAPI.update(editingIntake.id, formData);
+        showSuccessAlert(
+          'Intake Updated', 
+          `"${formData.name}" has been successfully updated.`
+        );
       } else {
         await intakesAPI.create(formData);
+        showSuccessAlert(
+          'Intake Created', 
+          `"${formData.name}" has been successfully created.`
+        );
       }
       setShowModal(false);
       fetchIntakes();
     } catch (error: any) {
-      console.error('Failed to save intake:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        // Handle field-specific errors from server
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save intake');
       }
     }
   };
@@ -211,12 +242,6 @@ const IntakesPage = () => {
         size="lg"
       >
         <Form onSubmit={handleSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="Name"
             name="name"

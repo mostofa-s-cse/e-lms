@@ -3,6 +3,13 @@ import { notesAPI, coursesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import { 
+  showSuccessAlert, 
+  showErrorAlert, 
+  showDeleteConfirmDialog, 
+  showFormErrorAlert,
+  handleApiError 
+} from '../../../utils/sweetAlert';
 
 interface Note {
   id: string;
@@ -63,7 +70,7 @@ const NotesPage = () => {
       const response = await notesAPI.getAll();
       setNotes((response.data as NotesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch notes:', error);
+      handleApiError(error, 'Failed to fetch notes');
     } finally {
       setLoading(false);
     }
@@ -74,7 +81,7 @@ const NotesPage = () => {
       const response = await coursesAPI.getAll();
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
+      handleApiError(error, 'Failed to fetch courses');
     }
   };
 
@@ -103,12 +110,18 @@ const NotesPage = () => {
   };
 
   const handleDelete = async (note: Note) => {
-    if (window.confirm(`Are you sure you want to delete "${note.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${note.title}"`);
+    
+    if (result.isConfirmed) {
       try {
         await notesAPI.delete(note.id);
+        showSuccessAlert(
+          'Note Deleted', 
+          `"${note.title}" has been successfully deleted.`
+        );
         fetchNotes();
       } catch (error) {
-        console.error('Failed to delete note:', error);
+        handleApiError(error, 'Failed to delete note');
       }
     }
   };
@@ -129,6 +142,7 @@ const NotesPage = () => {
     if (!formData.courseId) errors.courseId = 'Course is required';
 
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -144,15 +158,32 @@ const NotesPage = () => {
 
       if (editingNote) {
         await notesAPI.update(editingNote.id, submitData);
+        showSuccessAlert(
+          'Note Updated', 
+          `"${formData.title}" has been successfully updated.`
+        );
       } else {
         await notesAPI.create(submitData);
+        showSuccessAlert(
+          'Note Created', 
+          `"${formData.title}" has been successfully created.`
+        );
       }
       setShowModal(false);
       fetchNotes();
     } catch (error: any) {
-      console.error('Failed to save note:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        // Handle field-specific errors from server
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save note');
       }
     }
   };
@@ -236,12 +267,6 @@ const NotesPage = () => {
         size="lg"
       >
         <Form onSubmit={handleSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="Title"
             name="title"

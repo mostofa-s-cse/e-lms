@@ -16,7 +16,23 @@ export const getAllQuestions = async (req: Request, res: Response, next: NextFun
       },
       orderBy: { createdAt: 'desc' }
     });
-    res.json({ success: true, message: 'Questions fetched successfully', data: questions } as ApiResponse);
+
+    // Map the response to match client expectations
+    const mappedQuestions = questions.map(q => ({
+      id: q.id,
+      title: q.question, // Map question field to title
+      content: q.question, // Use question as content as well
+      type: q.type,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      points: q.marks, // Map marks to points
+      quizId: q.quizId,
+      quiz: q.quiz,
+      teacher: q.author, // Map author to teacher
+      createdAt: q.createdAt
+    }));
+
+    res.json({ success: true, message: 'Questions fetched successfully', data: mappedQuestions } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -40,8 +56,64 @@ export const getQuestionById = async (req: Request, res: Response, next: NextFun
       res.status(404).json({ success: false, message: 'Question not found' });
       return;
     }
+
+    // Map the response to match client expectations
+    const mappedQuestion = {
+      id: question.id,
+      title: question.question, // Map question field to title
+      content: question.question, // Use question as content as well
+      type: question.type,
+      options: question.options,
+      correctAnswer: question.correctAnswer,
+      points: question.marks, // Map marks to points
+      quizId: question.quizId,
+      quiz: question.quiz,
+      teacher: question.author, // Map author to teacher
+      createdAt: question.createdAt
+    };
     
-    res.json({ success: true, message: 'Question fetched successfully', data: question } as ApiResponse);
+    res.json({ success: true, message: 'Question fetched successfully', data: mappedQuestion } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getQuestionsByQuiz = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { quizId } = req.params;
+    
+    const questions = await prisma.question.findMany({
+      where: { 
+        quizId,
+        isActive: true 
+      },
+      include: {
+        quiz: {
+          select: { id: true, title: true }
+        },
+        author: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Map the response to match client expectations
+    const mappedQuestions = questions.map(q => ({
+      id: q.id,
+      title: q.question, // Map question field to title
+      content: q.question, // Use question as content as well
+      type: q.type,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      points: q.marks, // Map marks to points
+      quizId: q.quizId,
+      quiz: q.quiz,
+      teacher: q.author, // Map author to teacher
+      createdAt: q.createdAt
+    }));
+    
+    res.json({ success: true, message: 'Questions fetched successfully', data: mappedQuestions } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -49,8 +121,12 @@ export const getQuestionById = async (req: Request, res: Response, next: NextFun
 
 export const createQuestion = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { question, type, options, correctAnswer, marks, quizId } = req.body;
+    const { title, content, type, options, correctAnswer, points, quizId } = req.body;
     const teacherId = req.user!.id;
+    
+    // Map client fields to database fields
+    const question = title || content; // Use title or content as question
+    const marks = points || 1; // Map points to marks
     
     // Check if user is the author of this quiz or admin
     const quiz = await prisma.quiz.findUnique({
@@ -73,7 +149,7 @@ export const createQuestion = async (req: AuthRequest, res: Response, next: Next
         type,
         options: options || [],
         correctAnswer,
-        marks: marks || 1,
+        marks,
         quizId,
         authorId: teacherId
       },
@@ -86,8 +162,23 @@ export const createQuestion = async (req: AuthRequest, res: Response, next: Next
         }
       }
     });
+
+    // Map the response to match client expectations
+    const mappedQuestion = {
+      id: questionData.id,
+      title: questionData.question, // Map question field to title
+      content: questionData.question, // Use question as content as well
+      type: questionData.type,
+      options: questionData.options,
+      correctAnswer: questionData.correctAnswer,
+      points: questionData.marks, // Map marks to points
+      quizId: questionData.quizId,
+      quiz: questionData.quiz,
+      teacher: questionData.author, // Map author to teacher
+      createdAt: questionData.createdAt
+    };
     
-    res.status(201).json({ success: true, message: 'Question created successfully', data: questionData } as ApiResponse);
+    res.status(201).json({ success: true, message: 'Question created successfully', data: mappedQuestion } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -95,9 +186,13 @@ export const createQuestion = async (req: AuthRequest, res: Response, next: Next
 
 export const updateQuestion = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { question, type, options, correctAnswer, marks, isActive } = req.body;
+    const { title, content, type, options, correctAnswer, points, isActive } = req.body;
     const questionId = req.params.id;
     const teacherId = req.user!.id;
+    
+    // Map client fields to database fields
+    const question = title || content; // Use title or content as question
+    const marks = points; // Map points to marks
     
     // Check if user is the author of this question or admin
     const existingQuestion = await prisma.question.findUnique({
@@ -126,8 +221,23 @@ export const updateQuestion = async (req: AuthRequest, res: Response, next: Next
         }
       }
     });
+
+    // Map the response to match client expectations
+    const mappedQuestion = {
+      id: questionData.id,
+      title: questionData.question, // Map question field to title
+      content: questionData.question, // Use question as content as well
+      type: questionData.type,
+      options: questionData.options,
+      correctAnswer: questionData.correctAnswer,
+      points: questionData.marks, // Map marks to points
+      quizId: questionData.quizId,
+      quiz: questionData.quiz,
+      teacher: questionData.author, // Map author to teacher
+      createdAt: questionData.createdAt
+    };
     
-    res.json({ success: true, message: 'Question updated successfully', data: questionData } as ApiResponse);
+    res.json({ success: true, message: 'Question updated successfully', data: mappedQuestion } as ApiResponse);
   } catch (error) {
     next(error);
   }

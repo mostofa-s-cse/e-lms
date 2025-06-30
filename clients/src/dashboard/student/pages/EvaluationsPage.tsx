@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { evaluationsAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
+import { handleApiError } from '../../../utils/sweetAlert';
 
 interface Evaluation {
   id: string;
@@ -48,7 +49,7 @@ const EvaluationsPage = () => {
       const response = await evaluationsAPI.getAll();
       setEvaluations((response.data as EvaluationsResponse).data);
     } catch (error) {
-      console.error('Failed to fetch evaluations:', error);
+      handleApiError(error, 'Failed to fetch evaluations');
     } finally {
       setLoading(false);
     }

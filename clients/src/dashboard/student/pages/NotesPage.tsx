@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { notesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
+import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
 
 interface Note {
   id: string;
@@ -40,15 +41,20 @@ const NotesPage = () => {
       const response = await notesAPI.getAll();
       setNotes((response.data as NotesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch notes:', error);
+      handleApiError(error, 'Failed to fetch notes');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDownload = (note: Note) => {
+  const handleDownload = async (note: Note) => {
     if (note.fileUrl) {
-      window.open(note.fileUrl, '_blank');
+      try {
+        window.open(note.fileUrl, '_blank');
+        await showSuccessAlert('Download Started', `Downloading ${note.fileName || 'file'}...`);
+      } catch (error) {
+        handleApiError(error, 'Failed to download file');
+      }
     }
   };
 
