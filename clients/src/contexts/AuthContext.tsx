@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI } from '../services/api';
+import { showConfirmDialog, showSuccessAlert } from '../utils/sweetAlert';
 
 interface User {
   id: string;
@@ -14,6 +15,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  logoutWithConfirmation: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -77,11 +79,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
+  const logoutWithConfirmation = async () => {
+    const result = await showConfirmDialog(
+      'Logout',
+      'Are you sure you want to logout?',
+      'Yes, Logout',
+      'Cancel'
+    );
+
+    if (result.isConfirmed) {
+      logout();
+      showSuccessAlert('Logged Out', 'You have been successfully logged out.');
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
     logout,
+    logoutWithConfirmation,
     isAuthenticated: !!user,
   };
 

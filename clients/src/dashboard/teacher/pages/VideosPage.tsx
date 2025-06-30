@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { videosAPI } from '../../../services/api';
+import { videosAPI, coursesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showDeleteConfirmDialog,
+  showFormErrorAlert,
+  handleApiError
+} from '../../../utils/sweetAlert';
 
 interface Video {
   id: string;
@@ -46,7 +53,7 @@ const VideosPage = () => {
       const response = await videosAPI.getAll();
       setVideos((response.data as VideosResponse).data);
     } catch (error) {
-      console.error('Failed to fetch videos:', error);
+      handleApiError(error, 'Failed to fetch videos');
     } finally {
       setLoading(false);
     }
@@ -79,12 +86,18 @@ const VideosPage = () => {
   };
 
   const handleDelete = async (video: Video) => {
-    if (window.confirm(`Are you sure you want to delete "${video.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${video.title}"`);
+    
+    if (result.isConfirmed) {
       try {
         await videosAPI.delete(video.id);
+        showSuccessAlert(
+          'Video Deleted', 
+          `"${video.title}" has been successfully deleted.`
+        );
         fetchVideos();
       } catch (error) {
-        console.error('Failed to delete video:', error);
+        handleApiError(error, 'Failed to delete video');
       }
     }
   };
@@ -121,6 +134,7 @@ const VideosPage = () => {
     if (!editingVideo && !formData.video) errors.video = 'Video file is required';
 
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -139,15 +153,32 @@ const VideosPage = () => {
 
       if (editingVideo) {
         await videosAPI.update(editingVideo.id, submitData);
+        showSuccessAlert(
+          'Video Updated', 
+          `"${formData.title}" has been successfully updated.`
+        );
       } else {
         await videosAPI.create(submitData);
+        showSuccessAlert(
+          'Video Created', 
+          `"${formData.title}" has been successfully created.`
+        );
       }
       setShowModal(false);
       fetchVideos();
     } catch (error: any) {
-      console.error('Failed to save video:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        // Handle field-specific errors from server
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save video');
       }
     }
   };
@@ -227,12 +258,6 @@ const VideosPage = () => {
         size="lg"
       >
         <Form onSubmit={handleSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="Title"
             name="title"

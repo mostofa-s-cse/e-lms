@@ -3,6 +3,13 @@ import { videosAPI, coursesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import { 
+  showSuccessAlert, 
+  showErrorAlert, 
+  showDeleteConfirmDialog, 
+  showFormErrorAlert,
+  handleApiError 
+} from '../../../utils/sweetAlert';
 
 interface Video {
   id: string;
@@ -65,7 +72,7 @@ const VideosPage = () => {
       const response = await videosAPI.getAll();
       setVideos((response.data as VideosResponse).data);
     } catch (error) {
-      console.error('Failed to fetch videos:', error);
+      handleApiError(error, 'Failed to fetch videos');
     } finally {
       setLoading(false);
     }
@@ -76,7 +83,7 @@ const VideosPage = () => {
       const response = await coursesAPI.getAll();
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
+      handleApiError(error, 'Failed to fetch courses');
     }
   };
 
@@ -109,12 +116,18 @@ const VideosPage = () => {
   };
 
   const handleDelete = async (video: Video) => {
-    if (window.confirm(`Are you sure you want to delete "${video.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${video.title}"`);
+    
+    if (result.isConfirmed) {
       try {
         await videosAPI.delete(video.id);
+        showSuccessAlert(
+          'Video Deleted', 
+          `"${video.title}" has been successfully deleted.`
+        );
         fetchVideos();
       } catch (error) {
-        console.error('Failed to delete video:', error);
+        handleApiError(error, 'Failed to delete video');
       }
     }
   };

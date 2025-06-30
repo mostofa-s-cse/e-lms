@@ -3,6 +3,13 @@ import { evaluationsAPI, coursesAPI, usersAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import { 
+  showErrorAlert, 
+  showSuccessAlert, 
+  showDeleteConfirmDialog, 
+  showFormErrorAlert,
+  handleApiError 
+} from '../../../utils/sweetAlert';
 
 interface Evaluation {
   id: string;
@@ -87,7 +94,7 @@ const EvaluationsPage = () => {
       const response = await evaluationsAPI.getAll();
       setEvaluations((response.data as EvaluationsResponse).data);
     } catch (error) {
-      console.error('Failed to fetch evaluations:', error);
+      handleApiError(error, 'Failed to fetch evaluations');
     } finally {
       setLoading(false);
     }
@@ -98,7 +105,7 @@ const EvaluationsPage = () => {
       const response = await coursesAPI.getAll();
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
+      handleApiError(error, 'Failed to fetch courses');
     }
   };
 
@@ -109,7 +116,7 @@ const EvaluationsPage = () => {
       const studentUsers = allUsers.filter((user: any) => user.role === 'STUDENT');
       setStudents(studentUsers);
     } catch (error) {
-      console.error('Failed to fetch students:', error);
+      handleApiError(error, 'Failed to fetch students');
     }
   };
 
@@ -144,12 +151,14 @@ const EvaluationsPage = () => {
   };
 
   const handleDelete = async (evaluation: Evaluation) => {
-    if (window.confirm(`Are you sure you want to delete "${evaluation.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${evaluation.title}"`);
+    if (result.isConfirmed) {
       try {
         await evaluationsAPI.delete(evaluation.id);
+        await showSuccessAlert('Success', 'Evaluation deleted successfully');
         fetchEvaluations();
       } catch (error) {
-        console.error('Failed to delete evaluation:', error);
+        handleApiError(error, 'Failed to delete evaluation');
       }
     }
   };
@@ -173,6 +182,7 @@ const EvaluationsPage = () => {
     }
 
     if (Object.keys(errors).length > 0) {
+      await showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -186,16 +196,15 @@ const EvaluationsPage = () => {
 
       if (editingEvaluation) {
         await evaluationsAPI.update(editingEvaluation.id, submitData);
+        await showSuccessAlert('Success', 'Evaluation updated successfully');
       } else {
         await evaluationsAPI.create(submitData);
+        await showSuccessAlert('Success', 'Evaluation created successfully');
       }
       setShowModal(false);
       fetchEvaluations();
     } catch (error: any) {
-      console.error('Failed to save evaluation:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
-      }
+      handleApiError(error, 'Failed to save evaluation');
     }
   };
 
@@ -313,12 +322,6 @@ const EvaluationsPage = () => {
         size="lg"
       >
         <Form onSubmit={handleSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="Title"
             name="title"

@@ -3,6 +3,13 @@ import { questionsAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showDeleteConfirmDialog,
+  showFormErrorAlert,
+  handleApiError
+} from '../../../utils/sweetAlert';
 
 interface Question {
   id: string;
@@ -47,7 +54,7 @@ const QuestionsPage = () => {
       const response = await questionsAPI.getAll();
       setQuestions((response.data as QuestionsResponse).data);
     } catch (error) {
-      console.error('Failed to fetch questions:', error);
+      handleApiError(error, 'Failed to fetch questions');
     } finally {
       setLoading(false);
     }
@@ -82,12 +89,14 @@ const QuestionsPage = () => {
   };
 
   const handleDelete = async (question: Question) => {
-    if (window.confirm(`Are you sure you want to delete this question?`)) {
+    const result = await showDeleteConfirmDialog('this question');
+    if (result.isConfirmed) {
       try {
         await questionsAPI.delete(question.id);
+        showSuccessAlert('Question Deleted', 'The question has been successfully deleted.');
         fetchQuestions();
       } catch (error) {
-        console.error('Failed to delete question:', error);
+        handleApiError(error, 'Failed to delete question');
       }
     }
   };
@@ -110,13 +119,11 @@ const QuestionsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
-
     const errors: Record<string, string> = {};
     if (!formData.text.trim()) errors.text = 'Question text is required';
     if (!formData.quizId) errors.quizId = 'Quiz is required';
     if (formData.points < 1) errors.points = 'Points must be at least 1';
     if (!formData.correctAnswer.trim()) errors.correctAnswer = 'Correct answer is required';
-
     if (formData.type === 'multiple_choice') {
       const validOptions = formData.options.filter(opt => opt.trim() !== '');
       if (validOptions.length < 2) {
@@ -126,29 +133,37 @@ const QuestionsPage = () => {
         errors.correctAnswer = 'Correct answer must be one of the options';
       }
     }
-
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
-
     try {
       const submitData = {
         ...formData,
         options: formData.options.filter(opt => opt.trim() !== '')
       };
-
       if (editingQuestion) {
         await questionsAPI.update(editingQuestion.id, submitData);
+        showSuccessAlert('Question Updated', 'The question has been successfully updated.');
       } else {
         await questionsAPI.create(submitData);
+        showSuccessAlert('Question Created', 'The question has been successfully created.');
       }
       setShowModal(false);
       fetchQuestions();
     } catch (error: any) {
-      console.error('Failed to save question:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save question');
       }
     }
   };

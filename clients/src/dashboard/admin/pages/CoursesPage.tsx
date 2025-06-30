@@ -3,6 +3,13 @@ import { coursesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import { 
+  showSuccessAlert, 
+  showErrorAlert, 
+  showDeleteConfirmDialog, 
+  showFormErrorAlert,
+  handleApiError 
+} from '../../../utils/sweetAlert';
 
 interface Course {
   id: string;
@@ -49,7 +56,7 @@ const CoursesPage = () => {
       const response = await coursesAPI.getAll();
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
+      handleApiError(error, 'Failed to fetch courses');
     } finally {
       setLoading(false);
     }
@@ -84,12 +91,18 @@ const CoursesPage = () => {
   };
 
   const handleDelete = async (course: Course) => {
-    if (window.confirm(`Are you sure you want to delete "${course.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${course.title}"`);
+    
+    if (result.isConfirmed) {
       try {
         await coursesAPI.delete(course.id);
+        showSuccessAlert(
+          'Course Deleted', 
+          `"${course.title}" has been successfully deleted.`
+        );
         fetchCourses();
       } catch (error) {
-        console.error('Failed to delete course:', error);
+        handleApiError(error, 'Failed to delete course');
       }
     }
   };
@@ -107,6 +120,7 @@ const CoursesPage = () => {
     if (formData.duration < 1) errors.duration = 'Duration must be at least 1';
 
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -114,15 +128,32 @@ const CoursesPage = () => {
     try {
       if (editingCourse) {
         await coursesAPI.update(editingCourse.id, formData);
+        showSuccessAlert(
+          'Course Updated', 
+          `"${formData.title}" has been successfully updated.`
+        );
       } else {
         await coursesAPI.create(formData);
+        showSuccessAlert(
+          'Course Created', 
+          `"${formData.title}" has been successfully created.`
+        );
       }
       setShowModal(false);
       fetchCourses();
     } catch (error: any) {
-      console.error('Failed to save course:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        // Handle field-specific errors from server
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save course');
       }
     }
   };
@@ -208,12 +239,6 @@ const CoursesPage = () => {
         size="lg"
       >
         <Form onSubmit={handleSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="Title"
             name="title"

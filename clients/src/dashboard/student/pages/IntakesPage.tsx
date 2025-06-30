@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { intakesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
+import { handleApiError } from '../../../utils/sweetAlert';
 
 interface Intake {
   id: string;
@@ -31,7 +32,7 @@ const IntakesPage = () => {
       const response = await intakesAPI.getAll();
       setIntakes((response.data as IntakesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch intakes:', error);
+      handleApiError(error, 'Failed to fetch intakes');
     } finally {
       setLoading(false);
     }

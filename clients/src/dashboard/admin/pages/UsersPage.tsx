@@ -3,6 +3,13 @@ import { usersAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import { 
+  showSuccessAlert, 
+  showErrorAlert, 
+  showDeleteConfirmDialog, 
+  showFormErrorAlert,
+  handleApiError 
+} from '../../../utils/sweetAlert';
 
 interface User {
   id: string;
@@ -48,7 +55,7 @@ const UsersPage = () => {
       const response = await usersAPI.getAll();
       setUsers((response.data as UsersResponse).data);
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      handleApiError(error, 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
@@ -81,12 +88,18 @@ const UsersPage = () => {
   };
 
   const handleDelete = async (user: User) => {
-    if (window.confirm(`Are you sure you want to delete ${user.firstName} ${user.lastName}?`)) {
+    const result = await showDeleteConfirmDialog(`${user.firstName} ${user.lastName}`);
+    
+    if (result.isConfirmed) {
       try {
         await usersAPI.delete(user.id);
+        showSuccessAlert(
+          'User Deleted', 
+          `${user.firstName} ${user.lastName} has been successfully deleted.`
+        );
         fetchUsers();
       } catch (error) {
-        console.error('Failed to delete user:', error);
+        handleApiError(error, 'Failed to delete user');
       }
     }
   };
@@ -103,6 +116,7 @@ const UsersPage = () => {
     if (!editingUser && !formData.password.trim()) errors.password = 'Password is required';
 
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -115,15 +129,32 @@ const UsersPage = () => {
           email: formData.email,
           role: formData.role
         });
+        showSuccessAlert(
+          'User Updated', 
+          `${formData.firstName} ${formData.lastName} has been successfully updated.`
+        );
       } else {
         await usersAPI.create(formData);
+        showSuccessAlert(
+          'User Created', 
+          `${formData.firstName} ${formData.lastName} has been successfully created.`
+        );
       }
       setShowModal(false);
       fetchUsers();
     } catch (error: any) {
-      console.error('Failed to save user:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        // Handle field-specific errors from server
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save user');
       }
     }
   };
@@ -197,12 +228,6 @@ const UsersPage = () => {
         size="md"
       >
         <Form onSubmit={handleSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="First Name"
             name="firstName"

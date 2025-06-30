@@ -3,13 +3,12 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Form, FormField, FormActions } from '../components/Form';
 import { Navigation, Footer } from '../components';
+import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,7 +16,7 @@ const LoginPage = () => {
   useEffect(() => {
     // Check for success message from registration
     if (location.state?.message) {
-      setSuccessMessage(location.state.message);
+      showSuccessAlert('Registration Successful!', location.state.message);
       // Clear the state to prevent showing the message again on refresh
       window.history.replaceState({}, document.title);
     }
@@ -26,14 +25,13 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccessMessage('');
 
     try {
       await login(email, password);
+      showSuccessAlert('Login Successful!', 'Welcome back to EduLMS');
       navigate('/');
     } catch (error: any) {
-      setError(error.message || 'Login failed');
+      showErrorAlert('Login Failed', error.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
@@ -57,18 +55,6 @@ const LoginPage = () => {
           </div>
 
           <Form onSubmit={handleSubmit}>
-            {successMessage && (
-              <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                {successMessage}
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {error}
-              </div>
-            )}
-
             <FormField
               label="Email Address"
               name="email"

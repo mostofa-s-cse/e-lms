@@ -3,6 +3,13 @@ import { quizzesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showDeleteConfirmDialog,
+  showFormErrorAlert,
+  handleApiError
+} from '../../../utils/sweetAlert';
 
 interface Quiz {
   id: string;
@@ -47,7 +54,7 @@ const QuizzesPage = () => {
       const response = await quizzesAPI.getAll();
       setQuizzes((response.data as QuizzesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch quizzes:', error);
+      handleApiError(error, 'Failed to fetch quizzes');
     } finally {
       setLoading(false);
     }
@@ -82,12 +89,14 @@ const QuizzesPage = () => {
   };
 
   const handleDelete = async (quiz: Quiz) => {
-    if (window.confirm(`Are you sure you want to delete "${quiz.title}"?`)) {
+    const result = await showDeleteConfirmDialog(`"${quiz.title}"`);
+    if (result.isConfirmed) {
       try {
         await quizzesAPI.delete(quiz.id);
+        showSuccessAlert('Quiz Deleted', `"${quiz.title}" has been successfully deleted.`);
         fetchQuizzes();
       } catch (error) {
-        console.error('Failed to delete quiz:', error);
+        handleApiError(error, 'Failed to delete quiz');
       }
     }
   };
@@ -95,7 +104,6 @@ const QuizzesPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
-
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Title is required';
     if (!formData.description.trim()) errors.description = 'Description is required';
@@ -104,24 +112,33 @@ const QuizzesPage = () => {
     if (formData.passingScore < 1 || formData.passingScore > 100) {
       errors.passingScore = 'Passing score must be between 1 and 100';
     }
-
     if (Object.keys(errors).length > 0) {
+      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
-
     try {
       if (editingQuiz) {
         await quizzesAPI.update(editingQuiz.id, formData);
+        showSuccessAlert('Quiz Updated', `"${formData.title}" has been successfully updated.`);
       } else {
         await quizzesAPI.create(formData);
+        showSuccessAlert('Quiz Created', `"${formData.title}" has been successfully created.`);
       }
       setShowModal(false);
       fetchQuizzes();
     } catch (error: any) {
-      console.error('Failed to save quiz:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        showFormErrorAlert(serverErrors);
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save quiz');
       }
     }
   };

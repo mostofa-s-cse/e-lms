@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { videosAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
+import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
 
 interface Video {
   id: string;
@@ -40,15 +41,20 @@ const VideosPage = () => {
       const response = await videosAPI.getAll();
       setVideos((response.data as VideosResponse).data);
     } catch (error) {
-      console.error('Failed to fetch videos:', error);
+      handleApiError(error, 'Failed to fetch videos');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleWatch = (video: Video) => {
+  const handleWatch = async (video: Video) => {
     if (video.url) {
-      window.open(video.url, '_blank');
+      try {
+        window.open(video.url, '_blank');
+        await showSuccessAlert('Video Opened', `Opening "${video.title}" in a new tab...`);
+      } catch (error) {
+        handleApiError(error, 'Failed to open video');
+      }
     }
   };
 

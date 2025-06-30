@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { quizzesAPI } from '../../../services/api';
 import DataTable from '../../../components/DataTable';
+import { handleApiError, showInfoAlert } from '../../../utils/sweetAlert';
 
 interface Quiz {
   id: string;
@@ -42,15 +43,15 @@ const QuizzesPage = () => {
       const response = await quizzesAPI.getAll();
       setQuizzes((response.data as QuizzesResponse).data);
     } catch (error) {
-      console.error('Failed to fetch quizzes:', error);
+      handleApiError(error, 'Failed to fetch quizzes');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTakeQuiz = (quiz: Quiz) => {
+  const handleTakeQuiz = async (quiz: Quiz) => {
     // This would typically navigate to a quiz taking interface
-    alert(`Starting quiz: ${quiz.title}`);
+    await showInfoAlert('Quiz Starting', `Starting quiz: ${quiz.title}`);
   };
 
   const columns = [

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Navigation from '../components/Navigation';
-import { Footer } from '../components';
+import { Navigation, Footer } from '../components';
+import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
 interface ContactForm {
   name: string;
@@ -20,7 +20,6 @@ const ContactPage = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const contactInfo = [
     {
@@ -87,7 +86,6 @@ const ContactPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus('idle');
 
     try {
       // Simulate API call
@@ -101,9 +99,15 @@ const ContactPage = () => {
         message: ''
       });
       
-      setSubmitStatus('success');
+      showSuccessAlert(
+        'Message Sent Successfully!', 
+        'Thank you for contacting us. We will get back to you as soon as possible.'
+      );
     } catch (error) {
-      setSubmitStatus('error');
+      showErrorAlert(
+        'Message Failed to Send', 
+        'There was an error sending your message. Please try again or contact us directly.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -144,18 +148,6 @@ const ContactPage = () => {
             {/* Contact Form */}
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-              
-              {submitStatus === 'success' && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-                  Thank you for your message! We'll get back to you soon.
-                </div>
-              )}
-
-              {submitStatus === 'error' && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-                  Something went wrong. Please try again.
-                </div>
-              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -323,7 +315,7 @@ const ContactPage = () => {
             </Link>
           ) : (
             <Link 
-              to="/" 
+              to="/dashboard" 
               className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               Access Dashboard
