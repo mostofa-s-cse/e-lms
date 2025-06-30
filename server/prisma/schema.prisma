@@ -1,0 +1,250 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(STUDENT)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  courses    Course[]    @relation("TeacherCourses")
+  enrollments Enrollment[]
+  notes      Note[]
+  videos     Video[]
+  quizzes    Quiz[]
+  questions  Question[]
+  evaluations Evaluation[]
+  quizAttempts QuizAttempt[]
+  evaluationsGiven Evaluation[] @relation("Evaluations")
+
+  @@map("users")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  code        String   @unique
+  credits     Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  teacherId   String
+  teacher     User       @relation("TeacherCourses", fields: [teacherId], references: [id])
+  intakes     Intake[]
+  notes       Note[]
+  videos      Video[]
+  quizzes     Quiz[]
+  enrollments Enrollment[]
+
+  @@map("courses")
+}
+
+model Intake {
+  id        String   @id @default(cuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  courseId   String
+  course     Course       @relation(fields: [courseId], references: [id])
+  enrollments Enrollment[]
+
+  @@map("intakes")
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  enrolledAt DateTime @default(now())
+  status    EnrollmentStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+  courseId  String
+  course    Course @relation(fields: [courseId], references: [id])
+  intakeId  String
+  intake    Intake @relation(fields: [intakeId], references: [id])
+
+  @@unique([studentId, courseId, intakeId])
+  @@map("enrollments")
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  fileUrl     String
+  fileSize    Int
+  fileType    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@map("notes")
+}
+
+model Video {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  videoUrl    String
+  duration    Int      // in seconds
+  thumbnail   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@map("videos")
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  duration    Int      // in minutes
+  totalMarks  Int
+  passingMarks Int
+  isActive    Boolean  @default(true)
+  startTime   DateTime?
+  endTime     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+  questions  Question[]
+  attempts   QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  question    String   @db.Text
+  type        QuestionType
+  options     Json?    // For MCQ questions
+  correctAnswer String  @db.Text
+  marks       Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quizId String
+  quiz   Quiz @relation(fields: [quizId], references: [id])
+  authorId String
+  author   User @relation(fields: [authorId], references: [id])
+
+  @@map("questions")
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  score     Int
+  totalMarks Int
+  isPassed  Boolean
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  studentId String
+  student   User @relation(fields: [studentId], references: [id])
+  quizId    String
+  quiz      Quiz @relation(fields: [quizId], references: [id])
+
+  @@unique([studentId, quizId])
+  @@map("quiz_attempts")
+}
+
+model Evaluation {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  type        EvaluationType
+  score       Float?
+  maxScore    Float
+  feedback    String?  @db.Text
+  evaluatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  studentId String
+  student   User @relation(fields: [studentId], references: [id])
+  evaluatorId String
+  evaluator   User @relation("Evaluations", fields: [evaluatorId], references: [id])
+
+  @@map("evaluations")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  SUSPENDED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+}
+
+enum EvaluationType {
+  ASSIGNMENT
+  PROJECT
+  PRESENTATION
+  PARTICIPATION
+  OTHER
+}
