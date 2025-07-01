@@ -60,8 +60,8 @@ const VideosPage = () => {
     description: '',
     duration: 0,
     courseId: '',
-    videoUrl: videoFile,
-    thumbnail: thumbnailFile
+    videoUrl: null as File | null,
+    thumbnail: null as File | null
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -109,15 +109,23 @@ const VideosPage = () => {
   };
 
   const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const videoUrl = e.target.files?.[0] || null;
-    console.log('Video file selected:', videoUrl);
-    setFormData(prev => ({ ...prev, videoUrl }));
+    const file = e.target.files?.[0] || null;
+    console.log('Video file selected:', file);
+    setFormData(prev => ({ ...prev, videoUrl: file }));
+    // Clear error when file is selected
+    if (file) {
+      setFormErrors(prev => ({ ...prev, videoUrl: '' }));
+    }
   };
 
   const handleThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const thumbnail = e.target.files?.[0] || null;
-    console.log('Thumbnail file selected:', thumbnail);
-    setFormData(prev => ({ ...prev, thumbnail }));
+    const file = e.target.files?.[0] || null;
+    console.log('Thumbnail file selected:', file);
+    setFormData(prev => ({ ...prev, thumbnail: file }));
+    // Clear error when file is selected
+    if (file) {
+      setFormErrors(prev => ({ ...prev, thumbnail: '' }));
+    }
   };
 
   const formatDuration = (seconds: number) => {
@@ -145,26 +153,157 @@ const VideosPage = () => {
 
   const handleEdit = (video: Video) => {
     setEditingVideo(video);
+    setFormData({
+      title: video.title,
+      description: video.description,
+      duration: video.duration,
+      courseId: video.courseId,
+      videoUrl: null, // Keep existing video file
+      thumbnail: null  // Keep existing thumbnail
+    });
+    setFormErrors({});
     setShowModal(true);
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    // Required field validations
+    if (!formData.title.trim()) {
+      errors.title = 'Title is required';
+    }
+
+    if (!formData.description.trim()) {
+      errors.description = 'Description is required';
+    }
+
+    if (!formData.courseId) {
+      errors.courseId = 'Course is required';
+    }
+
+    if (!formData.duration || formData.duration <= 0) {
+      errors.duration = 'Duration must be greater than 0';
+    }
+
+    // File validations - only required for new videos, optional for editing
+    if (!editingVideo) {
+      // Creating new video - files are required
+      if (!formData.videoUrl) {
+        errors.videoUrl = 'Video file is required';
+      } else if (formData.videoUrl instanceof File) {
+        const maxSize = 500 * 1024 * 1024; // 500MB
+        if (formData.videoUrl.size > maxSize) {
+          errors.videoUrl = 'Video file size must be less than 500MB';
+        }
+        
+        const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/quicktime'];
+        if (!allowedTypes.includes(formData.videoUrl.type)) {
+          errors.videoUrl = 'Please select a valid video file (MP4, WebM, OGG, AVI, MOV)';
+        }
+      }
+
+      if (!formData.thumbnail) {
+        errors.thumbnail = 'Thumbnail image is required';
+      } else if (formData.thumbnail instanceof File) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (formData.thumbnail.size > maxSize) {
+          errors.thumbnail = 'Thumbnail file size must be less than 10MB';
+        }
+        
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(formData.thumbnail.type)) {
+          errors.thumbnail = 'Please select a valid image file (JPG, PNG, WebP)';
+        }
+      }
+    } else {
+      // Editing existing video - validate files only if new ones are selected
+      if (formData.videoUrl instanceof File) {
+        const maxSize = 500 * 1024 * 1024; // 500MB
+        if (formData.videoUrl.size > maxSize) {
+          errors.videoUrl = 'Video file size must be less than 500MB';
+        }
+        
+        const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/quicktime'];
+        if (!allowedTypes.includes(formData.videoUrl.type)) {
+          errors.videoUrl = 'Please select a valid video file (MP4, WebM, OGG, AVI, MOV)';
+        }
+      }
+
+      if (formData.thumbnail instanceof File) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (formData.thumbnail.size > maxSize) {
+          errors.thumbnail = 'Thumbnail file size must be less than 10MB';
+        }
+        
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(formData.thumbnail.type)) {
+          errors.thumbnail = 'Please select a valid image file (JPG, PNG, WebP)';
+        }
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Clear previous errors
+    setFormErrors({});
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       const submitData = formData;
-      await videosAPI.create(submitData);
+      
+      if (editingVideo) {
+        // Update existing video
+        await videosAPI.update(editingVideo.id, submitData);
+        showSuccessAlert(
+          'Video Updated',
+          `"${formData.title}" has been successfully updated.`
+        );
+      } else {
+        // Create new video
+        await videosAPI.create(submitData);
+        showSuccessAlert(
+          'Video Created',
+          `"${formData.title}" has been successfully created.`
+        );
+      }
+      
       setShowModal(false);
+      setEditingVideo(null);
+      setFormData({
+        title: '',
+        description: '',
+        duration: 0,
+        courseId: '',
+        videoUrl: null,
+        thumbnail: null
+      });
       fetchVideos();
-      showSuccessAlert(
-        'Video Created',
-        `"${formData.title}" has been successfully created.`
-      );
     } catch (error: any) {
-      handleApiError(error, 'Failed to save video');
+      if (error.response?.data?.errors) {
+        // Handle server-side validation errors
+        const serverErrors: Record<string, string> = {};
+        Object.keys(error.response.data.errors).forEach(key => {
+          serverErrors[key] = error.response.data.errors[key][0];
+        });
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, editingVideo ? 'Failed to update video' : 'Failed to create video');
+      }
     }
   };
-  
+
+  const handleView = (video: Video) => {
+    navigate(`/admin/videos/${video.id}`);
+  };
 
   const courseOptions = courses.map(course => ({
     value: course.id,
@@ -213,20 +352,6 @@ const VideosPage = () => {
       key: 'createdAt',
       label: 'Created',
       render: (date: string) => new Date(date).toLocaleDateString()
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (_: any, video: Video) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => navigate(`/admin/videos/${video.id}`)}
-            className="text-green-600 hover:text-green-900 text-sm font-medium"
-          >
-            View Details
-          </button>
-        </div>
-      )
     }
   ];
 
@@ -247,6 +372,7 @@ const VideosPage = () => {
         data={videos}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleView}
         loading={loading}
         title="Videos"
         subtitle="Manage videos and their details"
@@ -267,7 +393,7 @@ const VideosPage = () => {
           )}
 
           <FormField
-            label="Title"
+            label="Title *"
             name="title"
             value={formData.title}
             onChange={(value) => setFormData({ ...formData, title: value as string })}
@@ -276,7 +402,7 @@ const VideosPage = () => {
           />
 
           <FormField
-            label="Course"
+            label="Course *"
             name="courseId"
             type="select"
             value={formData.courseId}
@@ -287,7 +413,7 @@ const VideosPage = () => {
           />
 
           <FormField
-            label="Description"
+            label="Description *"
             name="description"
             type="textarea"
             value={formData.description}
@@ -298,9 +424,8 @@ const VideosPage = () => {
           />
 
           <div className="grid grid-cols-2 gap-4">
-
             <FormField
-              label="Duration (seconds)"
+              label="Duration (seconds) *"
               name="duration"
               type="number"
               value={formData.duration}
@@ -312,7 +437,7 @@ const VideosPage = () => {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Upload Video File
+              Upload Video File {!editingVideo && <span className="text-red-500">*</span>}
             </label>
             <input
               type="file"
@@ -322,18 +447,30 @@ const VideosPage = () => {
                 formErrors.videoUrl ? 'border-red-500' : 'border-gray-300'
               }`}
               accept="video/*"
+              required={!editingVideo}
             />
+            {formData.videoUrl && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  <strong>Selected:</strong> {formData.videoUrl.name}
+                </p>
+                <p className="text-xs text-green-600">
+                  Size: {(formData.videoUrl.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+            )}
             {formErrors.videoUrl && (
               <p className="mt-1 text-sm text-red-600">{formErrors.videoUrl}</p>
             )}
             <p className="mt-1 text-sm text-gray-500">
-              Supported formats: MP4, WebM, OGG, AVI, MOV
+              Supported formats: MP4, WebM, OGG, AVI, MOV (Max size: 500MB)
+              {editingVideo && ' - Leave empty to keep existing video'}
             </p>
           </div>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Upload Thumbnail File
+              Upload Thumbnail File {!editingVideo && <span className="text-red-500">*</span>}
             </label>
             <input
               type="file"
@@ -343,12 +480,24 @@ const VideosPage = () => {
                 formErrors.thumbnail ? 'border-red-500' : 'border-gray-300'
               }`}
               accept="image/*"
+              required={!editingVideo}
             />
+            {formData.thumbnail && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  <strong>Selected:</strong> {formData.thumbnail.name}
+                </p>
+                <p className="text-xs text-green-600">
+                  Size: {(formData.thumbnail.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+            )}
             {formErrors.thumbnail && (
               <p className="mt-1 text-sm text-red-600">{formErrors.thumbnail}</p>
             )}
             <p className="mt-1 text-sm text-gray-500">
-              Supported formats: JPG, PNG
+              Supported formats: JPG, PNG, WebP (Max size: 10MB)
+              {editingVideo && ' - Leave empty to keep existing thumbnail'}
             </p>
           </div>
 
