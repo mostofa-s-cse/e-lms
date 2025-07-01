@@ -6,6 +6,9 @@ server/node_modules
 clients/node_modules
 clients/build
 clients/.next
+server/uploads/videos
+server/uploads/thumbnails
+
 /.pnp
 .pnp.*
 .yarn/*

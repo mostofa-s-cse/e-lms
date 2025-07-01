@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { evaluationsAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
 
 interface Evaluation {
@@ -142,6 +142,8 @@ const EvaluationsPage = () => {
       <DataTable
         columns={columns}
         data={evaluations}
+        title="Evaluations"
+        subtitle="View your course evaluations and feedback"
         loading={loading}
       />
     </div>

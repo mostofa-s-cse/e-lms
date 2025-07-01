@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { coursesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
@@ -26,6 +27,7 @@ interface CoursesResponse {
 }
 
 const CoursesPage = () => {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -93,6 +95,10 @@ const CoursesPage = () => {
         handleApiError(error, 'Failed to delete course');
       }
     }
+  };
+
+  const handleView = (course: Course) => {
+    navigate(`/admin/courses/${course.id}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -218,6 +224,7 @@ const CoursesPage = () => {
         loading={loading}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleView}
         title="Courses"
         subtitle="Manage academic courses and their details"
         searchable={true}

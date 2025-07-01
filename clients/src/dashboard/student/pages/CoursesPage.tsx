@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
 
 interface Course {
@@ -110,6 +110,8 @@ const CoursesPage = () => {
 
       <DataTable
         columns={columns}
+        title="Courses"
+        subtitle="View all your enrolled courses and their details"
         data={courses}
         loading={loading}
       />

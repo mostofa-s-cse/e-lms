@@ -71,9 +71,34 @@ export const getVideoById = async (req: Request, res: Response, next: NextFuncti
 };
 
 export const createVideo = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+ console.log("CREATE VIDEO - Request:", req.files);
   try {
-    const { title, description, videoUrl, duration, thumbnail, courseId } = req.body;
+    const { title, description, duration, courseId } = req.body;
+    
     const teacherId = req.user!.id;
+    
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: teacherId }
+    });
+    
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+    
+    let videoUrlPath = undefined;
+    let thumbnailPath = undefined;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      if (files?.videoUrl?.[0]) {
+        videoUrlPath = `/uploads/videos/${files.videoUrl[0].filename}`;
+      }
+
+      if (files?.thumbnail?.[0]) {
+        thumbnailPath = `/uploads/thumbnails/${files.thumbnail[0].filename}`;
+      }
+
     
     // Check if user is the teacher of this course or admin
     const course = await prisma.course.findUnique({
@@ -94,9 +119,9 @@ export const createVideo = async (req: AuthRequest, res: Response, next: NextFun
       data: {
         title,
         description,
-        videoUrl,
-        duration: duration || 0,
-        thumbnail,
+        videoUrl: videoUrlPath || '',
+        duration: parseInt(duration) || 0,
+        thumbnail: thumbnailPath || '',
         courseId,
         authorId: teacherId
       },
@@ -112,15 +137,29 @@ export const createVideo = async (req: AuthRequest, res: Response, next: NextFun
     
     res.status(201).json({ success: true, message: 'Video created successfully', data: video } as ApiResponse);
   } catch (error) {
+    console.log("CREATE VIDEO - Error:", error);
     next(error);
   }
 };
 
 export const updateVideo = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, description, videoUrl, duration, thumbnail, isActive } = req.body;
+    const { title, description, duration, isActive } = req.body;
     const videoId = req.params.id;
     const teacherId = req.user!.id;
+    
+    // Handle file uploads
+    let videoUrlPath = undefined;
+    let thumbnailPath = undefined;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    if (files?.videoUrl?.[0]) {
+      videoUrlPath = `/uploads/videos/${files.videoUrl[0].filename}`;
+    }
+
+    if (files?.thumbnail?.[0]) {
+      thumbnailPath = `/uploads/thumbnails/${files.thumbnail[0].filename}`;
+    }
     
     // Check if user is the author of this video or admin
     const existingVideo = await prisma.video.findUnique({
@@ -137,9 +176,19 @@ export const updateVideo = async (req: AuthRequest, res: Response, next: NextFun
       return;
     }
     
+    // Prepare update data
+    const updateData: any = { 
+      title, 
+      description, 
+      duration: parseInt(duration) || 0, 
+      isActive 
+    };
+    if (videoUrlPath !== undefined) updateData.videoUrl = videoUrlPath;
+    if (thumbnailPath !== undefined) updateData.thumbnail = thumbnailPath;
+    
     const video = await prisma.video.update({
       where: { id: videoId },
-      data: { title, description, videoUrl, duration, thumbnail, isActive },
+      data: updateData,
       include: {
         course: {
           select: { id: true, title: true, code: true }

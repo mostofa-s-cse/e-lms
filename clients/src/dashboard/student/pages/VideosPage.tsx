@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { videosAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
 
 interface Video {
@@ -140,6 +140,8 @@ const VideosPage = () => {
       <DataTable
         columns={columns}
         data={videos}
+        title="Videos"
+        subtitle="Watch educational videos for your enrolled courses"
         loading={loading}
       />
     </div>

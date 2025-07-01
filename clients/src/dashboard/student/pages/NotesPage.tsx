@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { notesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
 
 interface Note {
@@ -131,6 +131,8 @@ const NotesPage = () => {
       <DataTable
         columns={columns}
         data={notes}
+        title="Notes"
+        subtitle="Access all notes and materials for your enrolled courses"
         loading={loading}
       />
     </div>
