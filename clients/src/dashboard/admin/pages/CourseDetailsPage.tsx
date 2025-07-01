@@ -1,88 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { coursesAPI, videosAPI } from '../../../services/api';
+import { coursesAPI, videosAPI, notesAPI, quizzesAPI } from '../../../services/api';
 import { handleApiError, showDeleteConfirmDialog, showSuccessAlert } from '../../../utils/sweetAlert';
-import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
-  ArrowLeft, 
-  BookOpen, 
-  Users, 
-  Video, 
-  Clock, 
-  User, 
-  Calendar,
-  GraduationCap
-} from 'lucide-react';
-import VideoDetails from '../../../components/VideoDetails';
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  code: string;
-  credits: number;
-  isActive: boolean;
-  teacher?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  intakes?: Array<{
-    id: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-  }>;
-  _count?: {
-    enrollments: number;
-    notes: number;
-    videos: number;
-    quizzes: number;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  videoUrl: string;
-  duration: number;
-  courseId: string;
-  course?: {
-    id: string;
-    title: string;
-    code: string;
-  };
-  author?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
-  createdAt: string;
-}
-
-interface Enrollment {
-  id: string;
-  student: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  intake?: {
-    id: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-  };
-  enrolledAt: string;
-  status: string;
-}
+  OverviewTab,
+  VideosTab,
+  StudentsTab,
+  NotesTab,
+  QuizzesTab,
+  Course,
+  Video,
+  Enrollment,
+  Note,
+  Quiz
+} from '../../../components/admin';
+import { ArrowLeft } from 'lucide-react';
 
 const CourseDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -90,12 +24,16 @@ const CourseDetailsPage = () => {
   const [course, setCourse] = useState<Course | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'videos' | 'students'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'videos' | 'students' | 'notes' | 'quizzes'>('overview');
   const [showModal, setShowModal] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -103,6 +41,19 @@ const CourseDetailsPage = () => {
     duration: 0,
     courseId: '',
     file: null as File | null
+  });
+  const [noteFormData, setNoteFormData] = useState({
+    title: '',
+    content: '',
+    courseId: ''
+  });
+  const [quizFormData, setQuizFormData] = useState({
+    title: '',
+    description: '',
+    duration: 30,
+    passingScore: 70,
+    isActive: true,
+    courseId: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -202,7 +153,84 @@ const CourseDetailsPage = () => {
     }
   };
 
+  const handleNoteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormErrors({});
 
+    // Basic validation
+    const errors: Record<string, string> = {};
+    if (!noteFormData.title.trim()) errors.title = 'Title is required';
+    if (!noteFormData.content.trim()) errors.content = 'Content is required';
+    if (!noteFormData.courseId) errors.courseId = 'Course is required';
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    try {
+      const submitData = new FormData();
+      submitData.append('title', noteFormData.title);
+      submitData.append('content', noteFormData.content);
+      submitData.append('courseId', noteFormData.courseId);
+
+      if (editingNote) {
+        await notesAPI.update(editingNote.id, submitData);
+      } else {
+        await notesAPI.create(submitData);
+      }
+      
+      setShowNoteModal(false);
+      fetchCourseDetails(); // Refresh the data
+    } catch (error: any) {
+      console.error('Failed to save note:', error);
+      if (error.response?.data?.message) {
+        setFormErrors({ general: error.response.data.message });
+      }
+    }
+  };
+
+  const handleQuizSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormErrors({});
+
+    // Basic validation
+    const errors: Record<string, string> = {};
+    if (!quizFormData.title.trim()) errors.title = 'Title is required';
+    if (!quizFormData.description.trim()) errors.description = 'Description is required';
+    if (!quizFormData.courseId) errors.courseId = 'Course is required';
+    if (quizFormData.duration < 0) errors.duration = 'Duration must be positive';
+    if (quizFormData.passingScore < 0 || quizFormData.passingScore > 100) errors.passingScore = 'Passing score must be between 0 and 100';
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    try {
+      const submitData = new FormData();
+      submitData.append('title', quizFormData.title);
+      submitData.append('description', quizFormData.description);
+      submitData.append('duration', quizFormData.duration.toString());
+      submitData.append('passingScore', quizFormData.passingScore.toString());
+      submitData.append('isActive', quizFormData.isActive.toString());
+      submitData.append('courseId', quizFormData.courseId);
+
+      if (editingQuiz) {
+        await quizzesAPI.update(editingQuiz.id, submitData);
+      } else {
+        await quizzesAPI.create(submitData);
+      }
+      
+      setShowQuizModal(false);
+      fetchCourseDetails(); // Refresh the data
+    } catch (error: any) {
+      console.error('Failed to save quiz:', error);
+      if (error.response?.data?.message) {
+        setFormErrors({ general: error.response.data.message });
+      }
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -215,20 +243,26 @@ const CourseDetailsPage = () => {
       setLoading(true);
       console.log('Fetching course details for ID:', id);
       
-      const [courseResponse, videosResponse, enrollmentsResponse] = await Promise.all([
+      const [courseResponse, videosResponse, enrollmentsResponse, notesResponse, quizzesResponse] = await Promise.all([
         coursesAPI.getById(id!),
         videosAPI.getByCourse(id!),
-        coursesAPI.getEnrollments(id!)
+        coursesAPI.getEnrollments(id!),
+        notesAPI.getByCourse(id!),
+        quizzesAPI.getByCourse(id!)
       ]);
 
       // Extract data from nested response structure
       const courseData = (courseResponse.data as any).data || courseResponse.data;
       const videosData = (videosResponse.data as any).data || videosResponse.data || [];
       const enrollmentsData = (enrollmentsResponse.data as any).data || enrollmentsResponse.data || [];
+      const notesData = (notesResponse.data as any).data || notesResponse.data || [];
+      const quizzesData = (quizzesResponse.data as any).data || quizzesResponse.data || [];
 
       setCourse(courseData as Course);
       setVideos(videosData as Video[]);
       setEnrollments(enrollmentsData as Enrollment[]);
+      setNotes(notesData as Note[]);
+      setQuizzes(quizzesData as Quiz[]);
     } catch (error) {
       console.error('Error fetching course details:', error);
       handleApiError(error, 'Failed to fetch course details');
@@ -240,20 +274,6 @@ const CourseDetailsPage = () => {
 
   const handleView = (video: Video) => {
       navigate(`/admin/videos/${video.id}`);
-  };
-
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  };
-
-  const getTotalVideoDuration = () => {
-    return videos.reduce((total, video) => total + video.duration, 0);
   };
 
   if (loading) {
@@ -273,7 +293,7 @@ const CourseDetailsPage = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
@@ -333,244 +353,138 @@ const CourseDetailsPage = () => {
           >
             Students ({enrollments.length})
           </button>
+          <button
+            onClick={() => setActiveTab('notes')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'notes'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Notes ({notes.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('quizzes')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'quizzes'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Quizzes ({quizzes.length})
+          </button>
         </nav>
       </div>
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Course Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Course Information</h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <BookOpen className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Course Code</p>
-                    <p className="font-medium">{course.code}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <GraduationCap className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Credits</p>
-                    <p className="font-medium">{course.credits} credits</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <User className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Teacher</p>
-                    <p className="font-medium">
-                      {course.teacher ? `${course.teacher.firstName} ${course.teacher.lastName}` : 'N/A'}
-                    </p>
-                    {course.teacher && (
-                      <p className="text-xs text-gray-500">{course.teacher.email}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <Calendar className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Created</p>
-                    <p className="font-medium">{new Date(course.createdAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                {course.intakes && course.intakes.length > 0 && (
-                  <div className="flex items-start space-x-3">
-                    <GraduationCap className="w-5 h-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <p className="text-sm text-gray-600">Associated Intakes</p>
-                      <div className="space-y-1 mt-1">
-                        {course.intakes.map((intake) => (
-                          <div key={intake.id} className="text-sm">
-                            <span className="font-medium">{intake.name}</span>
-                            <span className="text-gray-500 ml-2">
-                              ({new Date(intake.startDate).toLocaleDateString()} - {new Date(intake.endDate).toLocaleDateString()})
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-3">Description</h3>
-              <p className="text-gray-700 leading-relaxed">{course.description}</p>
-            </div>
-          </div>
-
-          {/* Statistics */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Course Statistics</h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Video className="w-5 h-5 text-blue-500" />
-                    <span className="text-sm text-gray-600">Total Videos</span>
-                  </div>
-                  <span className="font-semibold">{course._count?.videos || videos.length}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Clock className="w-5 h-5 text-green-500" />
-                    <span className="text-sm text-gray-600">Total Duration</span>
-                  </div>
-                  <span className="font-semibold">{formatDuration(getTotalVideoDuration())}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Users className="w-5 h-5 text-purple-500" />
-                    <span className="text-sm text-gray-600">Enrolled Students</span>
-                  </div>
-                  <span className="font-semibold">{course._count?.enrollments || enrollments.length}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <BookOpen className="w-5 h-5 text-orange-500" />
-                    <span className="text-sm text-gray-600">Notes</span>
-                  </div>
-                  <span className="font-semibold">{course._count?.notes || 0}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <GraduationCap className="w-5 h-5 text-indigo-500" />
-                    <span className="text-sm text-gray-600">Quizzes</span>
-                  </div>
-                  <span className="font-semibold">{course._count?.quizzes || 0}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <OverviewTab 
+          course={course}
+          videos={videos}
+          enrollments={enrollments}
+          notes={notes}
+          quizzes={quizzes}
+        />
       )}
 
       {activeTab === 'videos' && (
-        <div className="space-y-6">
-            <div className="flex justify-end items-center">
-            <button
-            onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Add Video
-          </button>
-          </div>
-          <DataTable
-            columns={[
-              {
-                key: 'title',
-                label: 'Video',
-                render: (title: string, video: Video) => (
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{title}</div>
-                    <div className="text-sm text-gray-500 mt-1">{video.description}</div>
-                  </div>
-                )
-              },
-              {
-                key: 'duration',
-                label: 'Duration',
-                render: (duration: number) => (
-                  <span className="text-sm text-gray-900">
-                    {formatDuration(duration)}
-                  </span>
-                )
-              },
-              {
-                key: 'createdAt',
-                label: 'Created',
-                render: (date: string) => (
-                  <span className="text-sm text-gray-900">
-                    {new Date(date).toLocaleDateString()}
-                  </span>
-                )
-              }
-            ]}
-            data={videos}
-            loading={loading}
-            title="All Videos"
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        </div>
+        <VideosTab 
+          videos={videos}
+          loading={loading}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCreate={handleCreate}
+        />
       )}
 
       {activeTab === 'students' && (
-        <div className="space-y-6">
-          <DataTable
-            columns={[
-              {
-                key: 'student',
-                label: 'Student',
-                render: (_: any, enrollment: Enrollment) => (
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {enrollment.student.firstName} {enrollment.student.lastName}
-                    </div>
-                  </div>
-                )
-              },
-              {
-                key: 'email',
-                label: 'Email',
-                render: (_: any, enrollment: Enrollment) => (
-                  <div className="text-sm text-gray-900">{enrollment.student.email}</div>
-                )
-              },
-              {
-                key: 'intake',
-                label: 'Intake',
-                render: (_: any, enrollment: Enrollment) => (
-                  <div className="text-sm text-gray-900">
-                    {enrollment.intake ? enrollment.intake.name : 'N/A'}
-                  </div>
-                )
-              },
-              {
-                key: 'status',
-                label: 'Status',
-                render: (_: any, enrollment: Enrollment) => (
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    enrollment.status === 'ACTIVE' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {enrollment.status}
-                  </span>
-                )
-              },
-              {
-                key: 'enrolledAt',
-                label: 'Enrolled Date',
-                render: (_: any, enrollment: Enrollment) => (
-                  <span className="text-sm text-gray-900">
-                    {new Date(enrollment.enrolledAt).toLocaleDateString()}
-                  </span>
-                )
-              }
-            ]}
-            data={enrollments}
-            loading={false}
-            title="Enrolled Students"
-          />
-        </div>
+        <StudentsTab 
+          enrollments={enrollments}
+        />
       )}
+
+      {activeTab === 'notes' && (
+        <NotesTab 
+          notes={notes}
+          loading={loading}
+          onEdit={(note: Note) => {
+            setEditingNote(note);
+            setNoteFormData({
+              title: note.title,
+              content: note.content,
+              courseId: course?.id || ''
+            });
+            setShowNoteModal(true);
+          }}
+          onDelete={async (note: Note) => {
+            const result = await showDeleteConfirmDialog(`"${note.title}"`);
+            if (result.isConfirmed) {
+              try {
+                await notesAPI.delete(note.id);
+                showSuccessAlert('Note Deleted', `"${note.title}" has been successfully deleted.`);
+                fetchCourseDetails();
+              } catch (error) {
+                handleApiError(error, 'Failed to delete note');
+              }
+            }
+          }}
+          onCreate={() => {
+            setEditingNote(null);
+            setNoteFormData({
+              title: '',
+              content: '',
+              courseId: course?.id || ''
+            });
+            setShowNoteModal(true);
+          }}
+        />
+      )}
+
+      {activeTab === 'quizzes' && (
+        <QuizzesTab 
+          quizzes={quizzes}
+          loading={loading}
+          onEdit={(quiz: Quiz) => {
+            setEditingQuiz(quiz);
+            setQuizFormData({
+              title: quiz.title,
+              description: quiz.description,
+              duration: quiz.duration,
+              passingScore: quiz.passingScore,
+              isActive: quiz.isActive,
+              courseId: course?.id || ''
+            });
+            setShowQuizModal(true);
+          }}
+          onDelete={async (quiz: Quiz) => {
+            const result = await showDeleteConfirmDialog(`"${quiz.title}"`);
+            if (result.isConfirmed) {
+              try {
+                await quizzesAPI.delete(quiz.id);
+                showSuccessAlert('Quiz Deleted', `"${quiz.title}" has been successfully deleted.`);
+                fetchCourseDetails();
+              } catch (error) {
+                handleApiError(error, 'Failed to delete quiz');
+              }
+            }
+          }}
+          onCreate={() => {
+            setEditingQuiz(null);
+            setQuizFormData({
+              title: '',
+              description: '',
+              duration: 30,
+              passingScore: 70,
+              isActive: true,
+              courseId: course?.id || ''
+            });
+            setShowQuizModal(true);
+          }}
+        />
+      )}
+
+      {/* Video Modal */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -645,6 +559,124 @@ const CourseDetailsPage = () => {
           <FormActions
             onCancel={() => setShowModal(false)}
             submitText={editingVideo ? 'Update Video' : 'Create Video'}
+          />
+        </Form>
+      </Modal>
+
+      {/* Note Modal */}
+      <Modal
+        isOpen={showNoteModal}
+        onClose={() => setShowNoteModal(false)}
+        title={editingNote ? 'Edit Note' : 'Create Note'}
+        size="lg"
+      >
+        <Form onSubmit={handleNoteSubmit}>
+          {formErrors.general && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {formErrors.general}
+            </div>
+          )}
+
+          <FormField
+            label="Title"
+            name="title"
+            type="text"
+            value={noteFormData.title}
+            onChange={(value) => setNoteFormData({ ...noteFormData, title: value as string })}
+            error={formErrors.title}
+            required
+          />
+
+          <FormField
+            label="Content"
+            name="content"
+            type="textarea"
+            value={noteFormData.content}
+            onChange={(value) => setNoteFormData({ ...noteFormData, content: value as string })}
+            error={formErrors.content}
+            required
+            rows={6}
+          />
+
+          <FormActions
+            onCancel={() => setShowNoteModal(false)}
+            submitText={editingNote ? 'Update Note' : 'Create Note'}
+          />
+        </Form>
+      </Modal>
+
+      {/* Quiz Modal */}
+      <Modal
+        isOpen={showQuizModal}
+        onClose={() => setShowQuizModal(false)}
+        title={editingQuiz ? 'Edit Quiz' : 'Create Quiz'}
+        size="lg"
+      >
+        <Form onSubmit={handleQuizSubmit}>
+          {formErrors.general && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {formErrors.general}
+            </div>
+          )}
+
+          <FormField
+            label="Title"
+            name="title"
+            type="text"
+            value={quizFormData.title}
+            onChange={(value) => setQuizFormData({ ...quizFormData, title: value as string })}
+            error={formErrors.title}
+            required
+          />
+
+          <FormField
+            label="Description"
+            name="description"
+            type="textarea"
+            value={quizFormData.description}
+            onChange={(value) => setQuizFormData({ ...quizFormData, description: value as string })}
+            error={formErrors.description}
+            required
+            rows={4}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              label="Duration (minutes)"
+              name="duration"
+              type="number"
+              value={quizFormData.duration}
+              onChange={(value) => setQuizFormData({ ...quizFormData, duration: value as number })}
+              error={formErrors.duration}
+              required
+            />
+
+            <FormField
+              label="Passing Score (%)"
+              name="passingScore"
+              type="number"
+              value={quizFormData.passingScore}
+              onChange={(value) => setQuizFormData({ ...quizFormData, passingScore: value as number })}
+              error={formErrors.passingScore}
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={quizFormData.isActive}
+                onChange={(e) => setQuizFormData({ ...quizFormData, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Active</span>
+            </label>
+          </div>
+
+          <FormActions
+            onCancel={() => setShowQuizModal(false)}
+            submitText={editingQuiz ? 'Update Quiz' : 'Create Quiz'}
           />
         </Form>
       </Modal>
