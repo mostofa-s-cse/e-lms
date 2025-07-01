@@ -11,6 +11,7 @@ interface Video {
   description: string;
   videoUrl: string;
   duration: number;
+  thumbnail: string;
   courseId: string;
   course?: {
     id: string;
@@ -56,6 +57,18 @@ const VideoDetailsPage = () => {
     }
   }, [id]);
 
+  // Debug video data when it changes
+  useEffect(() => {
+    if (video) {
+      console.log('Video data for VideoPlayer:', {
+        videoUrl: video.videoUrl,
+        thumbnailUrl: video.thumbnail,
+        hasThumbnail: !!video.thumbnail,
+        thumbnailLength: video.thumbnail?.length
+      });
+    }
+  }, [video]);
+
   const fetchVideo = async () => {
     try {
       setLoading(true);
@@ -70,6 +83,7 @@ const VideoDetailsPage = () => {
       console.log('Video data:', videoData);
       console.log('Environment API URL:', process.env.REACT_APP_API_URL);
       console.log('Video URL from database:', videoData.videoUrl);
+      console.log('Thumbnail from database:', videoData.thumbnail);
       
       // Test if the video URL is accessible
       if (videoData.videoUrl) {
@@ -220,7 +234,7 @@ const VideoDetailsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Video Player */}
         <div className="lg:col-span-2">
-          <VideoPlayer videoUrl={video.videoUrl} />
+          <VideoPlayer videoUrl={video.videoUrl} thumbnailUrl={video.thumbnail} />
           <div className="bg-white rounded-lg shadow-md p-6 mt-8">
             <h3 className="text-lg font-semibold mb-3">Description</h3>
             <p className="text-gray-700 leading-relaxed">{video.description}</p>

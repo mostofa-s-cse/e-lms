@@ -68,7 +68,7 @@ app.use(express.urlencoded({ extended: true }));
 // === FIX HERE === Serve static uploads with CORS & Range headers for videos
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg')) {
+    if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||filePath.endsWith('.JPG')|| filePath.endsWith('.png')) {
       res.setHeader('Access-Control-Allow-Origin', '*'); // Or your frontend URL
       res.setHeader('Access-Control-Allow-Headers', 'Range');
       res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');

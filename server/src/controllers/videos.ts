@@ -71,7 +71,7 @@ export const getVideoById = async (req: Request, res: Response, next: NextFuncti
 };
 
 export const createVideo = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-
+ console.log("CREATE VIDEO - Request:", req.files);
   try {
     const { title, description, duration, courseId } = req.body;
     

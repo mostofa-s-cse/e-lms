@@ -3,9 +3,10 @@ import { Pause, Play, Volume2, VolumeX, Maximize } from "lucide-react";
 
 interface VideoProps {
   videoUrl?: string;
+  thumbnailUrl?: string;
 }
 
-const VideoPlayer = ({ videoUrl = "" }: VideoProps) => {
+const VideoPlayer = ({ videoUrl = "", thumbnailUrl }: VideoProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -14,10 +15,64 @@ const VideoPlayer = ({ videoUrl = "" }: VideoProps) => {
   const [duration, setDuration] = useState(0);
   const [isPlayPauseDisabled, setIsPlayPauseDisabled] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const fullUrl = videoUrl?.startsWith("http")
     ? videoUrl
     : `${process.env.REACT_APP_API_URL || "http://localhost:4000"}${videoUrl}`;
+
+  const fullThumbnailUrl = thumbnailUrl?.startsWith("http")
+    ? thumbnailUrl
+    : thumbnailUrl && thumbnailUrl.trim() !== ""
+    ? `${process.env.REACT_APP_API_URL || "http://localhost:4000"}${thumbnailUrl}`
+    : undefined;
+
+  // Debug thumbnail URL
+  console.log('Thumbnail debug:', {
+    thumbnailUrl,
+    fullThumbnailUrl,
+    apiUrl: process.env.REACT_APP_API_URL || "http://localhost:4000"
+  });
+  // Generate a fallback thumbnail if none provided
+  const generateFallbackThumbnail = (): string | undefined => {
+    if (!videoUrl) return undefined;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280;
+    canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      // Create a gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
+      gradient.addColorStop(0, '#1f2937');
+      gradient.addColorStop(1, '#374151');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 1280, 720);
+      
+      // Add play icon (scaled up)
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(560, 320);
+      ctx.lineTo(560, 400);
+      ctx.lineTo(640, 360);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Add text (scaled up)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Click to Play', 640, 560);
+      
+      // Add subtitle
+      ctx.font = '24px Arial';
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillText('Video Player', 640, 600);
+    }
+    
+    return canvas.toDataURL();
+  };
 
   const handleTimeUpdate = () => {
     if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
@@ -127,7 +182,7 @@ const VideoPlayer = ({ videoUrl = "" }: VideoProps) => {
   return (
     <div className="lg:col-span-2">
       <div className="bg-black rounded-lg overflow-hidden shadow-lg">
-        <div className="relative aspect-video">
+        <div className="relative aspect-video bg-black">
           {!videoUrl ? (
             <div className="flex items-center justify-center w-full h-full bg-gray-800">
               <div className="text-center text-white">
@@ -139,10 +194,19 @@ const VideoPlayer = ({ videoUrl = "" }: VideoProps) => {
             <video
               ref={videoRef}
               className="w-full h-full object-contain"
+              style={{
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
               preload="metadata"
+              poster={fullThumbnailUrl || generateFallbackThumbnail()}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
-              onPlay={() => setIsPlaying(true)}
+              onPlay={() => {
+                setIsPlaying(true);
+                setHasStarted(true);
+              }}
               onPause={() => setIsPlaying(false)}
               onError={(e) => {
                 console.error("Video error:", e);
@@ -152,6 +216,18 @@ const VideoPlayer = ({ videoUrl = "" }: VideoProps) => {
               <source src={fullUrl} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
+          )}
+
+          {/* Custom Thumbnail Overlay */}
+          {videoUrl && fullThumbnailUrl && !hasStarted && (
+            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+              <div className="text-center text-white opacity-0 hover:opacity-100 transition-opacity duration-300">
+                <div className="bg-black bg-opacity-50 rounded-full p-4 mb-4">
+                  <Play className="w-12 h-12" />
+                </div>
+                <p className="text-lg font-semibold">Click to Play</p>
+              </div>
+            </div>
           )}
 
           {/* Video Controls Overlay */}
