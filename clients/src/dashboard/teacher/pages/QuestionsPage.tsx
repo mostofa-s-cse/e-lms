@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { questionsAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import {

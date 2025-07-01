@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { intakesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
 
 interface Intake {
@@ -103,6 +103,8 @@ const IntakesPage = () => {
 
       <DataTable
         columns={columns}
+        title="Intakes"
+        subtitle="View all your enrolled intakes and their details"
         data={intakes}
         loading={loading}
       />

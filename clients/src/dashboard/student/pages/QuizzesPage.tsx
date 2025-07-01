@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { quizzesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import { handleApiError, showInfoAlert } from '../../../utils/sweetAlert';
 
 interface Quiz {
@@ -138,6 +138,8 @@ const QuizzesPage = () => {
       <DataTable
         columns={columns}
         data={quizzes}
+        title="Quizzes"
+        subtitle="Take quizzes for your enrolled courses"
         loading={loading}
       />
     </div>

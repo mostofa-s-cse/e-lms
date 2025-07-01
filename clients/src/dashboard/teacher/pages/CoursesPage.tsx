@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
-import { 
-  showSuccessAlert, 
-  showErrorAlert, 
-  showDeleteConfirmDialog, 
-  showFormErrorAlert,
-  handleApiError 
-} from '../../../utils/sweetAlert';
 
 interface Course {
   id: string;
@@ -51,7 +44,7 @@ const CoursesPage = () => {
       const response = await coursesAPI.getAll();
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
-      handleApiError(error, 'Failed to fetch courses');
+      console.error('Failed to fetch courses:', error);
     } finally {
       setLoading(false);
     }
@@ -86,18 +79,12 @@ const CoursesPage = () => {
   };
 
   const handleDelete = async (course: Course) => {
-    const result = await showDeleteConfirmDialog(`"${course.title}"`);
-    
-    if (result.isConfirmed) {
+    if (window.confirm(`Are you sure you want to delete "${course.title}"?`)) {
       try {
         await coursesAPI.delete(course.id);
-        showSuccessAlert(
-          'Course Deleted', 
-          `"${course.title}" has been successfully deleted.`
-        );
         fetchCourses();
       } catch (error) {
-        handleApiError(error, 'Failed to delete course');
+        console.error('Failed to delete course:', error);
       }
     }
   };
@@ -114,7 +101,6 @@ const CoursesPage = () => {
     if (formData.duration < 1) errors.duration = 'Duration must be at least 1';
 
     if (Object.keys(errors).length > 0) {
-      showFormErrorAlert(errors);
       setFormErrors(errors);
       return;
     }
@@ -122,32 +108,15 @@ const CoursesPage = () => {
     try {
       if (editingCourse) {
         await coursesAPI.update(editingCourse.id, formData);
-        showSuccessAlert(
-          'Course Updated', 
-          `"${formData.title}" has been successfully updated.`
-        );
       } else {
         await coursesAPI.create(formData);
-        showSuccessAlert(
-          'Course Created', 
-          `"${formData.title}" has been successfully created.`
-        );
       }
       setShowModal(false);
       fetchCourses();
     } catch (error: any) {
-      if (error.response?.data?.errors) {
-        // Handle field-specific errors from server
-        const serverErrors: Record<string, string> = {};
-        error.response.data.errors.forEach((err: any) => {
-          if (err.field) {
-            serverErrors[err.field] = err.message;
-          }
-        });
-        showFormErrorAlert(serverErrors);
-        setFormErrors(serverErrors);
-      } else {
-        handleApiError(error, 'Failed to save course');
+      console.error('Failed to save course:', error);
+      if (error.response?.data?.message) {
+        setFormErrors({ general: error.response.data.message });
       }
     }
   };
@@ -207,22 +176,20 @@ const CoursesPage = () => {
   ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">My Courses</h1>
-          <p className="text-gray-600 mt-2">Manage your teaching courses</p>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Courses Management</h1>
         <button
           onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
         >
-          Create Course
+          Add Course
         </button>
       </div>
-
       <DataTable
         columns={columns}
+        title="My Courses"
+        subtitle="Manage your teaching courses"
         data={courses}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -236,6 +203,12 @@ const CoursesPage = () => {
         size="lg"
       >
         <Form onSubmit={handleSubmit}>
+          {formErrors.general && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {formErrors.general}
+            </div>
+          )}
+
           <FormField
             label="Title"
             name="title"

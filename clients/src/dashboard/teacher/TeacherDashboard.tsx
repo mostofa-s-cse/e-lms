@@ -34,18 +34,19 @@ const TeacherDashboard = () => {
   // Get page title based on current route
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path.includes('/teacher/courses')) return 'My Courses';
-    if (path.includes('/teacher/intakes')) return 'My Intakes';
-    if (path.includes('/teacher/notes')) return 'Course Notes';
-    if (path.includes('/teacher/videos')) return 'Course Videos';
-    if (path.includes('/teacher/quizzes')) return 'My Quizzes';
-    if (path.includes('/teacher/questions')) return 'Quiz Questions';
-    if (path.includes('/teacher/evaluations')) return 'Student Evaluations';
+    if (path.includes('/teacher/users')) return 'Users Management';
+    if (path.includes('/teacher/courses')) return 'Courses Management';
+    if (path.includes('/teacher/intakes')) return 'Intakes Management';
+    if (path.includes('/teacher/notes')) return 'Notes Management';
+    if (path.includes('/teacher/videos')) return 'Videos Management';
+    if (path.includes('/teacher/quizzes')) return 'Quizzes Management';
+    if (path.includes('/teacher/questions')) return 'Questions Management';
+    if (path.includes('/teacher/evaluations')) return 'Evaluations Management';
     return 'Teacher Dashboard';
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-50 overflow-hidden">
+    <div className="h-screen flex bg-gray-50 overflow-hidden">
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -56,18 +57,18 @@ const TeacherDashboard = () => {
 
       {/* Fixed Sidebar - Hidden on mobile, visible on tablet and desktop */}
       <aside className={`
-        fixed top-0 left-0 min-h-screen h-full bg-blue-900 text-white z-50 transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 h-full bg-gray-900 text-white z-50 transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:relative lg:z-auto
-        w-66 flex flex-col
+        w-64 flex flex-col
       `}>
         {/* Sidebar Header - Fixed */}
-        <div className="flex-shrink-0 p-6 border-b border-blue-700">
+        <div className="flex-shrink-0 p-6 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl lg:text-2xl font-bold">Teacher Dashboard</h2>
+            <h2 className="text-xl lg:text-2xl font-bold">Dashboard</h2>
             <button
               onClick={closeMobileMenu}
-              className="lg:hidden p-2 text-blue-200 hover:text-white"
+              className="lg:hidden p-2 text-gray-400 hover:text-white"
             >
               ✕
             </button>
@@ -77,11 +78,12 @@ const TeacherDashboard = () => {
         {/* Sidebar Navigation - Scrollable */}
         <nav className="flex-1 overflow-y-auto p-6">
           <div className="flex flex-col space-y-2">
+            
             <Link 
               to="/teacher/courses" 
               onClick={closeMobileMenu}
-              className={`hover:bg-blue-800 p-3 rounded transition-colors duration-200 ${
-                location.pathname.includes('/teacher/courses') ? 'bg-blue-800 text-blue-200' : ''
+              className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                location.pathname.includes('/teacher/courses') ? 'bg-gray-800 text-blue-400' : ''
               }`}
             >
               📚 Courses
@@ -89,8 +91,8 @@ const TeacherDashboard = () => {
             <Link 
               to="/teacher/intakes" 
               onClick={closeMobileMenu}
-              className={`hover:bg-blue-800 p-3 rounded transition-colors duration-200 ${
-                location.pathname.includes('/teacher/intakes') ? 'bg-blue-800 text-blue-200' : ''
+              className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                location.pathname.includes('/teacher/intakes') ? 'bg-gray-800 text-blue-400' : ''
               }`}
             >
               🎓 Intakes
@@ -98,8 +100,8 @@ const TeacherDashboard = () => {
             <Link 
               to="/teacher/notes" 
               onClick={closeMobileMenu}
-              className={`hover:bg-blue-800 p-3 rounded transition-colors duration-200 ${
-                location.pathname.includes('/teacher/notes') ? 'bg-blue-800 text-blue-200' : ''
+              className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                location.pathname.includes('/teacher/notes') ? 'bg-gray-800 text-blue-400' : ''
               }`}
             >
               📝 Notes
@@ -107,8 +109,8 @@ const TeacherDashboard = () => {
             <Link 
               to="/teacher/videos" 
               onClick={closeMobileMenu}
-              className={`hover:bg-blue-800 p-3 rounded transition-colors duration-200 ${
-                location.pathname.includes('/teacher/videos') ? 'bg-blue-800 text-blue-200' : ''
+              className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                location.pathname.includes('/teacher/videos') ? 'bg-gray-800 text-blue-400' : ''
               }`}
             >
               🎥 Videos
@@ -116,8 +118,8 @@ const TeacherDashboard = () => {
             <Link 
               to="/teacher/quizzes" 
               onClick={closeMobileMenu}
-              className={`hover:bg-blue-800 p-3 rounded transition-colors duration-200 ${
-                location.pathname.includes('/teacher/quizzes') ? 'bg-blue-800 text-blue-200' : ''
+              className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                location.pathname.includes('/teacher/quizzes') ? 'bg-gray-800 text-blue-400' : ''
               }`}
             >
               ❓ Quizzes
@@ -125,8 +127,8 @@ const TeacherDashboard = () => {
             <Link 
               to="/teacher/questions" 
               onClick={closeMobileMenu}
-              className={`hover:bg-blue-800 p-3 rounded transition-colors duration-200 ${
-                location.pathname.includes('/teacher/questions') ? 'bg-blue-800 text-blue-200' : ''
+              className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                location.pathname.includes('/teacher/questions') ? 'bg-gray-800 text-blue-400' : ''
               }`}
             >
               ❔ Questions
@@ -134,8 +136,8 @@ const TeacherDashboard = () => {
             <Link 
               to="/teacher/evaluations" 
               onClick={closeMobileMenu}
-              className={`hover:bg-blue-800 p-3 rounded transition-colors duration-200 ${
-                location.pathname.includes('/teacher/evaluations') ? 'bg-blue-800 text-blue-200' : ''
+              className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                location.pathname.includes('/teacher/evaluations') ? 'bg-gray-800 text-blue-400' : ''
               }`}
             >
               📊 Evaluations
@@ -144,7 +146,7 @@ const TeacherDashboard = () => {
         </nav>
 
         {/* User Profile Section - Fixed at Bottom */}
-        <div className="flex-shrink-0 p-4 bg-blue-800 border-t border-blue-700">
+        <div className="flex-shrink-0 p-4 bg-gray-800 border-t border-gray-700 mt-auto">
           <div className="flex items-center space-x-3">
             {/* User Avatar */}
             <div className="relative">
@@ -152,7 +154,7 @@ const TeacherDashboard = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold hover:bg-blue-700 transition-colors duration-200"
               >
-                {user?.firstName?.charAt(0)?.toUpperCase() || 'T'}
+                {user?.firstName?.charAt(0)?.toUpperCase() || 'A'}
               </button>
               
               {/* Profile Dropdown */}
@@ -161,7 +163,7 @@ const TeacherDashboard = () => {
                   <div className="p-3 border-b border-gray-200">
                     <div className="font-semibold text-gray-900">{user?.firstName} {user?.lastName}</div>
                     <div className="text-sm text-gray-600">{user?.email}</div>
-                    <div className="text-xs text-blue-600 font-medium mt-1">Teacher</div>
+                    <div className="text-xs text-blue-600 font-medium mt-1">Administrator</div>
                   </div>
                   <div className="p-1">
                     <button
@@ -189,7 +191,7 @@ const TeacherDashboard = () => {
               <div className="text-sm font-medium text-white truncate">
                 {user?.firstName} {user?.lastName}
               </div>
-              <div className="text-xs text-blue-200 truncate">
+              <div className="text-xs text-gray-400 truncate">
                 {user?.email}
               </div>
             </div>
@@ -197,7 +199,7 @@ const TeacherDashboard = () => {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="p-2 text-blue-200 hover:text-white hover:bg-blue-700 rounded transition-colors duration-200"
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors duration-200"
               title="Logout"
             >
               🚪
@@ -234,9 +236,9 @@ const TeacherDashboard = () => {
 
         {/* Scrollable Content Area */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="p-4 lg:p-8">
+          <div className="p-4">
             <Routes>
-              <Route path="/" element={<Navigate to="/teacher/courses" />} />
+              <Route path="/" element={<Navigate to="/teacher/users" />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="intakes" element={<IntakesPage />} />
               <Route path="notes" element={<NotesPage />} />
@@ -252,7 +254,7 @@ const TeacherDashboard = () => {
         <footer className="flex-shrink-0 w-full bg-white border-t border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              © 2024 LMS Teacher Dashboard. All rights reserved.
+              © 2024 LMS Dashboard. All rights reserved.
             </div>
             <div className="text-sm text-gray-600">
               Version 1.0.0
