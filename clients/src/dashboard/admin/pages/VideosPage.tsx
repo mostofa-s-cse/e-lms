@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { videosAPI, coursesAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
@@ -259,6 +259,8 @@ const VideosPage = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         loading={loading}
+        title="Videos"
+        subtitle="Manage videos and their details"
       />
 
       <Modal

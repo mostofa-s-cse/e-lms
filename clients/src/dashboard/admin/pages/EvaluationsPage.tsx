@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { evaluationsAPI, coursesAPI, usersAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
@@ -309,6 +309,8 @@ const EvaluationsPage = () => {
 
       <DataTable
         columns={columns}
+        title="Evaluations"
+        subtitle="Manage evaluations and their details"
         data={evaluations}
         onEdit={handleEdit}
         onDelete={handleDelete}

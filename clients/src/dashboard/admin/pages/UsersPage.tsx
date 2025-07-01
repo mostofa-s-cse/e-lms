@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usersAPI } from '../../../services/api';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
@@ -163,16 +163,18 @@ const UsersPage = () => {
     {
       key: 'name',
       label: 'Name',
+      sortable: true,
       render: (_: any, user: User) => (
         <div className="text-sm font-medium text-gray-900">
           {user.firstName} {user.lastName}
         </div>
       )
     },
-    { key: 'email', label: 'Email' },
+    { key: 'email', label: 'Email', sortable: true },
     {
       key: 'role',
       label: 'Role',
+      sortable: true,
       render: (role: string) => (
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
           role === 'ADMIN' ? 'bg-red-100 text-red-800' :
@@ -186,6 +188,7 @@ const UsersPage = () => {
     {
       key: 'isActive',
       label: 'Status',
+      sortable: true,
       render: (isActive: boolean) => (
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
           isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -197,17 +200,18 @@ const UsersPage = () => {
     {
       key: 'createdAt',
       label: 'Created',
+      sortable: true,
       render: (date: string) => new Date(date).toLocaleDateString()
     }
   ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Users Management</h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
         <button
           onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
         >
           Add User
         </button>
@@ -216,36 +220,41 @@ const UsersPage = () => {
       <DataTable
         columns={columns}
         data={users}
+        loading={loading}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        loading={loading}
+        title="Users"
+        subtitle="Manage system users and their roles"
+        searchable={true}
+        filterable={true}
+        pagination={true}
+        itemsPerPage={10}
       />
 
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        title={editingUser ? 'Edit User' : 'Create User'}
-        size="md"
+        title={editingUser ? 'Edit User' : 'Add User'}
       >
         <Form onSubmit={handleSubmit}>
           <FormField
             label="First Name"
             name="firstName"
+            type="text"
             value={formData.firstName}
             onChange={(value) => setFormData({ ...formData, firstName: value as string })}
             error={formErrors.firstName}
             required
           />
-
           <FormField
             label="Last Name"
             name="lastName"
+            type="text"
             value={formData.lastName}
             onChange={(value) => setFormData({ ...formData, lastName: value as string })}
             error={formErrors.lastName}
             required
           />
-
           <FormField
             label="Email"
             name="email"
@@ -255,7 +264,6 @@ const UsersPage = () => {
             error={formErrors.email}
             required
           />
-
           {!editingUser && (
             <FormField
               label="Password"
@@ -267,7 +275,6 @@ const UsersPage = () => {
               required
             />
           )}
-
           <FormField
             label="Role"
             name="role"
@@ -275,12 +282,12 @@ const UsersPage = () => {
             value={formData.role}
             onChange={(value) => setFormData({ ...formData, role: value as 'STUDENT' | 'TEACHER' | 'ADMIN' })}
             options={roleOptions}
+            error={formErrors.role}
             required
           />
-
           <FormActions
             onCancel={() => setShowModal(false)}
-            submitText={editingUser ? 'Update' : 'Create'}
+            submitText={editingUser ? 'Update User' : 'Create User'}
           />
         </Form>
       </Modal>
