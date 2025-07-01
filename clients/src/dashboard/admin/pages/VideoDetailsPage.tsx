@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { videosAPI } from '../../../services/api';
 import { handleApiError } from '../../../utils/sweetAlert';
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Maximize, Clock, User, BookOpen } from 'lucide-react';
+import VideoPlayer from '../../../components/VideoPlayer';
 
 interface Video {
   id: string;
@@ -38,6 +39,19 @@ const VideoDetailsPage = () => {
 
   useEffect(() => {
     if (id) {
+      // Test server connectivity first
+      const testServer = async () => {
+        try {
+          const serverUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+          console.log('Testing server connectivity to:', serverUrl);
+          const response = await fetch(`${serverUrl}/health`);
+          console.log('Server health check:', response.status, response.statusText);
+        } catch (error) {
+          console.error('Server not accessible:', error);
+        }
+      };
+      
+      testServer();
       fetchVideo();
     }
   }, [id]);
@@ -49,6 +63,37 @@ const VideoDetailsPage = () => {
       console.log('Video API response:', response);
       const videoData = (response.data as any).data || response.data;
       setVideo(videoData as Video);
+      
+      // Debug video URL
+      const videoUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${videoData.videoUrl}`;
+      console.log('Video URL:', videoUrl);
+      console.log('Video data:', videoData);
+      console.log('Environment API URL:', process.env.REACT_APP_API_URL);
+      console.log('Video URL from database:', videoData.videoUrl);
+      
+      // Test if the video URL is accessible
+      if (videoData.videoUrl) {
+        console.log('Testing video file accessibility...');
+        fetch(videoUrl, { method: 'HEAD' })
+          .then(response => {
+            console.log('Video file accessibility check:', {
+              url: videoUrl,
+              status: response.status,
+              statusText: response.statusText,
+              headers: Object.fromEntries(response.headers.entries())
+            });
+          })
+          .catch(error => {
+            console.error('Video file not accessible:', error);
+            console.error('Error details:', {
+              message: error.message,
+              type: error.type,
+              url: videoUrl
+            });
+          });
+      } else {
+        console.log('No video URL found in database');
+      }
     } catch (error) {
       console.error('Error fetching video:', error);
       handleApiError(error, 'Failed to fetch video details');
@@ -175,83 +220,7 @@ const VideoDetailsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Video Player */}
         <div className="lg:col-span-2">
-          <div className="bg-black rounded-lg overflow-hidden shadow-lg">
-            <div className="relative">
-              <video
-                ref={videoRef}
-                className="w-full h-auto"
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-              >
-                <source src={video.videoUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-
-              {/* Video Controls Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                {/* Progress Bar */}
-                <div className="mb-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max={duration || 0}
-                    value={currentTime}
-                    onChange={handleSeek}
-                    className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                    style={{
-                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`
-                    }}
-                  />
-                </div>
-
-                {/* Controls */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={handlePlayPause}
-                      className="text-white hover:text-gray-300"
-                    >
-                      {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-                    </button>
-
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={handleMute}
-                        className="text-white hover:text-gray-300"
-                      >
-                        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                      </button>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={volume}
-                        onChange={handleVolumeChange}
-                        className="w-16 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #4b5563 ${volume * 100}%, #4b5563 100%)`
-                        }}
-                      />
-                    </div>
-
-                    <span className="text-white text-sm">
-                      {formatTime(currentTime)} / {formatDuration(duration)}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={handleFullscreen}
-                    className="text-white hover:text-gray-300"
-                  >
-                    <Maximize className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <VideoPlayer videoUrl={video.videoUrl} />
           <div className="bg-white rounded-lg shadow-md p-6 mt-8">
             <h3 className="text-lg font-semibold mb-3">Description</h3>
             <p className="text-gray-700 leading-relaxed">{video.description}</p>

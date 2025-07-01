@@ -32,6 +32,7 @@ export interface Video {
   title: string;
   description: string;
   videoUrl: string;
+  thumbnail: string;
   duration: number;
   courseId: string;
   course?: {

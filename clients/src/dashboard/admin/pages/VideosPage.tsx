@@ -6,7 +6,6 @@ import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
   showSuccessAlert, 
-  showErrorAlert, 
   showDeleteConfirmDialog, 
   showFormErrorAlert,
   handleApiError 
@@ -16,7 +15,8 @@ interface Video {
   id: string;
   title: string;
   description: string;
-  url: string;
+  videoUrl: string;
+  thumbnail?: string;
   duration: number;
   courseId: string;
   course?: {
@@ -53,13 +53,15 @@ const VideosPage = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    url: '',
     duration: 0,
     courseId: '',
-    file: null as File | null
+    videoUrl: videoFile,
+    thumbnail: thumbnailFile
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -89,34 +91,6 @@ const VideosPage = () => {
     }
   };
 
-  const handleCreate = () => {
-    setEditingVideo(null);
-    setFormData({
-      title: '',
-      description: '',
-      url: '',
-      duration: 0,
-      courseId: '',
-      file: null
-    });
-    setFormErrors({});
-    setShowModal(true);
-  };
-
-  const handleEdit = (video: Video) => {
-    setEditingVideo(video);
-    setFormData({
-      title: video.title,
-      description: video.description,
-      url: video.url,
-      duration: video.duration,
-      courseId: video.courseId,
-      file: null
-    });
-    setFormErrors({});
-    setShowModal(true);
-  };
-
   const handleDelete = async (video: Video) => {
     const result = await showDeleteConfirmDialog(`"${video.title}"`);
     
@@ -134,9 +108,16 @@ const VideosPage = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData({ ...formData, file });
+  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const videoUrl = e.target.files?.[0] || null;
+    console.log('Video file selected:', videoUrl);
+    setFormData(prev => ({ ...prev, videoUrl }));
+  };
+
+  const handleThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const thumbnail = e.target.files?.[0] || null;
+    console.log('Thumbnail file selected:', thumbnail);
+    setFormData(prev => ({ ...prev, thumbnail }));
   };
 
   const formatDuration = (seconds: number) => {
@@ -150,48 +131,40 @@ const VideosPage = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleCreate = () => {
+    setShowModal(true);
+    setFormData({
+      title: '',
+      description: '',
+      duration: 0,
+      courseId: '',
+      videoUrl: null,
+      thumbnail: null
+    });
+  };
+
+  const handleEdit = (video: Video) => {
+    setEditingVideo(video);
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormErrors({});
-
-    // Basic validation
-    const errors: Record<string, string> = {};
-    if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
-    if (!formData.courseId) errors.courseId = 'Course is required';
-    if (!formData.url.trim() && !formData.file) errors.url = 'Either URL or file is required';
-    if (formData.duration < 0) errors.duration = 'Duration must be positive';
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
 
     try {
-      const submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('description', formData.description);
-      submitData.append('url', formData.url);
-      submitData.append('duration', formData.duration.toString());
-      submitData.append('courseId', formData.courseId);
-      if (formData.file) {
-        submitData.append('file', formData.file);
-      }
-
-      if (editingVideo) {
-        await videosAPI.update(editingVideo.id, submitData);
-      } else {
-        await videosAPI.create(submitData);
-      }
+      const submitData = formData;
+      await videosAPI.create(submitData);
       setShowModal(false);
       fetchVideos();
+      showSuccessAlert(
+        'Video Created',
+        `"${formData.title}" has been successfully created.`
+      );
     } catch (error: any) {
-      console.error('Failed to save video:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
-      }
+      handleApiError(error, 'Failed to save video');
     }
   };
+  
 
   const courseOptions = courses.map(course => ({
     value: course.id,
@@ -284,8 +257,9 @@ const VideosPage = () => {
         onClose={() => setShowModal(false)}
         title={editingVideo ? 'Edit Video' : 'Create Video'}
         size="lg"
+        key={editingVideo ? `edit-${editingVideo.id}` : 'create'}
       >
-        <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleSubmit} >
           {formErrors.general && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               {formErrors.general}
@@ -324,15 +298,6 @@ const VideosPage = () => {
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField
-              label="Video URL"
-              name="url"
-              type="text"
-              value={formData.url}
-              onChange={(value) => setFormData({ ...formData, url: value as string })}
-              error={formErrors.url}
-              placeholder="https://example.com/video.mp4"
-            />
 
             <FormField
               label="Duration (seconds)"
@@ -351,12 +316,39 @@ const VideosPage = () => {
             </label>
             <input
               type="file"
-              onChange={handleFileChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              name="videoUrl"
+              onChange={handleVideoFileChange}
+              className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                formErrors.videoUrl ? 'border-red-500' : 'border-gray-300'
+              }`}
               accept="video/*"
             />
+            {formErrors.videoUrl && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.videoUrl}</p>
+            )}
             <p className="mt-1 text-sm text-gray-500">
               Supported formats: MP4, WebM, OGG, AVI, MOV
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Upload Thumbnail File
+            </label>
+            <input
+              type="file"
+              name="thumbnail"
+              onChange={handleThumbnailFileChange}
+              className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                formErrors.thumbnail ? 'border-red-500' : 'border-gray-300'
+              }`}
+              accept="image/*"
+            />
+            {formErrors.thumbnail && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.thumbnail}</p>
+            )}
+            <p className="mt-1 text-sm text-gray-500">
+              Supported formats: JPG, PNG
             </p>
           </div>
 

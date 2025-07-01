@@ -34,14 +34,17 @@ const CourseDetailsPage = () => {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
-  const [formData, setFormData] = useState({
+  
+  const [videoFormData, setVideoFormData] = useState({
     title: '',
     description: '',
-    url: '',
     duration: 0,
     courseId: '',
-    file: null as File | null
+    videoUrl: null as File | null,
+    thumbnail: null as File | null
   });
+  
+
   const [noteFormData, setNoteFormData] = useState({
     title: '',
     content: '',
@@ -57,22 +60,26 @@ const CourseDetailsPage = () => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, file });
-    }
+  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const videoFile = e.target.files?.[0] || null;
+    setVideoFormData(prev => ({ ...prev, videoUrl: videoFile }));
   };
+  
+  const handleThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const thumbnailFile = e.target.files?.[0] || null;
+    setVideoFormData(prev => ({ ...prev, thumbnail: thumbnailFile }));
+  };
+  
 
   const handleCreate = () => {
     setEditingVideo(null);
-    setFormData({
+    setVideoFormData({
       title: '',
       description: '',
-      url: '',
       duration: 0,
       courseId: course?.id || '',
-      file: null
+      videoUrl: null as File | null,
+      thumbnail: null as File | null
     });
     setFormErrors({});
     setShowModal(true);
@@ -80,29 +87,30 @@ const CourseDetailsPage = () => {
 
   const handleEdit = (video: Video) => {
     setEditingVideo(video);
-    setFormData({
+    setVideoFormData({
       title: video.title,
       description: video.description,
-      url: video.videoUrl,
       duration: video.duration,
       courseId: course?.id || '',
-      file: null
+      videoUrl: null as File | null,
+      thumbnail: null as File | null
     });
     setFormErrors({});
     setShowModal(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
 
     // Basic validation
     const errors: Record<string, string> = {};
-    if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
-    if (!formData.courseId) errors.courseId = 'Course is required';
-    if (!formData.url.trim() && !formData.file) errors.url = 'Either URL or file is required';
-    if (formData.duration < 0) errors.duration = 'Duration must be positive';
+    if (!videoFormData.title.trim()) errors.title = 'Title is required';
+    if (!videoFormData.description.trim()) errors.description = 'Description is required';
+    if (!videoFormData.courseId) errors.courseId = 'Course is required';
+    if (!videoFormData.videoUrl) errors.videoUrl = 'Video file is required';
+    if (!videoFormData.thumbnail) errors.thumbnail = 'Thumbnail is required';
+    if (videoFormData.duration < 0) errors.duration = 'Duration must be positive';
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -111,14 +119,24 @@ const CourseDetailsPage = () => {
 
     try {
       const submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('description', formData.description);
-      submitData.append('url', formData.url);
-      submitData.append('duration', formData.duration.toString());
-      submitData.append('courseId', formData.courseId);
-      if (formData.file) {
-        submitData.append('file', formData.file);
+      submitData.append('title', videoFormData.title);
+      submitData.append('description', videoFormData.description);
+      submitData.append('duration', videoFormData.duration.toString());
+      submitData.append('courseId', videoFormData.courseId);
+      
+      // Append files with proper field names
+      if (videoFormData.videoUrl) {
+        submitData.append('videoUrl', videoFormData.videoUrl); // This now works
       }
+      
+      if (videoFormData.thumbnail) {
+        submitData.append('thumbnail', videoFormData.thumbnail);
+      }
+      
+
+      console.log('Form data being submitted:', {   
+        submitData
+      });
 
       if (editingVideo) {
         await videosAPI.update(editingVideo.id, submitData);
@@ -484,14 +502,14 @@ const CourseDetailsPage = () => {
         />
       )}
 
-      {/* Video Modal */}
+      {/*Create and Edit Video Modal */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editingVideo ? 'Edit Video' : 'Create Video'}
         size="lg"
       >
-        <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleVideoSubmit}>
           {formErrors.general && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               {formErrors.general}
@@ -502,8 +520,8 @@ const CourseDetailsPage = () => {
             label="Title"
             name="title"
             type="text"
-            value={formData.title}
-            onChange={(value) => setFormData({ ...formData, title: value as string })}
+            value={videoFormData.title}
+            onChange={(value) => setVideoFormData({ ...videoFormData, title: value as string })}
             error={formErrors.title}
             required
           />
@@ -512,8 +530,8 @@ const CourseDetailsPage = () => {
             label="Description"
             name="description"
             type="textarea"
-            value={formData.description}
-            onChange={(value) => setFormData({ ...formData, description: value as string })}
+            value={videoFormData.description}
+            onChange={(value) => setVideoFormData({ ...videoFormData, description: value as string })}
             error={formErrors.description}
             required
             rows={4}
@@ -521,21 +539,11 @@ const CourseDetailsPage = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <FormField
-              label="Video URL"
-              name="url"
-              type="text"
-              value={formData.url}
-              onChange={(value) => setFormData({ ...formData, url: value as string })}
-              error={formErrors.url}
-              placeholder="https://example.com/video.mp4"
-            />
-
-            <FormField
-              label="Duration (seconds)"
+              label="Duration (minutes)"
               name="duration"
               type="number"
-              value={formData.duration}
-              onChange={(value) => setFormData({ ...formData, duration: value as number })}
+              value={videoFormData.duration}
+              onChange={(value) => setVideoFormData({ ...videoFormData, duration: value as number })}
               error={formErrors.duration}
               required
             />
@@ -547,12 +555,33 @@ const CourseDetailsPage = () => {
             </label>
             <input
               type="file"
-              onChange={handleFileChange}
+              onChange={handleVideoFileChange}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               accept="video/*"
             />
+            {formErrors.videoUrl && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.videoUrl}</p>
+            )}
             <p className="mt-1 text-sm text-gray-500">
               Supported formats: MP4, WebM, OGG, AVI, MOV
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Upload Thumbnail File
+            </label>
+            <input
+              type="file"
+              onChange={handleThumbnailFileChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              accept="image/*"
+            />
+            {formErrors.thumbnail && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.thumbnail}</p>
+            )}
+            <p className="mt-1 text-sm text-gray-500">
+              Supported formats: JPEG, PNG, GIF
             </p>
           </div>
 
