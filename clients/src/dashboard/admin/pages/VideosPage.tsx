@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { videosAPI, coursesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
@@ -46,6 +47,7 @@ interface CoursesResponse {
 }
 
 const VideosPage = () => {
+  const navigate = useNavigate();
   const [videos, setVideos] = useState<Video[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -238,6 +240,20 @@ const VideosPage = () => {
       key: 'createdAt',
       label: 'Created',
       render: (date: string) => new Date(date).toLocaleDateString()
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_: any, video: Video) => (
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate(`/admin/videos/${video.id}`)}
+            className="text-green-600 hover:text-green-900 text-sm font-medium"
+          >
+            View Details
+          </button>
+        </div>
+      )
     }
   ];
 

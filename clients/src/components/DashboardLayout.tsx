@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { Link, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { showConfirmDialog } from '../utils/sweetAlert';
-import { MenuIcon } from 'lucide-react';
+import { MenuIcon, User, LogOut } from 'lucide-react';
 
 interface NavigationItem {
   path: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 interface DashboardLayoutProps {
   title: string;
+  icon?: React.ReactNode;
   navigationItems: NavigationItem[];
   routes: React.ReactNode;
   defaultRoute: string;
@@ -21,6 +22,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ 
   title, 
+  icon, 
   navigationItems, 
   routes, 
   defaultRoute, 
@@ -73,7 +75,11 @@ const DashboardLayout = ({
         {/* Sidebar Header - Fixed */}
         <div className="flex-shrink-0 p-6 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl lg:text-2xl font-bold">{title}</h2>
+           <div className="flex items-center">
+           {icon}
+           <h2 className="text-xl lg:text-2xl font-bold ml-2">{title}</h2>
+           </div>
+            
             <button
               onClick={closeMobileMenu}
               className="lg:hidden p-2 text-gray-400 hover:text-white"
@@ -91,11 +97,11 @@ const DashboardLayout = ({
                 key={item.path}
                 to={item.path} 
                 onClick={closeMobileMenu}
-                className={`hover:bg-gray-800 p-3 rounded transition-colors duration-200 ${
+                className={`hover:bg-gray-800 p-3 flex items-center rounded transition-colors duration-200 ${
                   location.pathname.includes(item.path) ? `bg-gray-800 ${roleColor}` : ''
                 }`}
               >
-                {item.icon} {item.label}
+                {item.icon} <span className="ml-3">{item.label}</span>
               </Link>
             ))}
           </div>
@@ -124,18 +130,20 @@ const DashboardLayout = ({
                   <div className="p-1">
                     <button
                       onClick={() => setIsProfileOpen(false)}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded flex items-center"
                     >
-                      👤 View Profile
+                      <User className="w-4 h-4 mr-2" />
+                      View Profile
                     </button>
                     <button
                       onClick={() => {
                         setIsProfileOpen(false);
                         handleLogout();
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center"
                     >
-                      🚪 Logout
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
                     </button>
                   </div>
                 </div>
@@ -158,7 +166,7 @@ const DashboardLayout = ({
               className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors duration-200"
               title="Logout"
             >
-              🚪
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
         </div>
