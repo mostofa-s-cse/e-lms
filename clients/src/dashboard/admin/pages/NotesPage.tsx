@@ -61,6 +61,7 @@ const NotesPage = () => {
     courseId: '',
     file: null as File | null
   });
+  const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -97,6 +98,7 @@ const NotesPage = () => {
       courseId: '',
       file: null
     });
+    setCurrentFileUrl(null);
     setFormErrors({});
     setShowModal(true);
   };
@@ -109,6 +111,7 @@ const NotesPage = () => {
       courseId: note.courseId,
       file: null
     });
+    setCurrentFileUrl(note.file || null);
     setFormErrors({});
     setShowModal(true);
   };
@@ -144,6 +147,35 @@ const NotesPage = () => {
     if (!formData.title.trim()) errors.title = 'Title is required';
     if (!formData.description?.trim()) errors.description = 'Description is required';
     if (!formData.courseId) errors.courseId = 'Course is required';
+    
+    // File validation
+    if (!editingNote && !formData.file) {
+      errors.file = 'File is required for new notes';
+    } else if (formData.file) {
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (formData.file.size > maxSize) {
+        errors.file = 'File size must be less than 10MB';
+      }
+      
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/csv'
+      ];
+      
+      if (!allowedTypes.includes(formData.file.type)) {
+        errors.file = 'Please select a valid file type';
+      }
+    }
 
     if (Object.keys(errors).length > 0) {
       showFormErrorAlert(errors);
@@ -286,7 +318,10 @@ const NotesPage = () => {
 
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          setCurrentFileUrl(null);
+        }}
         title={editingNote ? 'Edit Note' : 'Create Note'}
         size="lg"
       >
@@ -324,16 +359,73 @@ const NotesPage = () => {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Attachment
+              Attachment {!editingNote && <span className="text-red-500">*</span>}
             </label>
+            
+            {/* Current File Display */}
+            {currentFileUrl && !formData.file && editingNote && (
+              <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Current File:</strong>
+                </p>
+                <div className="flex items-center space-x-2">
+                  {editingNote.isImage ? (
+                    <img
+                      src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${currentFileUrl}`}
+                      alt="Current note file"
+                      className="w-16 h-16 rounded object-cover border border-gray-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-blue-100 rounded flex items-center justify-center">
+                      <span className="text-xs text-blue-600">📎</span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">{currentFileUrl.split('/').pop()}</p>
+                    {editingNote.fileSize && (
+                      <p className="text-xs text-gray-500">
+                        {(editingNote.fileSize / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    )}
+                    {editingNote.fileType && (
+                      <p className="text-xs text-gray-500">{editingNote.fileType}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <input
               type="file"
               onChange={handleFileChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                formErrors.file ? 'border-red-500' : 'border-gray-300'
+              }`}
               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.xlsx,.xls,.ppt,.pptx,.csv"
+              required={!editingNote}
             />
+            {formData.file && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  <strong>Selected:</strong> {formData.file.name}
+                </p>
+                <p className="text-xs text-green-600">
+                  Size: {(formData.file.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+                <p className="text-xs text-green-600">
+                  Type: {formData.file.type}
+                </p>
+              </div>
+            )}
+            {formErrors.file && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.file}</p>
+            )}
             <p className="mt-1 text-sm text-gray-500">
               Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, XLSX, XLS, PPT, PPTX, CSV (Max size: 10MB)
+              {editingNote && ' - Leave empty to keep existing file'}
             </p>
           </div>
 

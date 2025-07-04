@@ -72,8 +72,18 @@ export interface Enrollment {
 export interface Note {
   id: string;
   title: string;
-  content: string;
+  description?: string;
+  file?: string;
+  isImage?: boolean;
+  fileSize?: number;
+  fileType?: string;
+  isActive: boolean;
   courseId: string;
+  course?: {
+    id: string;
+    title: string;
+    code: string;
+  };
   author?: {
     id: string;
     firstName: string;

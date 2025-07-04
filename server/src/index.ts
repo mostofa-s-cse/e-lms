@@ -68,7 +68,7 @@ app.use(express.urlencoded({ extended: true }));
 // === FIX HERE === Serve static uploads with CORS & Range headers for videos
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||filePath.endsWith('.JPG')|| filePath.endsWith('.png')) {
+    if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||filePath.endsWith('.JPG')|| filePath.endsWith('.pdf') || filePath.endsWith('.docx') || filePath.endsWith('.png') || filePath.endsWith('.webp')) {
       res.setHeader('Access-Control-Allow-Origin', '*'); // Or your frontend URL
       res.setHeader('Access-Control-Allow-Headers', 'Range');
       res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
@@ -78,10 +78,11 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   }
 }));
 
-// Serve course thumbnails specifically
-app.use('/uploads/course', express.static(path.join(__dirname, '../uploads/course'), {
+
+// Serve notes files specifically
+app.use('/uploads/notes', express.static(path.join(__dirname, '../uploads/notes'), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.JPG') || filePath.endsWith('.png') || filePath.endsWith('.pdf') || filePath.endsWith('.docx') || filePath.endsWith('.webp')) {
+    if (filePath.endsWith('.pdf') || filePath.endsWith('.docx') || filePath.endsWith('.png') || filePath.endsWith('.webp') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.JPG')) {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     }

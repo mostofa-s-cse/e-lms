@@ -73,7 +73,7 @@ const CourseDetailsPage = () => {
 
   const [noteFormData, setNoteFormData] = useState({
     title: '',
-    content: '',
+    description: '',
     courseId: ''
   });
   const [quizFormData, setQuizFormData] = useState({
@@ -292,7 +292,7 @@ const CourseDetailsPage = () => {
     // Basic validation
     const errors: Record<string, string> = {};
     if (!noteFormData.title.trim()) errors.title = 'Title is required';
-    if (!noteFormData.content.trim()) errors.content = 'Content is required';
+    if (!noteFormData.description.trim()) errors.description = 'Description is required';
     if (!noteFormData.courseId) errors.courseId = 'Course is required';
 
     if (Object.keys(errors).length > 0) {
@@ -303,7 +303,7 @@ const CourseDetailsPage = () => {
     try {
       const submitData = new FormData();
       submitData.append('title', noteFormData.title);
-      submitData.append('content', noteFormData.content);
+      submitData.append('description', noteFormData.description);
       submitData.append('courseId', course?.id!);
 
       if (editingNote) {
@@ -658,7 +658,7 @@ const CourseDetailsPage = () => {
             setEditingNote(note);
             setNoteFormData({
               title: note.title,
-              content: note.content,
+              description: note.description || '',
               courseId: course?.id || ''
             });
             setShowNoteModal(true);
@@ -679,7 +679,7 @@ const CourseDetailsPage = () => {
             setEditingNote(null);
             setNoteFormData({
               title: '',
-              content: '',
+              description: '',
               courseId: course?.id || ''
             });
             setShowNoteModal(true);
@@ -875,12 +875,12 @@ const CourseDetailsPage = () => {
           />
 
           <FormField
-            label="Content"
-            name="content"
+            label="Description"
+            name="description"
             type="textarea"
-            value={noteFormData.content}
-            onChange={(value) => setNoteFormData({ ...noteFormData, content: value as string })}
-            error={formErrors.content}
+            value={noteFormData.description}
+            onChange={(value) => setNoteFormData({ ...noteFormData, description: value as string })}
+            error={formErrors.description}
             required
             rows={6}
           />
