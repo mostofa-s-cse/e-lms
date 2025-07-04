@@ -11,34 +11,42 @@ if (!fs.existsSync(uploadsDir)) {
 // Configure disk storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    
     const base = path.join(__dirname, '../../uploads');
     
     if (file.fieldname === 'videoUrl') {
       const dir = path.join(base, 'videos');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      // console.log('Saving video to:', dir);
       cb(null, dir);
     } else if (file.fieldname === 'thumbnail' && req.path?.includes('/courses')) {
       // Handle course thumbnail uploads
-      const dir = path.join(base, 'course');
+      const dir = path.join(base, 'thumbnails');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      // console.log('Saving course thumbnail to:', dir);
       cb(null, dir);
     } else if (file.fieldname === 'thumbnail') {
       const dir = path.join(base, 'thumbnails');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      // console.log('Saving thumbnail to:', dir);
       cb(null, dir);
     } else if (file.fieldname === 'file' && req.path?.includes('/notes')) {
       // Handle notes file uploads
       const dir = path.join(base, 'notes');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      // console.log('Saving note file to:', dir);
       cb(null, dir);
     } else {
+      // console.log('Using fallback directory:', base);
       cb(null, base); // fallback
     }
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
+    // console.log('Generated filename:', filename);
+    cb(null, filename);
   }
 });
 
@@ -72,9 +80,12 @@ const allowedMimes = [
 
 // File filter function
 const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  
   if (allowedMimes.includes(file.mimetype)) {
+    console.log('File accepted');
     cb(null, true);
   } else {
+    console.log('File rejected - invalid type');
     cb(new Error('Invalid file type. Only images and videos are allowed.'));
   }
 };

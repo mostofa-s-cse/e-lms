@@ -65,23 +65,27 @@ export const createCourse = async (req: AuthRequest, res: Response, next: NextFu
       finalTeacherId = req.user!.id;
     }
     
-    // Handle thumbnail file upload
+        // Handle thumbnail file upload
     let thumbnail = null;
     if (req.file) {
-      thumbnail = `course/${req.file.filename}`; // Store relative path to course directory
+      thumbnail = `/uploads/thumbnails/${req.file.filename}`; 
+    } else {
+      thumbnail = null;
     }
     
+    const courseData = {
+      title,
+      description,
+      code,
+      credits: credits ? parseInt(credits) : 0,
+      price: price ? parseFloat(price) : 0.0,
+      isFree: isFree === 'true' || isFree === true,
+      thumbnail,
+      teacherId: finalTeacherId
+    };
+    
     const course = await prisma.course.create({
-      data: {
-        title,
-        description,
-        code,
-        credits: credits ? parseInt(credits) : 0,
-        price: price ? parseFloat(price) : 0.0,
-        isFree: isFree === 'true' || isFree === true,
-        thumbnail,
-        teacherId: finalTeacherId
-      },
+      data: courseData,
       include: {
         teacher: {
           select: { id: true, firstName: true, lastName: true, email: true }
@@ -89,8 +93,10 @@ export const createCourse = async (req: AuthRequest, res: Response, next: NextFu
       }
     });
     
+    
     res.status(201).json({ success: true, message: 'Course created successfully', data: course } as ApiResponse);
   } catch (error: any) {
+    console.error('Error creating course:', error);
     if (error.code === 'P2002') {
       res.status(409).json({ success: false, message: 'Course code already exists' });
       return;
@@ -123,7 +129,7 @@ export const updateCourse = async (req: AuthRequest, res: Response, next: NextFu
     // Handle thumbnail file upload
     let thumbnail = undefined;
     if (req.file) {
-      thumbnail = `course/${req.file.filename}`; // Store relative path to course directory
+      thumbnail = `/uploads/thumbnails/${req.file.filename}`; // Store public URL path
     }
     
     // Prepare update data

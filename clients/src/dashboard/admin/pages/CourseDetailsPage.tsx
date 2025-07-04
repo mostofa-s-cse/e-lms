@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { coursesAPI, videosAPI, notesAPI, quizzesAPI } from '../../../services/api';
+import { coursesAPI, videosAPI, notesAPI, quizzesAPI, usersAPI } from '../../../services/api';
 import { handleApiError, showDeleteConfirmDialog, showSuccessAlert } from '../../../utils/sweetAlert';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import SearchableDropdown from '../../../components/SearchableDropdown';
 import { 
   OverviewTab,
   VideosTab,
@@ -18,6 +19,18 @@ import {
 } from '../../../components/admin';
 import { ArrowLeft } from 'lucide-react';
 
+interface Teacher {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
+interface TeachersResponse {
+  data: Teacher[];
+}
+
 const CourseDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -26,7 +39,9 @@ const CourseDetailsPage = () => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
+  const [teachersLoading, setTeachersLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'videos' | 'students' | 'notes' | 'quizzes'>('overview');
   const [showModal, setShowModal] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
@@ -42,8 +57,10 @@ const CourseDetailsPage = () => {
     credits: 0,
     price: 0,
     isFree: false,
-    thumbnail: null as File | null
+    thumbnail: null as File | null,
+    teacherId: ''
   });
+  const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -384,6 +401,10 @@ const CourseDetailsPage = () => {
       submitData.append('price', courseFormData.price.toString());
       submitData.append('isFree', courseFormData.isFree.toString());
       
+      if (courseFormData.teacherId) {
+        submitData.append('teacherId', courseFormData.teacherId);
+      }
+      
       if (courseFormData.thumbnail) {
         submitData.append('thumbnail', courseFormData.thumbnail);
       }
@@ -420,8 +441,21 @@ const CourseDetailsPage = () => {
   useEffect(() => {
     if (id) {
       fetchCourseDetails();
+      fetchTeachers();
     }
   }, [id]);
+
+  const fetchTeachers = async () => {
+    try {
+      setTeachersLoading(true);
+      const response = await usersAPI.getTeachers();
+      setTeachers((response.data as TeachersResponse).data);
+    } catch (error) {
+      handleApiError(error, 'Failed to fetch teachers');
+    } finally {
+      setTeachersLoading(false);
+    }
+  };
 
   const fetchCourseDetails = async () => {
     try {
@@ -478,7 +512,7 @@ const CourseDetailsPage = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
@@ -490,10 +524,13 @@ const CourseDetailsPage = () => {
             <span>Back to Courses</span>
           </button>
         </div>
-        <div className="text-right">
-          <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
-          <p className="text-gray-600">{course.code}</p>
-          <button
+        <div className="flex items-center space-x-6">
+        
+          {/* Course Info */}
+          <div className="text-right">
+            <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
+            <p className="text-gray-600">{course.code}</p>
+                      <button
             onClick={() => {
               setCourseFormData({
                 title: course.title,
@@ -502,14 +539,18 @@ const CourseDetailsPage = () => {
                 credits: course.credits,
                 price: course.price,
                 isFree: course.isFree || false,
-                thumbnail: null
+                thumbnail: null,
+                teacherId: course.teacher?.id || ''
               });
+              setCurrentThumbnailUrl(course.thumbnail);
+              setFormErrors({});
               setShowCourseModal(true);
             }}
-            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
-          >
-            Edit Course
-          </button>
+              className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+            >
+              Edit Course
+            </button>
+          </div>
         </div>
       </div>
 
@@ -930,7 +971,10 @@ const CourseDetailsPage = () => {
       {/* Course Edit Modal */}
       <Modal
         isOpen={showCourseModal}
-        onClose={() => setShowCourseModal(false)}
+        onClose={() => {
+          setShowCourseModal(false);
+          setCurrentThumbnailUrl(null);
+        }}
         title="Edit Course"
         size="lg"
       >
@@ -957,6 +1001,19 @@ const CourseDetailsPage = () => {
             onChange={(value) => setCourseFormData({ ...courseFormData, code: value as string })}
             error={formErrors.code}
             required
+          />
+
+          <SearchableDropdown
+            label="Teacher"
+            value={courseFormData.teacherId}
+            onChange={(value) => setCourseFormData({ ...courseFormData, teacherId: value })}
+            options={teachers.map(teacher => ({
+              value: teacher.id,
+              label: `${teacher.firstName} ${teacher.lastName} (${teacher.email})`
+            }))}
+            placeholder="Select a teacher..."
+            error={formErrors.teacherId}
+            loading={teachersLoading}
           />
 
           <FormField
@@ -1008,6 +1065,24 @@ const CourseDetailsPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Course Thumbnail
             </label>
+            
+            {/* Current Thumbnail Display */}
+            {currentThumbnailUrl && !courseFormData.thumbnail && (
+              <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Current Thumbnail:</strong>
+                </p>
+                <img
+                  src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${currentThumbnailUrl}`}
+                  alt="Current course thumbnail"
+                  className="w-full h-auto rounded object-cover border border-gray-300"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            
             <input
               type="file"
               name="thumbnail"

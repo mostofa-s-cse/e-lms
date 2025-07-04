@@ -66,6 +66,7 @@ const CoursesPage = () => {
     thumbnail: null as File | null,
     teacherId: ''
   });
+  const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -109,6 +110,7 @@ const CoursesPage = () => {
       thumbnail: null,
       teacherId: ''
     });
+    setCurrentThumbnailUrl(null);
     setFormErrors({});
     setShowModal(true);
   };
@@ -125,6 +127,7 @@ const CoursesPage = () => {
       thumbnail: null,
       teacherId: course.teacher?.id || ''
     });
+    setCurrentThumbnailUrl(course.thumbnail);
     setFormErrors({});
     setShowModal(true);
   };
@@ -203,7 +206,19 @@ const CoursesPage = () => {
       
       if (formData.thumbnail) {
         submitData.append('thumbnail', formData.thumbnail);
+        console.log('Frontend: Adding thumbnail to FormData:', formData.thumbnail);
       }
+
+      // Debug FormData contents
+      console.log('Frontend: FormData contents:');
+      console.log('Title:', submitData.get('title'));
+      console.log('Description:', submitData.get('description'));
+      console.log('Code:', submitData.get('code'));
+      console.log('Credits:', submitData.get('credits'));
+      console.log('Price:', submitData.get('price'));
+      console.log('IsFree:', submitData.get('isFree'));
+      console.log('TeacherId:', submitData.get('teacherId'));
+      console.log('Thumbnail:', submitData.get('thumbnail'));
 
       if (editingCourse) {
         await coursesAPI.update(editingCourse.id, submitData);
@@ -244,7 +259,7 @@ const CoursesPage = () => {
         <div className="flex items-center">
           {thumbnail ? (
             <img
-              src={`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/uploads/${thumbnail}`}
+              src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${thumbnail}`}
               alt="Course thumbnail"
               className="w-10 h-10 rounded object-cover"
               onError={(e) => {
@@ -368,7 +383,10 @@ const CoursesPage = () => {
 
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          setCurrentThumbnailUrl(null);
+        }}
         title={editingCourse ? 'Edit Course' : 'Add Course'}
       >
         <Form onSubmit={handleSubmit}>
@@ -446,6 +464,24 @@ const CoursesPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Course Thumbnail
             </label>
+            
+            {/* Current Thumbnail Display */}
+            {currentThumbnailUrl && !formData.thumbnail && editingCourse && (
+              <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Current Thumbnail:</strong>
+                </p>
+                <img
+                  src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${currentThumbnailUrl}`}
+                  alt="Current course thumbnail"
+                  className="w-full h-auto rounded object-cover border border-gray-300"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            
             <input
               type="file"
               name="thumbnail"

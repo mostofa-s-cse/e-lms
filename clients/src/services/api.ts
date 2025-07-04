@@ -65,15 +65,21 @@ export const coursesAPI = {
   getEnrollments: (id: string) => api.get(`/courses/${id}/enrollments`),
   create: (data: any) => {
     const isFormData = data instanceof FormData;
-    return api.post('/courses', data, {
-      headers: isFormData ? {} : { 'Content-Type': 'application/json' }
-    });
+    const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
+    console.log('API: Creating course, isFormData:', isFormData);
+    console.log('API: Data type:', typeof data);
+    if (isFormData) {
+      console.log('API: FormData has thumbnail:', data.has('thumbnail'));
+    }
+    
+    return api.post('/courses', data, { headers });
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: any) => {  
     const isFormData = data instanceof FormData;
-    return api.put(`/courses/${id}`, data, {
-      headers: isFormData ? {} : { 'Content-Type': 'application/json' }
-    });
+    const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
+    console.log('API: Updating course, isFormData:', isFormData);
+    
+    return api.put(`/courses/${id}`, data, { headers });
   },
   delete: (id: string) => api.delete(`/courses/${id}`),
 };

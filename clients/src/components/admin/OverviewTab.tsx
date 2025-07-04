@@ -48,7 +48,23 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4">Course Information</h2>
-          
+          {/* Course Thumbnail */}
+          <div className="flex-shrink-0">
+            {course.thumbnail ? (
+              <img
+                src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${course.thumbnail}`}
+                alt={`${course.title} thumbnail`}
+                className="w-full h-auto rounded-lg object-cover border-2 border-gray-200 mb-4"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-full h-auto bg-gray-200 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                <span className="text-sm text-gray-500">No image</span>
+              </div>
+            )}
+          </div>
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <BookOpen className="w-5 h-5 text-gray-500" />
