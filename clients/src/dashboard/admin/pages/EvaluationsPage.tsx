@@ -14,29 +14,26 @@ import {
 interface Evaluation {
   id: string;
   title: string;
-  description: string;
+  description?: string;
+  type: 'ASSIGNMENT' | 'EXAM' | 'PROJECT' | 'PRESENTATION' | 'QUIZ';
   score?: number;
-  maxScore?: number;
+  maxScore: number;
   feedback?: string;
-  courseId: string;
+  evaluatedAt: string;
   studentId: string;
-  course?: {
-    id: string;
-    title: string;
-    code: string;
-  };
   student?: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
   };
-  teacher?: {
+  evaluator?: {
     id: string;
     firstName: string;
     lastName: string;
   };
   createdAt: string;
+  updatedAt: string;
 }
 
 interface Course {
@@ -74,10 +71,10 @@ const EvaluationsPage = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    type: 'ASSIGNMENT' as 'ASSIGNMENT' | 'EXAM' | 'PROJECT' | 'PRESENTATION' | 'QUIZ',
     score: '',
     maxScore: '',
     feedback: '',
-    courseId: '',
     studentId: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -125,10 +122,10 @@ const EvaluationsPage = () => {
     setFormData({
       title: '',
       description: '',
+      type: 'ASSIGNMENT',
       score: '',
       maxScore: '',
       feedback: '',
-      courseId: '',
       studentId: ''
     });
     setFormErrors({});
@@ -139,11 +136,11 @@ const EvaluationsPage = () => {
     setEditingEvaluation(evaluation);
     setFormData({
       title: evaluation.title,
-      description: evaluation.description,
+      description: evaluation.description || '',
+      type: evaluation.type,
       score: evaluation.score?.toString() || '',
-      maxScore: evaluation.maxScore?.toString() || '',
+      maxScore: evaluation.maxScore.toString(),
       feedback: evaluation.feedback || '',
-      courseId: evaluation.courseId,
       studentId: evaluation.studentId
     });
     setFormErrors({});
@@ -170,9 +167,8 @@ const EvaluationsPage = () => {
     // Basic validation
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
-    if (!formData.courseId) errors.courseId = 'Course is required';
     if (!formData.studentId) errors.studentId = 'Student is required';
+    if (!formData.maxScore || parseFloat(formData.maxScore) <= 0) errors.maxScore = 'Maximum score is required and must be greater than 0';
     
     if (formData.score && formData.maxScore) {
       const score = parseFloat(formData.score);
@@ -244,12 +240,18 @@ const EvaluationsPage = () => {
       )
     },
     {
-      key: 'course',
-      label: 'Course',
-      render: (_: any, evaluation: Evaluation) => (
-        <div className="text-sm text-gray-900">
-          {evaluation.course ? `${evaluation.course.code} - ${evaluation.course.title}` : 'N/A'}
-        </div>
+      key: 'type',
+      label: 'Type',
+      render: (type: string) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          type === 'ASSIGNMENT' ? 'bg-blue-100 text-blue-800' :
+          type === 'EXAM' ? 'bg-red-100 text-red-800' :
+          type === 'PROJECT' ? 'bg-green-100 text-green-800' :
+          type === 'PRESENTATION' ? 'bg-purple-100 text-purple-800' :
+          'bg-yellow-100 text-yellow-800'
+        }`}>
+          {type}
+        </span>
       )
     },
     {
@@ -280,11 +282,11 @@ const EvaluationsPage = () => {
       }
     },
     {
-      key: 'teacher',
-      label: 'Teacher',
+      key: 'evaluator',
+      label: 'Evaluator',
       render: (_: any, evaluation: Evaluation) => (
         <div className="text-sm text-gray-900">
-          {evaluation.teacher ? `${evaluation.teacher.firstName} ${evaluation.teacher.lastName}` : 'N/A'}
+          {evaluation.evaluator ? `${evaluation.evaluator.firstName} ${evaluation.evaluator.lastName}` : 'N/A'}
         </div>
       )
     },
@@ -335,13 +337,18 @@ const EvaluationsPage = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <FormField
-              label="Course"
-              name="courseId"
+              label="Evaluation Type"
+              name="type"
               type="select"
-              value={formData.courseId}
-              onChange={(value) => setFormData({ ...formData, courseId: value as string })}
-              options={courseOptions}
-              error={formErrors.courseId}
+              value={formData.type}
+              onChange={(value) => setFormData({ ...formData, type: value as any })}
+              options={[
+                { value: 'ASSIGNMENT', label: 'Assignment' },
+                { value: 'EXAM', label: 'Exam' },
+                { value: 'PROJECT', label: 'Project' },
+                { value: 'PRESENTATION', label: 'Presentation' },
+                { value: 'QUIZ', label: 'Quiz' }
+              ]}
               required
             />
 

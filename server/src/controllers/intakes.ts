@@ -56,7 +56,7 @@ export const getIntakeById = async (req: Request, res: Response, next: NextFunct
 
 export const createIntake = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, startDate, endDate, courseId } = req.body;
+    const { name, startDate, endDate, courseId, amount } = req.body;
     const teacherId = req.user!.id;
     
     // Check if user is the teacher of this course or admin
@@ -79,7 +79,8 @@ export const createIntake = async (req: AuthRequest, res: Response, next: NextFu
         name,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
-        courseId
+        courseId,
+        amount: amount ? parseFloat(amount) : 0.0
       },
       include: {
         course: {
@@ -96,7 +97,7 @@ export const createIntake = async (req: AuthRequest, res: Response, next: NextFu
 
 export const updateIntake = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, startDate, endDate, isActive } = req.body;
+    const { name, startDate, endDate, isActive, amount } = req.body;
     const intakeId = req.params.id;
     const teacherId = req.user!.id;
     
@@ -124,7 +125,8 @@ export const updateIntake = async (req: AuthRequest, res: Response, next: NextFu
         name,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
-        isActive
+        isActive,
+        amount: amount !== undefined ? parseFloat(amount) : undefined
       },
       include: {
         course: {

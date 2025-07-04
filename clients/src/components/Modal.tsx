@@ -43,9 +43,9 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div className={`relative w-full ${sizeClasses[size]} bg-white rounded-lg shadow-xl`}>
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-start justify-center p-4 overflow-y-auto min-h-screen">
+      <div className={`relative w-full ${sizeClasses[size]} bg-white rounded-lg shadow-xl my-8 max-h-[calc(100vh-4rem)] flex flex-col`}>
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
           <h3 className="text-lg font-medium text-gray-900">{title}</h3>
           <button
             onClick={onClose}
@@ -54,7 +54,7 @@ const Modal: React.FC<ModalProps> = ({
             ×
           </button>
         </div>
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           {children}
         </div>
       </div>

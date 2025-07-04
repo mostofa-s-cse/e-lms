@@ -14,23 +14,26 @@ import {
 interface Quiz {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   duration: number;
-  passingScore: number;
-  maxAttempts: number;
+  totalMarks: number;
+  passingMarks: number;
   isActive: boolean;
+  startTime?: string;
+  endTime?: string;
   courseId: string;
   course?: {
     id: string;
     title: string;
     code: string;
   };
-  teacher?: {
+  author?: {
     id: string;
     firstName: string;
     lastName: string;
   };
   createdAt: string;
+  updatedAt: string;
 }
 
 interface Course {
@@ -57,10 +60,12 @@ const QuizzesPage = () => {
     title: '',
     description: '',
     duration: 30,
-    passingScore: 70,
-    maxAttempts: 3,
+    totalMarks: 100,
+    passingMarks: 70,
     isActive: true,
-    courseId: ''
+    courseId: '',
+    startTime: '',
+    endTime: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -96,10 +101,12 @@ const QuizzesPage = () => {
       title: '',
       description: '',
       duration: 30,
-      passingScore: 70,
-      maxAttempts: 3,
+      totalMarks: 100,
+      passingMarks: 70,
       isActive: true,
-      courseId: ''
+      courseId: '',
+      startTime: '',
+      endTime: ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -109,12 +116,14 @@ const QuizzesPage = () => {
     setEditingQuiz(quiz);
     setFormData({
       title: quiz.title,
-      description: quiz.description,
+      description: quiz.description || '',
       duration: quiz.duration,
-      passingScore: quiz.passingScore,
-      maxAttempts: quiz.maxAttempts,
+      totalMarks: quiz.totalMarks,
+      passingMarks: quiz.passingMarks,
       isActive: quiz.isActive,
-      courseId: quiz.courseId
+      courseId: quiz.courseId,
+      startTime: quiz.startTime ? quiz.startTime.split('T')[0] : '',
+      endTime: quiz.endTime ? quiz.endTime.split('T')[0] : ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -140,11 +149,12 @@ const QuizzesPage = () => {
     // Basic validation
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
     if (!formData.courseId) errors.courseId = 'Course is required';
     if (formData.duration < 1) errors.duration = 'Duration must be at least 1 minute';
-    if (formData.passingScore < 0 || formData.passingScore > 100) errors.passingScore = 'Passing score must be between 0 and 100';
-    if (formData.maxAttempts < 1) errors.maxAttempts = 'Maximum attempts must be at least 1';
+    if (formData.totalMarks < 1) errors.totalMarks = 'Total marks must be at least 1';
+    if (formData.passingMarks < 0 || formData.passingMarks > formData.totalMarks) {
+      errors.passingMarks = 'Passing marks cannot exceed total marks';
+    }
 
     if (Object.keys(errors).length > 0) {
       await showFormErrorAlert(errors);
@@ -202,19 +212,21 @@ const QuizzesPage = () => {
       )
     },
     {
-      key: 'passingScore',
-      label: 'Passing Score',
-      render: (passingScore: number) => (
-        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-          {passingScore}%
+      key: 'totalMarks',
+      label: 'Total Marks',
+      render: (totalMarks: number) => (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+          {totalMarks} marks
         </span>
       )
     },
     {
-      key: 'maxAttempts',
-      label: 'Max Attempts',
-      render: (maxAttempts: number) => (
-        <span className="text-sm text-gray-900">{maxAttempts}</span>
+      key: 'passingMarks',
+      label: 'Passing Marks',
+      render: (passingMarks: number) => (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          {passingMarks} marks
+        </span>
       )
     },
     {
@@ -295,7 +307,7 @@ const QuizzesPage = () => {
             rows={4}
           />
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               label="Duration (minutes)"
               name="duration"
@@ -307,25 +319,45 @@ const QuizzesPage = () => {
             />
 
             <FormField
-              label="Passing Score (%)"
-              name="passingScore"
+              label="Total Marks"
+              name="totalMarks"
               type="number"
-              value={formData.passingScore}
-              onChange={(value) => setFormData({ ...formData, passingScore: value as number })}
-              error={formErrors.passingScore}
+              value={formData.totalMarks}
+              onChange={(value) => setFormData({ ...formData, totalMarks: value as number })}
+              error={formErrors.totalMarks}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              label="Passing Marks"
+              name="passingMarks"
+              type="number"
+              value={formData.passingMarks}
+              onChange={(value) => setFormData({ ...formData, passingMarks: value as number })}
+              error={formErrors.passingMarks}
               required
             />
 
             <FormField
-              label="Max Attempts"
-              name="maxAttempts"
-              type="number"
-              value={formData.maxAttempts}
-              onChange={(value) => setFormData({ ...formData, maxAttempts: value as number })}
-              error={formErrors.maxAttempts}
-              required
+              label="Start Date"
+              name="startTime"
+              type="date"
+              value={formData.startTime}
+              onChange={(value) => setFormData({ ...formData, startTime: value as string })}
+              error={formErrors.startTime}
             />
           </div>
+
+          <FormField
+            label="End Date"
+            name="endTime"
+            type="date"
+            value={formData.endTime}
+            onChange={(value) => setFormData({ ...formData, endTime: value as string })}
+            error={formErrors.endTime}
+          />
 
           <div className="flex items-center">
             <input

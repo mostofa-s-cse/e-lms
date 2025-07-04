@@ -8,7 +8,8 @@ import {
   Clock,
   Users,
   FileText,
-  HelpCircle
+  HelpCircle,
+  DollarSign
 } from 'lucide-react';
 import { Course, Video as VideoType, Enrollment, Note, Quiz } from './types';
 
@@ -62,6 +63,14 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               <div>
                 <p className="text-sm text-gray-600">Credits</p>
                 <p className="font-medium">{course.credits} credits</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <DollarSign className="w-5 h-5 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-600">Price</p>
+                <p className="font-medium">${course.price.toFixed(2)}</p>
               </div>
             </div>
 

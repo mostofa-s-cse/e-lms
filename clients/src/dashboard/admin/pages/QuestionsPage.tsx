@@ -13,23 +13,24 @@ import {
 
 interface Question {
   id: string;
-  title: string;
-  content: string;
+  question: string;
   type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
   options?: string[];
-  correctAnswer?: string;
-  points: number;
+  correctAnswer: string;
+  marks: number;
+  isActive: boolean;
   quizId: string;
   quiz?: {
     id: string;
     title: string;
   };
-  teacher?: {
+  author?: {
     id: string;
     firstName: string;
     lastName: string;
   };
   createdAt: string;
+  updatedAt: string;
 }
 
 interface Quiz {
@@ -52,12 +53,12 @@ const QuestionsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
+    question: '',
     type: 'MULTIPLE_CHOICE' as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY',
     options: ['', '', '', ''],
     correctAnswer: '',
-    points: 1,
+    marks: 1,
+    isActive: true,
     quizId: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -91,12 +92,12 @@ const QuestionsPage = () => {
   const handleCreate = () => {
     setEditingQuestion(null);
     setFormData({
-      title: '',
-      content: '',
+      question: '',
       type: 'MULTIPLE_CHOICE',
       options: ['', '', '', ''],
       correctAnswer: '',
-      points: 1,
+      marks: 1,
+      isActive: true,
       quizId: ''
     });
     setFormErrors({});
@@ -106,12 +107,12 @@ const QuestionsPage = () => {
   const handleEdit = (question: Question) => {
     setEditingQuestion(question);
     setFormData({
-      title: question.title,
-      content: question.content,
+      question: question.question,
       type: question.type,
       options: question.options || ['', '', '', ''],
-      correctAnswer: question.correctAnswer || '',
-      points: question.points,
+      correctAnswer: question.correctAnswer,
+      marks: question.marks,
+      isActive: question.isActive,
       quizId: question.quizId
     });
     setFormErrors({});
@@ -119,7 +120,7 @@ const QuestionsPage = () => {
   };
 
   const handleDelete = async (question: Question) => {
-    const result = await showDeleteConfirmDialog(`"${question.title}"`);
+    const result = await showDeleteConfirmDialog(`"${question.question}"`);
     if (result.isConfirmed) {
       try {
         await questionsAPI.delete(question.id);
@@ -143,10 +144,9 @@ const QuestionsPage = () => {
 
     // Basic validation
     const errors: Record<string, string> = {};
-    if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.content.trim()) errors.content = 'Content is required';
+    if (!formData.question.trim()) errors.question = 'Question is required';
     if (!formData.quizId) errors.quizId = 'Quiz is required';
-    if (formData.points < 1) errors.points = 'Points must be at least 1';
+    if (formData.marks < 1) errors.marks = 'Marks must be at least 1';
 
     if (formData.type === 'MULTIPLE_CHOICE') {
       const validOptions = formData.options.filter(opt => opt.trim());
@@ -194,12 +194,12 @@ const QuestionsPage = () => {
 
   const columns = [
     {
-      key: 'title',
+      key: 'question',
       label: 'Question',
-      render: (title: string, question: Question) => (
+      render: (question: string, questionObj: Question) => (
         <div>
-          <div className="text-sm font-medium text-gray-900">{title}</div>
-          <div className="text-sm text-gray-500">{question.content}</div>
+          <div className="text-sm font-medium text-gray-900">{question}</div>
+          <div className="text-sm text-gray-500">{questionObj.correctAnswer}</div>
         </div>
       )
     },
@@ -227,20 +227,20 @@ const QuestionsPage = () => {
       )
     },
     {
-      key: 'points',
-      label: 'Points',
-      render: (points: number) => (
+      key: 'marks',
+      label: 'Marks',
+      render: (marks: number) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-          {points} pts
+          {marks} marks
         </span>
       )
     },
     {
-      key: 'teacher',
-      label: 'Teacher',
+      key: 'author',
+      label: 'Author',
       render: (_: any, question: Question) => (
         <div className="text-sm text-gray-900">
-          {question.teacher ? `${question.teacher.firstName} ${question.teacher.lastName}` : 'N/A'}
+          {question.author ? `${question.author.firstName} ${question.author.lastName}` : 'N/A'}
         </div>
       )
     },
@@ -281,11 +281,11 @@ const QuestionsPage = () => {
       >
         <Form onSubmit={handleSubmit}>
           <FormField
-            label="Title"
-            name="title"
-            value={formData.title}
-            onChange={(value) => setFormData({ ...formData, title: value as string })}
-            error={formErrors.title}
+            label="Question"
+            name="question"
+            value={formData.question}
+            onChange={(value) => setFormData({ ...formData, question: value as string })}
+            error={formErrors.question}
             required
           />
 
@@ -312,11 +312,11 @@ const QuestionsPage = () => {
 
           <FormField
             label="Question Content"
-            name="content"
+            name="question"
             type="textarea"
-            value={formData.content}
-            onChange={(value) => setFormData({ ...formData, content: value as string })}
-            error={formErrors.content}
+            value={formData.question}
+            onChange={(value) => setFormData({ ...formData, question: value as string })}
+            error={formErrors.question}
             required
             rows={4}
           />
@@ -387,14 +387,27 @@ const QuestionsPage = () => {
           )}
 
           <FormField
-            label="Points"
-            name="points"
+            label="Marks"
+            name="marks"
             type="number"
-            value={formData.points}
-            onChange={(value) => setFormData({ ...formData, points: value as number })}
-            error={formErrors.points}
+            value={formData.marks}
+            onChange={(value) => setFormData({ ...formData, marks: value as number })}
+            error={formErrors.marks}
             required
           />
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isActive"
+              checked={formData.isActive}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+              Active
+            </label>
+          </div>
 
           <FormActions
             onCancel={() => setShowModal(false)}

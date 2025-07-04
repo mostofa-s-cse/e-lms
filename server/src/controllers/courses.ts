@@ -6,6 +6,7 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
   try {
     const courses = await prisma.course.findMany({
       where: { isActive: true },
+      orderBy: { createdAt: 'desc' },
       include: {
         teacher: {
           select: { id: true, firstName: true, lastName: true, email: true }
@@ -52,16 +53,34 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
 
 export const createCourse = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, description, code, credits } = req.body;
-    const teacherId = req.user!.id;
+    const { title, description, code, credits, price, isFree, teacherId } = req.body;
+    
+    // Determine the teacher ID based on user role
+    let finalTeacherId: string;
+    if (req.user!.role === 'ADMIN' && teacherId) {
+      // Admin can assign any teacher
+      finalTeacherId = teacherId;
+    } else {
+      // Regular teachers can only assign themselves
+      finalTeacherId = req.user!.id;
+    }
+    
+    // Handle thumbnail file upload
+    let thumbnail = null;
+    if (req.file) {
+      thumbnail = `course/${req.file.filename}`; // Store relative path to course directory
+    }
     
     const course = await prisma.course.create({
       data: {
         title,
         description,
         code,
-        credits: credits || 0,
-        teacherId
+        credits: credits ? parseInt(credits) : 0,
+        price: price ? parseFloat(price) : 0.0,
+        isFree: isFree === 'true' || isFree === true,
+        thumbnail,
+        teacherId: finalTeacherId
       },
       include: {
         teacher: {
@@ -82,9 +101,9 @@ export const createCourse = async (req: AuthRequest, res: Response, next: NextFu
 
 export const updateCourse = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, description, code, credits, isActive } = req.body;
+    const { title, description, code, credits, isActive, price, isFree, teacherId } = req.body;
     const courseId = req.params.id;
-    const teacherId = req.user!.id;
+    const currentUserId = req.user!.id;
     
     // Check if user is the teacher of this course or admin
     const existingCourse = await prisma.course.findUnique({
@@ -96,14 +115,37 @@ export const updateCourse = async (req: AuthRequest, res: Response, next: NextFu
       return;
     }
     
-    if (existingCourse.teacherId !== teacherId && req.user!.role !== 'ADMIN') {
+    if (existingCourse.teacherId !== currentUserId && req.user!.role !== 'ADMIN') {
       res.status(403).json({ success: false, message: 'You can only update your own courses' });
       return;
     }
     
+    // Handle thumbnail file upload
+    let thumbnail = undefined;
+    if (req.file) {
+      thumbnail = `course/${req.file.filename}`; // Store relative path to course directory
+    }
+    
+    // Prepare update data
+    const updateData: any = { 
+      title, 
+      description, 
+      code, 
+      credits: credits ? parseInt(credits) : undefined,
+      isActive: isActive !== undefined ? isActive === 'true' || isActive === true : undefined,
+      price: price !== undefined ? parseFloat(price) : undefined,
+      isFree: isFree !== undefined ? (isFree === 'true' || isFree === true) : undefined,
+      thumbnail: thumbnail !== undefined ? thumbnail : undefined
+    };
+    
+    // Only allow admin to change teacher assignment
+    if (req.user!.role === 'ADMIN' && teacherId) {
+      updateData.teacherId = teacherId;
+    }
+    
     const course = await prisma.course.update({
       where: { id: courseId },
-      data: { title, description, code, credits, isActive },
+      data: updateData,
       include: {
         teacher: {
           select: { id: true, firstName: true, lastName: true, email: true }

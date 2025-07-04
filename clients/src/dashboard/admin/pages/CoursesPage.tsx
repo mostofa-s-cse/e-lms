@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { coursesAPI } from '../../../services/api';
+import { coursesAPI, usersAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import SearchableDropdown from '../../../components/SearchableDropdown';
 import { 
   showSuccessAlert, 
   showErrorAlert, 
@@ -18,30 +19,58 @@ interface Course {
   description: string;
   code: string;
   credits: number;
+  price: number;
+  isFree: boolean;
+  thumbnail: string | null;
   isActive: boolean;
   createdAt: string;
+  teacher?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+interface Teacher {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
 }
 
 interface CoursesResponse {
   data: Course[];
 }
 
+interface TeachersResponse {
+  data: Teacher[];
+}
+
 const CoursesPage = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
+  const [teachersLoading, setTeachersLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     code: '',
-    credits: 3
+    credits: 3,
+    price: 0,
+    isFree: false,
+    thumbnail: null as File | null,
+    teacherId: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchCourses();
+    fetchTeachers();
   }, []);
 
   const fetchCourses = async () => {
@@ -56,13 +85,29 @@ const CoursesPage = () => {
     }
   };
 
+  const fetchTeachers = async () => {
+    try {
+      setTeachersLoading(true);
+      const response = await usersAPI.getTeachers();
+      setTeachers((response.data as TeachersResponse).data);
+    } catch (error) {
+      handleApiError(error, 'Failed to fetch teachers');
+    } finally {
+      setTeachersLoading(false);
+    }
+  };
+
   const handleCreate = () => {
     setEditingCourse(null);
     setFormData({
       title: '',
       description: '',
       code: '',
-      credits: 3
+      credits: 3,
+      price: 0,
+      isFree: false,
+      thumbnail: null,
+      teacherId: ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -74,7 +119,11 @@ const CoursesPage = () => {
       title: course.title,
       description: course.description,
       code: course.code,
-      credits: course.credits
+      credits: course.credits,
+      price: course.price,
+      isFree: course.isFree || false,
+      thumbnail: null,
+      teacherId: course.teacher?.id || ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -101,6 +150,14 @@ const CoursesPage = () => {
     navigate(`/admin/courses/${course.id}`);
   };
 
+  const handleThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData(prev => ({ ...prev, thumbnail: file }));
+    if (file) {
+      setFormErrors(prev => ({ ...prev, thumbnail: '' }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
@@ -111,6 +168,19 @@ const CoursesPage = () => {
     if (!formData.description.trim()) errors.description = 'Description is required';
     if (!formData.code.trim()) errors.code = 'Course code is required';
     if (formData.credits <= 0) errors.credits = 'Credits must be greater than 0';
+    if (!formData.isFree && formData.price < 0) errors.price = 'Price cannot be negative';
+    if (!editingCourse && !formData.teacherId) errors.teacherId = 'Teacher is required';
+    if (formData.thumbnail instanceof File) {
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (formData.thumbnail.size > maxSize) {
+        errors.thumbnail = 'Thumbnail file size must be less than 10MB';
+      }
+      
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(formData.thumbnail.type)) {
+        errors.thumbnail = 'Please select a valid image file (JPG, PNG, WebP)';
+      }
+    }
 
     if (Object.keys(errors).length > 0) {
       showFormErrorAlert(errors);
@@ -119,14 +189,30 @@ const CoursesPage = () => {
     }
 
     try {
+      const submitData = new FormData();
+      submitData.append('title', formData.title);
+      submitData.append('description', formData.description);
+      submitData.append('code', formData.code);
+      submitData.append('credits', formData.credits.toString());
+      submitData.append('price', formData.price.toString());
+      submitData.append('isFree', formData.isFree.toString());
+      
+      if (formData.teacherId) {
+        submitData.append('teacherId', formData.teacherId);
+      }
+      
+      if (formData.thumbnail) {
+        submitData.append('thumbnail', formData.thumbnail);
+      }
+
       if (editingCourse) {
-        await coursesAPI.update(editingCourse.id, formData);
+        await coursesAPI.update(editingCourse.id, submitData);
         showSuccessAlert(
           'Course Updated', 
           `${formData.title} has been successfully updated.`
         );
       } else {
-        await coursesAPI.create(formData);
+        await coursesAPI.create(submitData);
         showSuccessAlert(
           'Course Created', 
           `${formData.title} has been successfully created.`
@@ -152,6 +238,28 @@ const CoursesPage = () => {
 
   const columns = [
     {
+      key: 'thumbnail',
+      label: 'Thumbnail',
+      render: (thumbnail: string | null) => (
+        <div className="flex items-center">
+          {thumbnail ? (
+            <img
+              src={`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/uploads/${thumbnail}`}
+              alt="Course thumbnail"
+              className="w-10 h-10 rounded object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+              <span className="text-xs text-gray-500">No image</span>
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
       key: 'title',
       label: 'Title',
       sortable: true,
@@ -165,6 +273,16 @@ const CoursesPage = () => {
       sortable: true,
       render: (code: string) => (
         <div className="text-sm text-gray-900 font-mono">{code}</div>
+      )
+    },
+    {
+      key: 'teacher',
+      label: 'Teacher',
+      sortable: true,
+      render: (teacher: any) => (
+        <div className="text-sm text-gray-900">
+          {teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Not assigned'}
+        </div>
       )
     },
     {
@@ -187,6 +305,16 @@ const CoursesPage = () => {
       )
     },
     {
+      key: 'price',
+      label: 'Price',
+      sortable: true,
+      render: (price: number, course: Course) => (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          {course.isFree ? 'Free' : `$${price.toFixed(2)}`}
+        </span>
+      )
+    },
+    {
       key: 'isActive',
       label: 'Status',
       sortable: true,
@@ -205,6 +333,11 @@ const CoursesPage = () => {
       render: (date: string) => new Date(date).toLocaleDateString()
     }
   ];
+
+  const teacherOptions = teachers.map(teacher => ({
+    value: teacher.id,
+    label: `${teacher.firstName} ${teacher.lastName} (${teacher.email})`
+  }));
 
   return (
     <div className="space-y-6">
@@ -248,6 +381,18 @@ const CoursesPage = () => {
             error={formErrors.title}
             required
           />
+          
+          <SearchableDropdown
+            label="Teacher"
+            value={formData.teacherId}
+            onChange={(value) => setFormData({ ...formData, teacherId: value })}
+            options={teacherOptions}
+            placeholder="Select a teacher..."
+            error={formErrors.teacherId}
+            required={!editingCourse}
+            loading={teachersLoading}
+          />
+          
           <FormField
             label="Course Code"
             name="code"
@@ -275,6 +420,60 @@ const CoursesPage = () => {
             error={formErrors.credits}
             required
           />
+          <FormField
+            label="Price"
+            name="price"
+            type="number"
+            value={formData.price}
+            onChange={(value) => setFormData({ ...formData, price: value as number })}
+            error={formErrors.price}
+            disabled={formData.isFree}
+          />
+          
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.isFree}
+                onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Free Course</span>
+            </label>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Course Thumbnail
+            </label>
+            <input
+              type="file"
+              name="thumbnail"
+              onChange={handleThumbnailFileChange}
+              className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                formErrors.thumbnail ? 'border-red-500' : 'border-gray-300'
+              }`}
+              accept="image/*"
+            />
+            {formData.thumbnail && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  <strong>Selected:</strong> {formData.thumbnail.name}
+                </p>
+                <p className="text-xs text-green-600">
+                  Size: {(formData.thumbnail.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+            )}
+            {formErrors.thumbnail && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.thumbnail}</p>
+            )}
+            <p className="mt-1 text-sm text-gray-500">
+              Supported formats: JPG, PNG, WebP (Max size: 10MB)
+              {editingCourse && ' - Leave empty to keep existing thumbnail'}
+            </p>
+          </div>
+
           <FormActions
             onCancel={() => setShowModal(false)}
             submitText={editingCourse ? 'Update Course' : 'Create Course'}

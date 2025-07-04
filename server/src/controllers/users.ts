@@ -5,7 +5,15 @@ import bcrypt from 'bcryptjs';
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const { role } = req.query;
+    
+    const whereClause: any = {};
+    if (role) {
+      whereClause.role = role as string;
+    }
+    
     const users = await prisma.user.findMany({
+      where: whereClause,
       select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true, createdAt: true }
     });
     res.json({ success: true, message: 'Users fetched', data: users } as ApiResponse);

@@ -14,21 +14,25 @@ import {
 interface Note {
   id: string;
   title: string;
-  content: string;
-  fileUrl?: string;
-  fileName?: string;
+  description?: string;
+  file?: string;
+  isImage?: boolean;
+  fileSize?: number;
+  fileType?: string;
+  isActive: boolean;
   courseId: string;
   course?: {
     id: string;
     title: string;
     code: string;
   };
-  teacher?: {
+  author?: {
     id: string;
     firstName: string;
     lastName: string;
   };
   createdAt: string;
+  updatedAt: string;
 }
 
 interface Course {
@@ -53,7 +57,7 @@ const NotesPage = () => {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
+    description: '',
     courseId: '',
     file: null as File | null
   });
@@ -89,7 +93,7 @@ const NotesPage = () => {
     setEditingNote(null);
     setFormData({
       title: '',
-      content: '',
+      description: '',
       courseId: '',
       file: null
     });
@@ -101,7 +105,7 @@ const NotesPage = () => {
     setEditingNote(note);
     setFormData({
       title: note.title,
-      content: note.content,
+      description: note.description || '',
       courseId: note.courseId,
       file: null
     });
@@ -138,7 +142,7 @@ const NotesPage = () => {
     // Basic validation
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.content.trim()) errors.content = 'Content is required';
+    if (!formData.description?.trim()) errors.description = 'Description is required';
     if (!formData.courseId) errors.courseId = 'Course is required';
 
     if (Object.keys(errors).length > 0) {
@@ -150,7 +154,7 @@ const NotesPage = () => {
     try {
       const submitData = new FormData();
       submitData.append('title', formData.title);
-      submitData.append('content', formData.content);
+      submitData.append('description', formData.description);
       submitData.append('courseId', formData.courseId);
       if (formData.file) {
         submitData.append('file', formData.file);
@@ -200,18 +204,25 @@ const NotesPage = () => {
       render: (title: string, note: Note) => (
         <div>
           <div className="text-sm font-medium text-gray-900">{title}</div>
-          {note.fileName && (
-            <div className="text-sm text-blue-600">📎 {note.fileName}</div>
+          {note.file && (
+            <div className="text-sm text-blue-600">
+              {note.isImage ? '🖼️' : '📎'} {note.file.split('/').pop()}
+              {note.fileSize && (
+                <span className="text-gray-500 ml-1">
+                  ({(note.fileSize / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              )}
+            </div>
           )}
         </div>
       )
     },
     {
-      key: 'content',
-      label: 'Content',
-      render: (content: string) => (
+      key: 'description',
+      label: 'Description',
+      render: (description: string) => (
         <div className="text-sm text-gray-900 max-w-xs truncate">
-          {content}
+          {description || 'No description'}
         </div>
       )
     },
@@ -225,12 +236,23 @@ const NotesPage = () => {
       )
     },
     {
-      key: 'teacher',
-      label: 'Teacher',
+      key: 'author',
+      label: 'Author',
       render: (_: any, note: Note) => (
         <div className="text-sm text-gray-900">
-          {note.teacher ? `${note.teacher.firstName} ${note.teacher.lastName}` : 'N/A'}
+          {note.author ? `${note.author.firstName} ${note.author.lastName}` : 'N/A'}
         </div>
+      )
+    },
+    {
+      key: 'isActive',
+      label: 'Status',
+      render: (isActive: boolean) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
       )
     },
     {
@@ -290,12 +312,12 @@ const NotesPage = () => {
           />
 
           <FormField
-            label="Content"
-            name="content"
+            label="Description"
+            name="description"
             type="textarea"
-            value={formData.content}
-            onChange={(value) => setFormData({ ...formData, content: value as string })}
-            error={formErrors.content}
+            value={formData.description}
+            onChange={(value) => setFormData({ ...formData, description: value as string })}
+            error={formErrors.description}
             required
             rows={6}
           />
@@ -308,10 +330,10 @@ const NotesPage = () => {
               type="file"
               onChange={handleFileChange}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.xlsx,.xls,.ppt,.pptx,.csv"
             />
             <p className="mt-1 text-sm text-gray-500">
-              Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG
+              Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, XLSX, XLS, PPT, PPTX, CSV (Max size: 10MB)
             </p>
           </div>
 

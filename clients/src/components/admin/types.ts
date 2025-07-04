@@ -4,6 +4,9 @@ export interface Course {
   description: string;
   code: string;
   credits: number;
+  price: number;
+  isFree: boolean;
+  thumbnail: string | null;
   isActive: boolean;
   teacher?: {
     id: string;

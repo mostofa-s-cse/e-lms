@@ -11,6 +11,7 @@ interface FormFieldProps {
   placeholder?: string;
   options?: { value: string; label: string }[];
   rows?: number;
+  disabled?: boolean;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -23,7 +24,8 @@ export const FormField: React.FC<FormFieldProps> = ({
   required = false,
   placeholder,
   options = [],
-  rows = 3
+  rows = 3,
+  disabled = false
 }) => {
   const renderField = () => {
     switch (type) {
@@ -36,9 +38,12 @@ export const FormField: React.FC<FormFieldProps> = ({
             placeholder={placeholder}
             required={required}
             rows={rows}
+            disabled={disabled}
             className={`mt-1 block w-full border rounded-md px-3 py-2 ${
               error ? 'border-red-500' : 'border-gray-300'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+            }`}
           />
         );
       case 'select':
@@ -48,9 +53,12 @@ export const FormField: React.FC<FormFieldProps> = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             required={required}
+            disabled={disabled}
             className={`mt-1 block w-full border rounded-md px-3 py-2 ${
               error ? 'border-red-500' : 'border-gray-300'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+            }`}
           >
             <option value="">Select {label}</option>
             {options.map((option) => (
@@ -69,9 +77,12 @@ export const FormField: React.FC<FormFieldProps> = ({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             required={required}
+            disabled={disabled}
             className={`mt-1 block w-full border rounded-md px-3 py-2 ${
               error ? 'border-red-500' : 'border-gray-300'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+            }`}
           />
         );
       default:
@@ -83,9 +94,12 @@ export const FormField: React.FC<FormFieldProps> = ({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             required={required}
+            disabled={disabled}
             className={`mt-1 block w-full border rounded-md px-3 py-2 ${
               error ? 'border-red-500' : 'border-gray-300'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+            }`}
           />
         );
     }

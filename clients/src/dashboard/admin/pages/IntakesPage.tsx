@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { intakesAPI } from '../../../services/api';
+import { intakesAPI, coursesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
@@ -11,38 +11,53 @@ import {
   handleApiError 
 } from '../../../utils/sweetAlert';
 
+interface Course {
+  id: string;
+  title: string;
+  code: string;
+}
+
 interface Intake {
   id: string;
   name: string;
-  description: string;
   startDate: string;
   endDate: string;
-  maxStudents: number;
+  amount: number;
   isActive: boolean;
   createdAt: string;
+  course: Course;
+  _count?: {
+    enrollments: number;
+  };
 }
 
 interface IntakesResponse {
   data: Intake[];
 }
 
+interface CoursesResponse {
+  data: Course[];
+}
+
 const IntakesPage = () => {
   const [intakes, setIntakes] = useState<Intake[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingIntake, setEditingIntake] = useState<Intake | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     startDate: '',
     endDate: '',
-    maxStudents: 50,
+    courseId: '',
+    amount: 0,
     isActive: true
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchIntakes();
+    fetchCourses();
   }, []);
 
   const fetchIntakes = async () => {
@@ -57,14 +72,23 @@ const IntakesPage = () => {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const response = await coursesAPI.getAll();
+      setCourses((response.data as CoursesResponse).data);
+    } catch (error) {
+      handleApiError(error, 'Failed to fetch courses');
+    }
+  };
+
   const handleCreate = () => {
     setEditingIntake(null);
     setFormData({
       name: '',
-      description: '',
       startDate: '',
       endDate: '',
-      maxStudents: 50,
+      courseId: '',
+      amount: 0,
       isActive: true
     });
     setFormErrors({});
@@ -75,10 +99,10 @@ const IntakesPage = () => {
     setEditingIntake(intake);
     setFormData({
       name: intake.name,
-      description: intake.description,
       startDate: intake.startDate.split('T')[0],
       endDate: intake.endDate.split('T')[0],
-      maxStudents: intake.maxStudents,
+      courseId: intake.course.id,
+      amount: intake.amount,
       isActive: intake.isActive
     });
     setFormErrors({});
@@ -109,10 +133,10 @@ const IntakesPage = () => {
     // Basic validation
     const errors: Record<string, string> = {};
     if (!formData.name.trim()) errors.name = 'Name is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
     if (!formData.startDate) errors.startDate = 'Start date is required';
     if (!formData.endDate) errors.endDate = 'End date is required';
-    if (formData.maxStudents < 1) errors.maxStudents = 'Maximum students must be at least 1';
+    if (!formData.courseId) errors.courseId = 'Course is required';
+    if (formData.amount < 0) errors.amount = 'Amount cannot be negative';
     
     if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
       errors.endDate = 'End date must be after start date';
@@ -164,7 +188,7 @@ const IntakesPage = () => {
       render: (name: string, intake: Intake) => (
         <div>
           <div className="text-sm font-medium text-gray-900">{name}</div>
-          <div className="text-sm text-gray-500">{intake.description}</div>
+          <div className="text-sm text-gray-500">{intake.course.title} ({intake.course.code})</div>
         </div>
       )
     },
@@ -187,11 +211,23 @@ const IntakesPage = () => {
       )
     },
     {
-      key: 'maxStudents',
-      label: 'Max Students',
-      render: (maxStudents: number) => (
+      key: 'amount',
+      label: 'Amount',
+      sortable: true,
+      render: (amount: number) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          amount === 0 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+        }`}>
+          {amount === 0 ? 'Free' : `$${amount.toFixed(2)}`}
+        </span>
+      )
+    },
+    {
+      key: 'enrollments',
+      label: 'Enrollments',
+      render: (_: any, intake: Intake) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-          {maxStudents} students
+          {intake._count?.enrollments || 0} students
         </span>
       )
     },
@@ -251,17 +287,6 @@ const IntakesPage = () => {
             required
           />
 
-          <FormField
-            label="Description"
-            name="description"
-            type="textarea"
-            value={formData.description}
-            onChange={(value) => setFormData({ ...formData, description: value as string })}
-            error={formErrors.description}
-            required
-            rows={3}
-          />
-
           <div className="grid grid-cols-2 gap-4">
             <FormField
               label="Start Date"
@@ -285,14 +310,38 @@ const IntakesPage = () => {
           </div>
 
           <FormField
-            label="Maximum Students"
-            name="maxStudents"
+            label="Amount"
+            name="amount"
             type="number"
-            value={formData.maxStudents}
-            onChange={(value) => setFormData({ ...formData, maxStudents: value as number })}
-            error={formErrors.maxStudents}
-            required
+            value={formData.amount}
+            onChange={(value) => setFormData({ ...formData, amount: value as number })}
+            error={formErrors.amount}
           />
+
+          <div className="mb-4">
+            <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-2">
+              Course <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="courseId"
+              value={formData.courseId}
+              onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                formErrors.courseId ? 'border-red-500' : 'border-gray-300'
+              }`}
+              disabled={!!editingIntake} // Disable course selection when editing
+            >
+              <option value="">Select a course</option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.title} ({course.code})
+                </option>
+              ))}
+            </select>
+            {formErrors.courseId && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.courseId}</p>
+            )}
+          </div>
 
           <div className="flex items-center">
             <input

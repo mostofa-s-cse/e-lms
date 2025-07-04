@@ -10,6 +10,7 @@ interface Course {
   description: string;
   code: string;
   credits: number;
+  price: number;
   duration: number;
   isActive: boolean;
   createdAt: string;
@@ -29,6 +30,7 @@ const CoursesPage = () => {
     description: '',
     code: '',
     credits: 3,
+    price: 0,
     duration: 12,
     isActive: true
   });
@@ -57,6 +59,7 @@ const CoursesPage = () => {
       description: '',
       code: '',
       credits: 3,
+      price: 0,
       duration: 12,
       isActive: true
     });
@@ -71,6 +74,7 @@ const CoursesPage = () => {
       description: course.description,
       code: course.code,
       credits: course.credits,
+      price: course.price,
       duration: course.duration,
       isActive: course.isActive
     });
@@ -99,6 +103,7 @@ const CoursesPage = () => {
     if (!formData.code.trim()) errors.code = 'Course code is required';
     if (formData.credits < 1) errors.credits = 'Credits must be at least 1';
     if (formData.duration < 1) errors.duration = 'Duration must be at least 1';
+    if (formData.price < 0) errors.price = 'Price cannot be negative';
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -147,6 +152,15 @@ const CoursesPage = () => {
       render: (credits: number) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
           {credits} credits
+        </span>
+      )
+    },
+    {
+      key: 'price',
+      label: 'Price',
+      render: (price: number) => (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          ${price.toFixed(2)}
         </span>
       )
     },
@@ -238,7 +252,7 @@ const CoursesPage = () => {
             rows={4}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <FormField
               label="Credits"
               name="credits"
@@ -247,6 +261,15 @@ const CoursesPage = () => {
               onChange={(value) => setFormData({ ...formData, credits: value as number })}
               error={formErrors.credits}
               required
+            />
+
+            <FormField
+              label="Price"
+              name="price"
+              type="number"
+              value={formData.price}
+              onChange={(value) => setFormData({ ...formData, price: value as number })}
+              error={formErrors.price}
             />
 
             <FormField

@@ -34,6 +34,16 @@ const CourseDetailsPage = () => {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [courseFormData, setCourseFormData] = useState({
+    title: '',
+    description: '',
+    code: '',
+    credits: 0,
+    price: 0,
+    isFree: false,
+    thumbnail: null as File | null
+  });
   
   const [formData, setFormData] = useState({
     title: '',
@@ -337,6 +347,76 @@ const CourseDetailsPage = () => {
     }
   };
 
+  const handleCourseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormErrors({});
+
+    // Basic validation
+    const errors: Record<string, string> = {};
+    if (!courseFormData.title.trim()) errors.title = 'Title is required';
+    if (!courseFormData.description.trim()) errors.description = 'Description is required';
+    if (!courseFormData.code.trim()) errors.code = 'Course code is required';
+    if (courseFormData.credits <= 0) errors.credits = 'Credits must be greater than 0';
+    if (!courseFormData.isFree && courseFormData.price < 0) errors.price = 'Price cannot be negative';
+    if (courseFormData.thumbnail instanceof File) {
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (courseFormData.thumbnail.size > maxSize) {
+        errors.thumbnail = 'Thumbnail file size must be less than 10MB';
+      }
+      
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(courseFormData.thumbnail.type)) {
+        errors.thumbnail = 'Please select a valid image file (JPG, PNG, WebP)';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    try {
+      const submitData = new FormData();
+      submitData.append('title', courseFormData.title);
+      submitData.append('description', courseFormData.description);
+      submitData.append('code', courseFormData.code);
+      submitData.append('credits', courseFormData.credits.toString());
+      submitData.append('price', courseFormData.price.toString());
+      submitData.append('isFree', courseFormData.isFree.toString());
+      
+      if (courseFormData.thumbnail) {
+        submitData.append('thumbnail', courseFormData.thumbnail);
+      }
+
+      await coursesAPI.update(course!.id, submitData);
+      showSuccessAlert(
+        'Course Updated',
+        `"${courseFormData.title}" has been successfully updated.`
+      );
+      setShowCourseModal(false);
+      fetchCourseDetails(); // Refresh the data
+    } catch (error: any) {
+      if (error.response?.data?.errors) {
+        // Handle server-side validation errors
+        const serverErrors: Record<string, string> = {};
+        Object.keys(error.response.data.errors).forEach(key => {
+          serverErrors[key] = error.response.data.errors[key][0];
+        });
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to update course');
+      }
+    }
+  };
+
+  const handleCourseThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setCourseFormData(prev => ({ ...prev, thumbnail: file }));
+    if (file) {
+      setFormErrors(prev => ({ ...prev, thumbnail: '' }));
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchCourseDetails();
@@ -413,15 +493,35 @@ const CourseDetailsPage = () => {
         <div className="text-right">
           <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
           <p className="text-gray-600">{course.code}</p>
+          <button
+            onClick={() => {
+              setCourseFormData({
+                title: course.title,
+                description: course.description,
+                code: course.code,
+                credits: course.credits,
+                price: course.price,
+                isFree: course.isFree || false,
+                thumbnail: null
+              });
+              setShowCourseModal(true);
+            }}
+            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+          >
+            Edit Course
+          </button>
         </div>
       </div>
 
-      {/* Course Status Badge */}
-      <div className="mb-6">
+      {/* Course Status and Price Badges */}
+      <div className="mb-6 flex items-center space-x-4">
         <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
           course.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
           {course.isActive ? 'Active' : 'Inactive'}
+        </span>
+        <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
+          {course.isFree ? 'Free' : `$${course.price.toFixed(2)}`}
         </span>
       </div>
 
@@ -823,6 +923,121 @@ const CourseDetailsPage = () => {
           <FormActions
             onCancel={() => setShowQuizModal(false)}
             submitText={editingQuiz ? 'Update Quiz' : 'Create Quiz'}
+          />
+        </Form>
+      </Modal>
+
+      {/* Course Edit Modal */}
+      <Modal
+        isOpen={showCourseModal}
+        onClose={() => setShowCourseModal(false)}
+        title="Edit Course"
+        size="lg"
+      >
+        <Form onSubmit={handleCourseSubmit}>
+          {formErrors.general && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {formErrors.general}
+            </div>
+          )}
+
+          <FormField
+            label="Title *"
+            name="title"
+            value={courseFormData.title}
+            onChange={(value) => setCourseFormData({ ...courseFormData, title: value as string })}
+            error={formErrors.title}
+            required
+          />
+
+          <FormField
+            label="Course Code *"
+            name="code"
+            value={courseFormData.code}
+            onChange={(value) => setCourseFormData({ ...courseFormData, code: value as string })}
+            error={formErrors.code}
+            required
+          />
+
+          <FormField
+            label="Description *"
+            name="description"
+            type="textarea"
+            value={courseFormData.description}
+            onChange={(value) => setCourseFormData({ ...courseFormData, description: value as string })}
+            error={formErrors.description}
+            required
+            rows={4}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              label="Credits *"
+              name="credits"
+              type="number"
+              value={courseFormData.credits}
+              onChange={(value) => setCourseFormData({ ...courseFormData, credits: value as number })}
+              error={formErrors.credits}
+              required
+            />
+
+            <FormField
+              label="Price"
+              name="price"
+              type="number"
+              value={courseFormData.price}
+              onChange={(value) => setCourseFormData({ ...courseFormData, price: value as number })}
+              error={formErrors.price}
+              disabled={courseFormData.isFree}
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={courseFormData.isFree}
+                onChange={(e) => setCourseFormData({ ...courseFormData, isFree: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Free Course</span>
+            </label>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Course Thumbnail
+            </label>
+            <input
+              type="file"
+              name="thumbnail"
+              onChange={handleCourseThumbnailFileChange}
+              className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                formErrors.thumbnail ? 'border-red-500' : 'border-gray-300'
+              }`}
+              accept="image/*"
+            />
+            {courseFormData.thumbnail && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  <strong>Selected:</strong> {courseFormData.thumbnail.name}
+                </p>
+                <p className="text-xs text-green-600">
+                  Size: {(courseFormData.thumbnail.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+            )}
+            {formErrors.thumbnail && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.thumbnail}</p>
+            )}
+            <p className="mt-1 text-sm text-gray-500">
+              Supported formats: JPG, PNG, WebP (Max size: 10MB) - Leave empty to keep existing thumbnail
+            </p>
+          </div>
+
+          <FormActions
+            onCancel={() => setShowCourseModal(false)}
+            submitText="Update Course"
           />
         </Form>
       </Modal>

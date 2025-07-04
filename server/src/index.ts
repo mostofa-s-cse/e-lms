@@ -78,6 +78,16 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   }
 }));
 
+// Serve course thumbnails specifically
+app.use('/uploads/course', express.static(path.join(__dirname, '../uploads/course'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.JPG') || filePath.endsWith('.png') || filePath.endsWith('.pdf') || filePath.endsWith('.docx') || filePath.endsWith('.webp')) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
+  }
+}));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({

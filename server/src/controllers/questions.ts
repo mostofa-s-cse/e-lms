@@ -17,19 +17,20 @@ export const getAllQuestions = async (req: Request, res: Response, next: NextFun
       orderBy: { createdAt: 'desc' }
     });
 
-    // Map the response to match client expectations
+    // Return questions with new schema structure
     const mappedQuestions = questions.map(q => ({
       id: q.id,
-      title: q.question, // Map question field to title
-      content: q.question, // Use question as content as well
+      question: q.question,
       type: q.type,
       options: q.options,
       correctAnswer: q.correctAnswer,
-      points: q.marks, // Map marks to points
+      marks: q.marks,
+      isActive: q.isActive,
       quizId: q.quizId,
       quiz: q.quiz,
-      teacher: q.author, // Map author to teacher
-      createdAt: q.createdAt
+      author: q.author,
+      createdAt: q.createdAt,
+      updatedAt: q.updatedAt
     }));
 
     res.json({ success: true, message: 'Questions fetched successfully', data: mappedQuestions } as ApiResponse);
@@ -57,19 +58,20 @@ export const getQuestionById = async (req: Request, res: Response, next: NextFun
       return;
     }
 
-    // Map the response to match client expectations
+    // Return question with new schema structure
     const mappedQuestion = {
       id: question.id,
-      title: question.question, // Map question field to title
-      content: question.question, // Use question as content as well
+      question: question.question,
       type: question.type,
       options: question.options,
       correctAnswer: question.correctAnswer,
-      points: question.marks, // Map marks to points
+      marks: question.marks,
+      isActive: question.isActive,
       quizId: question.quizId,
       quiz: question.quiz,
-      teacher: question.author, // Map author to teacher
-      createdAt: question.createdAt
+      author: question.author,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt
     };
     
     res.json({ success: true, message: 'Question fetched successfully', data: mappedQuestion } as ApiResponse);
@@ -98,19 +100,20 @@ export const getQuestionsByQuiz = async (req: Request, res: Response, next: Next
       orderBy: { createdAt: 'desc' }
     });
 
-    // Map the response to match client expectations
+    // Return questions with new schema structure
     const mappedQuestions = questions.map(q => ({
       id: q.id,
-      title: q.question, // Map question field to title
-      content: q.question, // Use question as content as well
+      question: q.question,
       type: q.type,
       options: q.options,
       correctAnswer: q.correctAnswer,
-      points: q.marks, // Map marks to points
+      marks: q.marks,
+      isActive: q.isActive,
       quizId: q.quizId,
       quiz: q.quiz,
-      teacher: q.author, // Map author to teacher
-      createdAt: q.createdAt
+      author: q.author,
+      createdAt: q.createdAt,
+      updatedAt: q.updatedAt
     }));
     
     res.json({ success: true, message: 'Questions fetched successfully', data: mappedQuestions } as ApiResponse);

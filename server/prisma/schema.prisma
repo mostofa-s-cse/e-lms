@@ -44,9 +44,13 @@ model Course {
   description String   @db.Text
   code        String   @unique
   credits     Int      @default(0)
+  price       Float?   @default(0.0)
+  isFree      Boolean  @default(false)
+  thumbnail   String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
 
   // Relations
   teacherId   String
@@ -65,6 +69,7 @@ model Intake {
   name      String
   startDate DateTime
   endDate   DateTime
+  amount    Float?    @default(0.0)  // 0.0 means free course
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -100,9 +105,10 @@ model Note {
   id          String   @id @default(cuid())
   title       String
   description String?  @db.Text
-  fileUrl     String
-  fileSize    Int
-  fileType    String
+  file        String?
+  isImage     Boolean?  @default(false)
+  fileSize    Int?
+  fileType    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

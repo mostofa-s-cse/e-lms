@@ -40,7 +40,7 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (data: { email: string; password: string }) => 
-    api.post('/auth/login', data),
+    api.post('auth/login', data),
   register: (data: { email: string; password: string; firstName: string; lastName: string; role: string }) => 
     api.post('/auth/register', data),
   logout: () => api.post('/auth/logout'),
@@ -50,6 +50,7 @@ export const authAPI = {
 export const usersAPI = {
   getAll: () => api.get('/users'),
   getById: (id: string) => api.get(`/users/${id}`),
+  getTeachers: () => api.get('/users?role=TEACHER'),
   create: (data: { email: string; password: string; firstName: string; lastName: string; role: string }) => 
     api.post('/users', data),
   update: (id: string, data: { firstName?: string; lastName?: string; email?: string; role?: string }) => 
@@ -62,8 +63,18 @@ export const coursesAPI = {
   getAll: () => api.get('/courses'),
   getById: (id: string) => api.get(`/courses/${id}`),
   getEnrollments: (id: string) => api.get(`/courses/${id}/enrollments`),
-  create: (data: any) => api.post('/courses', data),
-  update: (id: string, data: any) => api.put(`/courses/${id}`, data),
+  create: (data: any) => {
+    const isFormData = data instanceof FormData;
+    return api.post('/courses', data, {
+      headers: isFormData ? {} : { 'Content-Type': 'application/json' }
+    });
+  },
+  update: (id: string, data: any) => {
+    const isFormData = data instanceof FormData;
+    return api.put(`/courses/${id}`, data, {
+      headers: isFormData ? {} : { 'Content-Type': 'application/json' }
+    });
+  },
   delete: (id: string) => api.delete(`/courses/${id}`),
 };
 
