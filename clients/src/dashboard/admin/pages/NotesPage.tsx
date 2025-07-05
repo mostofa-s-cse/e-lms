@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notesAPI, coursesAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import SearchableDropdown from '../../../components/SearchableDropdown';
 import { 
   showSuccessAlert,
   showDeleteConfirmDialog, 
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
+import { DataTable } from '../../../components';
 
 interface Note {
   id: string;
@@ -248,10 +249,7 @@ const NotesPage = () => {
     }
   };
 
-  const courseOptions = courses.map(course => ({
-    value: course.id,
-    label: `${course.code} - ${course.title}`
-  }));
+
 
   const columns = [
         {
@@ -365,13 +363,15 @@ const NotesPage = () => {
             required
           />
 
-          <FormField
+          <SearchableDropdown
             label="Course"
-            name="courseId"
-            type="select"
             value={formData.courseId}
-            onChange={(value) => setFormData({ ...formData, courseId: value as string })}
-            options={courseOptions}
+            onChange={(value) => setFormData({ ...formData, courseId: value })}
+            options={courses.map(course => ({
+              value: course.id,
+              label: `${course.code} - ${course.title}`
+            }))}
+            placeholder="Select a course..."
             error={formErrors.courseId}
             required
           />

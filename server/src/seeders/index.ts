@@ -87,7 +87,7 @@ async function main() {
     await seedQuestions(prisma, users, quizzes);
 
     console.log('📊 Seeding quiz attempts...');
-    await seedQuizAttempts(prisma, users, quizzes);
+    await seedQuizAttempts();
 
     console.log('📈 Seeding evaluations...');
     await seedEvaluations(prisma, users);

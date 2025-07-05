@@ -1,332 +1,136 @@
-import { PrismaClient, UserRole } from '@prisma/client';
+import { prisma } from '../utils/database';
 
-export async function seedQuizAttempts(prisma: PrismaClient, users: any[], quizzes: any[]) {
-  const students = users.filter(user => user.role === UserRole.STUDENT);
+export const seedQuizAttempts = async () => {
+  try {
+    console.log('🌱 Seeding quiz attempts...');
 
-  const quizAttemptsData = [
-    // Programming Fundamentals Quiz Attempts
-    {
-      studentId: students[0].id,
-      quizId: quizzes.find(q => q.title === 'Programming Fundamentals Quiz')?.id,
-      score: 42,
-      totalMarks: 50,
-      isPassed: true,
-      startedAt: new Date('2024-09-15T10:05:00Z'),
-      completedAt: new Date('2024-09-15T10:25:00Z')
-    },
-    {
-      studentId: students[1].id,
-      quizId: quizzes.find(q => q.title === 'Programming Fundamentals Quiz')?.id,
-      score: 38,
-      totalMarks: 50,
-      isPassed: true,
-      startedAt: new Date('2024-09-15T10:10:00Z'),
-      completedAt: new Date('2024-09-15T10:30:00Z')
-    },
-    {
-      studentId: students[2].id,
-      quizId: quizzes.find(q => q.title === 'Programming Fundamentals Quiz')?.id,
-      score: 28,
-      totalMarks: 50,
-      isPassed: false,
-      startedAt: new Date('2024-09-15T10:15:00Z'),
-      completedAt: new Date('2024-09-15T10:40:00Z')
-    },
+    // Get all existing students, quizzes, and questions
+    const students = await prisma.user.findMany({
+      where: { role: 'STUDENT' }
+    });
 
-    // Data Structures Midterm Attempts
-    {
-      studentId: students[0].id,
-      quizId: quizzes.find(q => q.title === 'Data Structures Midterm')?.id,
-      score: 85,
-      totalMarks: 100,
-      isPassed: true,
-      startedAt: new Date('2024-10-01T14:05:00Z'),
-      completedAt: new Date('2024-10-01T14:55:00Z')
-    },
-    {
-      studentId: students[1].id,
-      quizId: quizzes.find(q => q.title === 'Data Structures Midterm')?.id,
-      score: 72,
-      totalMarks: 100,
-      isPassed: true,
-      startedAt: new Date('2024-10-01T14:10:00Z'),
-      completedAt: new Date('2024-10-01T15:05:00Z')
-    },
+    const quizzes = await prisma.quiz.findMany({
+      include: {
+        questions: {
+          where: { isActive: true }
+        }
+      }
+    });
 
-    // Calculus Basics Quiz Attempts
-    {
-      studentId: students[3].id,
-      quizId: quizzes.find(q => q.title === 'Calculus Basics Quiz')?.id,
-      score: 65,
-      totalMarks: 80,
-      isPassed: true,
-      startedAt: new Date('2024-09-20T11:05:00Z'),
-      completedAt: new Date('2024-09-20T11:40:00Z')
-    },
-    {
-      studentId: students[4].id,
-      quizId: quizzes.find(q => q.title === 'Calculus Basics Quiz')?.id,
-      score: 58,
-      totalMarks: 80,
-      isPassed: true,
-      startedAt: new Date('2024-09-20T11:10:00Z'),
-      completedAt: new Date('2024-09-20T11:45:00Z')
-    },
-    {
-      studentId: students[5].id,
-      quizId: quizzes.find(q => q.title === 'Calculus Basics Quiz')?.id,
-      score: 45,
-      totalMarks: 80,
-      isPassed: false,
-      startedAt: new Date('2024-09-20T11:15:00Z'),
-      completedAt: new Date('2024-09-20T11:50:00Z')
-    },
-
-    // Management Principles Quiz Attempts
-    {
-      studentId: students[6].id,
-      quizId: quizzes.find(q => q.title === 'Management Principles Quiz')?.id,
-      score: 48,
-      totalMarks: 60,
-      isPassed: true,
-      startedAt: new Date('2024-09-25T14:05:00Z'),
-      completedAt: new Date('2024-09-25T14:35:00Z')
-    },
-    {
-      studentId: students[7].id,
-      quizId: quizzes.find(q => q.title === 'Management Principles Quiz')?.id,
-      score: 52,
-      totalMarks: 60,
-      isPassed: true,
-      startedAt: new Date('2024-09-25T14:10:00Z'),
-      completedAt: new Date('2024-09-25T14:40:00Z')
-    },
-    {
-      studentId: students[8].id,
-      quizId: quizzes.find(q => q.title === 'Management Principles Quiz')?.id,
-      score: 35,
-      totalMarks: 60,
-      isPassed: false,
-      startedAt: new Date('2024-09-25T14:15:00Z'),
-      completedAt: new Date('2024-09-25T14:45:00Z')
-    },
-
-    // Marketing Strategy Assessment Attempts
-    {
-      studentId: students[7].id,
-      quizId: quizzes.find(q => q.title === 'Marketing Strategy Assessment')?.id,
-      score: 68,
-      totalMarks: 85,
-      isPassed: true,
-      startedAt: new Date('2024-11-05T10:05:00Z'),
-      completedAt: new Date('2024-11-05T10:45:00Z')
-    },
-    {
-      studentId: students[8].id,
-      quizId: quizzes.find(q => q.title === 'Marketing Strategy Assessment')?.id,
-      score: 55,
-      totalMarks: 85,
-      isPassed: false,
-      startedAt: new Date('2024-11-05T10:10:00Z'),
-      completedAt: new Date('2024-11-05T10:50:00Z')
-    },
-
-    // Literary Analysis Quiz Attempts
-    {
-      studentId: students[9].id,
-      quizId: quizzes.find(q => q.title === 'Literary Analysis Quiz')?.id,
-      score: 58,
-      totalMarks: 70,
-      isPassed: true,
-      startedAt: new Date('2024-09-30T15:05:00Z'),
-      completedAt: new Date('2024-09-30T15:40:00Z')
-    },
-    {
-      studentId: students[10].id,
-      quizId: quizzes.find(q => q.title === 'Literary Analysis Quiz')?.id,
-      score: 62,
-      totalMarks: 70,
-      isPassed: true,
-      startedAt: new Date('2024-09-30T15:10:00Z'),
-      completedAt: new Date('2024-09-30T15:45:00Z')
-    },
-    {
-      studentId: students[11].id,
-      quizId: quizzes.find(q => q.title === 'Literary Analysis Quiz')?.id,
-      score: 45,
-      totalMarks: 70,
-      isPassed: false,
-      startedAt: new Date('2024-09-30T15:15:00Z'),
-      completedAt: new Date('2024-09-30T15:50:00Z')
-    },
-
-    // Newton's Laws Quiz Attempts
-    {
-      studentId: students[12].id,
-      quizId: quizzes.find(q => q.title === 'Newton\'s Laws Quiz')?.id,
-      score: 52,
-      totalMarks: 65,
-      isPassed: true,
-      startedAt: new Date('2024-10-05T11:05:00Z'),
-      completedAt: new Date('2024-10-05T11:35:00Z')
-    },
-    {
-      studentId: students[13].id,
-      quizId: quizzes.find(q => q.title === 'Newton\'s Laws Quiz')?.id,
-      score: 48,
-      totalMarks: 65,
-      isPassed: true,
-      startedAt: new Date('2024-10-05T11:10:00Z'),
-      completedAt: new Date('2024-10-05T11:40:00Z')
-    },
-    {
-      studentId: students[14].id,
-      quizId: quizzes.find(q => q.title === 'Newton\'s Laws Quiz')?.id,
-      score: 38,
-      totalMarks: 65,
-      isPassed: false,
-      startedAt: new Date('2024-10-05T11:15:00Z'),
-      completedAt: new Date('2024-10-05T11:45:00Z')
-    },
-
-    // Chemistry Lab Safety Quiz Attempts
-    {
-      studentId: students[12].id,
-      quizId: quizzes.find(q => q.title === 'Chemistry Lab Safety Quiz')?.id,
-      score: 28,
-      totalMarks: 30,
-      isPassed: true,
-      startedAt: new Date('2024-09-10T09:05:00Z'),
-      completedAt: new Date('2024-09-10T09:20:00Z')
-    },
-    {
-      studentId: students[13].id,
-      quizId: quizzes.find(q => q.title === 'Chemistry Lab Safety Quiz')?.id,
-      score: 25,
-      totalMarks: 30,
-      isPassed: true,
-      startedAt: new Date('2024-09-10T09:10:00Z'),
-      completedAt: new Date('2024-09-10T09:25:00Z')
-    },
-    {
-      studentId: students[14].id,
-      quizId: quizzes.find(q => q.title === 'Chemistry Lab Safety Quiz')?.id,
-      score: 18,
-      totalMarks: 30,
-      isPassed: false,
-      startedAt: new Date('2024-09-10T09:15:00Z'),
-      completedAt: new Date('2024-09-10T09:30:00Z')
-    },
-
-    // Web Development Final Attempts
-    {
-      studentId: students[0].id,
-      quizId: quizzes.find(q => q.title === 'Web Development Final')?.id,
-      score: 125,
-      totalMarks: 150,
-      isPassed: true,
-      startedAt: new Date('2024-12-10T09:05:00Z'),
-      completedAt: new Date('2024-12-10T10:35:00Z')
-    },
-    {
-      studentId: students[1].id,
-      quizId: quizzes.find(q => q.title === 'Web Development Final')?.id,
-      score: 110,
-      totalMarks: 150,
-      isPassed: true,
-      startedAt: new Date('2024-12-10T09:10:00Z'),
-      completedAt: new Date('2024-12-10T10:40:00Z')
-    },
-
-    // Statistics Final Exam Attempts
-    {
-      studentId: students[3].id,
-      quizId: quizzes.find(q => q.title === 'Statistics Final Exam')?.id,
-      score: 165,
-      totalMarks: 200,
-      isPassed: true,
-      startedAt: new Date('2025-04-20T10:05:00Z'),
-      completedAt: new Date('2025-04-20T12:15:00Z')
-    },
-    {
-      studentId: students[4].id,
-      quizId: quizzes.find(q => q.title === 'Statistics Final Exam')?.id,
-      score: 142,
-      totalMarks: 200,
-      isPassed: true,
-      startedAt: new Date('2025-04-20T10:10:00Z'),
-      completedAt: new Date('2025-04-20T12:20:00Z')
-    },
-
-    // Financial Accounting Quiz Attempts
-    {
-      studentId: students[6].id,
-      quizId: quizzes.find(q => q.title === 'Financial Accounting Quiz')?.id,
-      score: 78,
-      totalMarks: 100,
-      isPassed: true,
-      startedAt: new Date('2024-12-05T13:05:00Z'),
-      completedAt: new Date('2024-12-05T14:15:00Z')
-    },
-    {
-      studentId: students[7].id,
-      quizId: quizzes.find(q => q.title === 'Financial Accounting Quiz')?.id,
-      score: 82,
-      totalMarks: 100,
-      isPassed: true,
-      startedAt: new Date('2024-12-05T13:10:00Z'),
-      completedAt: new Date('2024-12-05T14:20:00Z')
-    },
-
-    // Creative Writing Portfolio Review Attempts
-    {
-      studentId: students[9].id,
-      quizId: quizzes.find(q => q.title === 'Creative Writing Portfolio Review')?.id,
-      score: 78,
-      totalMarks: 100,
-      isPassed: true,
-      startedAt: new Date('2024-11-20T10:05:00Z'),
-      completedAt: new Date('2024-11-20T12:15:00Z')
-    },
-    {
-      studentId: students[10].id,
-      quizId: quizzes.find(q => q.title === 'Creative Writing Portfolio Review')?.id,
-      score: 85,
-      totalMarks: 100,
-      isPassed: true,
-      startedAt: new Date('2024-11-20T10:10:00Z'),
-      completedAt: new Date('2024-11-20T12:20:00Z')
-    },
-
-    // Energy and Conservation Quiz Attempts
-    {
-      studentId: students[12].id,
-      quizId: quizzes.find(q => q.title === 'Energy and Conservation Quiz')?.id,
-      score: 62,
-      totalMarks: 80,
-      isPassed: true,
-      startedAt: new Date('2024-11-10T14:05:00Z'),
-      completedAt: new Date('2024-11-10T14:45:00Z')
-    },
-    {
-      studentId: students[13].id,
-      quizId: quizzes.find(q => q.title === 'Energy and Conservation Quiz')?.id,
-      score: 58,
-      totalMarks: 80,
-      isPassed: true,
-      startedAt: new Date('2024-11-10T14:10:00Z'),
-      completedAt: new Date('2024-11-10T14:50:00Z')
+    if (students.length === 0 || quizzes.length === 0) {
+      console.log('⚠️  No students or quizzes found. Skipping quiz attempts seeding.');
+      return;
     }
-  ];
 
-  const quizAttempts = await Promise.all(
-    quizAttemptsData.map(attemptData => 
-      prisma.quizAttempt.create({
-        data: attemptData
-      })
-    )
-  );
+    // Create quiz attempts with answers
+    for (const quiz of quizzes) {
+      if (quiz.questions.length === 0) continue;
 
-  console.log(`✅ Created ${quizAttempts.length} quiz attempts`);
-  return quizAttempts;
-} 
+      // For each quiz, create attempts for a random subset of students (60-80% of students)
+      const studentsForThisQuiz = students.filter(() => Math.random() < 0.7);
+      
+      for (const student of studentsForThisQuiz) {
+        // Check if attempt already exists
+        const existingAttempt = await prisma.quizAttempt.findFirst({
+          where: {
+            quizId: quiz.id,
+            studentId: student.id
+          }
+        });
+
+        if (existingAttempt) {
+          console.log(`⚠️  Quiz attempt already exists for student ${student.id} and quiz ${quiz.id}`);
+          continue;
+        }
+
+        // Calculate score and create answers
+        let totalScore = 0;
+        const answers = [];
+
+        // Determine student performance level for this attempt (affects all questions)
+        const performanceLevel = Math.random();
+        let correctAnswerChance = 0.5; // Base 50% chance
+        
+        if (performanceLevel < 0.2) {
+          correctAnswerChance = 0.3; // Poor performance (30% chance)
+        } else if (performanceLevel < 0.5) {
+          correctAnswerChance = 0.6; // Average performance (60% chance)
+        } else if (performanceLevel < 0.8) {
+          correctAnswerChance = 0.8; // Good performance (80% chance)
+        } else {
+          correctAnswerChance = 0.95; // Excellent performance (95% chance)
+        }
+
+        for (const question of quiz.questions) {
+          // Simulate student answers based on performance level
+          let studentAnswer = '';
+          let isCorrect = false;
+
+          if (question.type === 'MULTIPLE_CHOICE' && question.options) {
+            const options = question.options as string[];
+            if (Math.random() < correctAnswerChance) {
+              studentAnswer = question.correctAnswer;
+              isCorrect = true;
+            } else {
+              // Pick a wrong answer
+              const wrongOptions = options.filter(opt => opt !== question.correctAnswer);
+              studentAnswer = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+              isCorrect = false;
+            }
+          } else if (question.type === 'TRUE_FALSE') {
+            if (Math.random() < correctAnswerChance) {
+              studentAnswer = question.correctAnswer;
+              isCorrect = true;
+            } else {
+              studentAnswer = question.correctAnswer === 'True' ? 'False' : 'True';
+              isCorrect = false;
+            }
+          } else {
+            // For short answer and essay, simulate some correct answers
+            if (Math.random() < correctAnswerChance * 0.8) { // Slightly harder for text answers
+              studentAnswer = question.correctAnswer;
+              isCorrect = true;
+            } else {
+              studentAnswer = 'Incorrect answer';
+              isCorrect = false;
+            }
+          }
+
+          const marksEarned = isCorrect ? question.marks : 0;
+          totalScore += marksEarned;
+
+          answers.push({
+            answer: studentAnswer,
+            isCorrect,
+            marksEarned,
+            questionId: question.id
+          });
+        }
+
+        const isPassed = totalScore >= quiz.passingMarks;
+
+        // Create the quiz attempt with answers
+        const attempt = await prisma.quizAttempt.create({
+          data: {
+            studentId: student.id,
+            quizId: quiz.id,
+            score: totalScore,
+            totalMarks: quiz.totalMarks,
+            isPassed,
+            startedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random time in last week
+            completedAt: new Date(),
+            answers: {
+              create: answers
+            }
+          }
+        });
+
+        console.log(`✅ Created quiz attempt ${attempt.id} for student ${student.firstName} ${student.lastName} on quiz "${quiz.title}" - Score: ${totalScore}/${quiz.totalMarks} (${isPassed ? 'PASSED' : 'FAILED'})`);
+      }
+    }
+
+    console.log('✅ Quiz attempts seeding completed!');
+  } catch (error) {
+    console.error('❌ Error seeding quiz attempts:', error);
+  }
+}; 

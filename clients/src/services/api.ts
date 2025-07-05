@@ -29,7 +29,7 @@ export interface User {
   profile?: UserProfile;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -200,6 +200,15 @@ export const evaluationsAPI = {
   create: (evaluationData: any) => api.post('/evaluations', evaluationData),
   update: (id: string, evaluationData: any) => api.put(`/evaluations/${id}`, evaluationData),
   delete: (id: string) => api.delete(`/evaluations/${id}`),
+};
+
+// Quiz Attempts API
+export const quizAttemptsAPI = {
+  getAll: () => api.get('/quizAttempts'),
+  getById: (id: string) => api.get(`/quizAttempts/${id}`),
+  getByQuiz: (quizId: string) => api.get(`/quizAttempts/quiz/${quizId}`),
+  create: (attemptData: any) => api.post('/quizAttempts', attemptData),
+  delete: (id: string) => api.delete(`/quizAttempts/${id}`),
 };
 
 export default api; 

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { evaluationsAPI, coursesAPI, usersAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import { 
-  showErrorAlert, 
   showSuccessAlert, 
   showDeleteConfirmDialog, 
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
+import { DataTable } from '../../../components';
 
 interface Evaluation {
   id: string;
@@ -22,11 +22,17 @@ interface Evaluation {
   feedback?: string;
   evaluatedAt: string;
   studentId: string;
+  courseId: string;
   student?: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
+  };
+  course?: {
+    id: string;
+    title: string;
+    code: string;
   };
   evaluator?: {
     id: string;
@@ -63,6 +69,7 @@ interface StudentsResponse {
 }
 
 const EvaluationsPage = () => {
+  const navigate = useNavigate();
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -76,7 +83,8 @@ const EvaluationsPage = () => {
     score: '',
     maxScore: '',
     feedback: '',
-    studentId: ''
+    studentId: '',
+    courseId: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -127,7 +135,8 @@ const EvaluationsPage = () => {
       score: '',
       maxScore: '',
       feedback: '',
-      studentId: ''
+      studentId: '',
+      courseId: ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -142,7 +151,8 @@ const EvaluationsPage = () => {
       score: evaluation.score?.toString() || '',
       maxScore: evaluation.maxScore.toString(),
       feedback: evaluation.feedback || '',
-      studentId: evaluation.studentId
+      studentId: evaluation.studentId,
+      courseId: evaluation.courseId || ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -169,6 +179,7 @@ const EvaluationsPage = () => {
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Title is required';
     if (!formData.studentId) errors.studentId = 'Student is required';
+    if (!formData.courseId) errors.courseId = 'Course is required';
     if (!formData.maxScore || parseFloat(formData.maxScore) <= 0) errors.maxScore = 'Maximum score is required and must be greater than 0';
     
     if (formData.score && formData.maxScore) {
@@ -205,6 +216,10 @@ const EvaluationsPage = () => {
     }
   };
 
+  const handleView = (evaluation: Evaluation) => {
+    navigate(`/admin/evaluations/${evaluation.id}`);
+  };
+
   const courseOptions = courses.map(course => ({
     value: course.id,
     label: `${course.code} - ${course.title}`
@@ -237,6 +252,15 @@ const EvaluationsPage = () => {
       render: (_: any, evaluation: Evaluation) => (
         <div className="text-sm text-gray-900">
           {evaluation.student ? `${evaluation.student.firstName} ${evaluation.student.lastName}` : 'N/A'}
+        </div>
+      )
+    },
+    {
+      key: 'course',
+      label: 'Course',
+      render: (_: any, evaluation: Evaluation) => (
+        <div className="text-sm text-gray-900">
+          {evaluation.course ? `${evaluation.course.code} - ${evaluation.course.title}` : 'N/A'}
         </div>
       )
     },
@@ -317,6 +341,7 @@ const EvaluationsPage = () => {
         data={evaluations}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleView}
         loading={loading}
       />
 
@@ -363,6 +388,16 @@ const EvaluationsPage = () => {
               required
             />
           </div>
+
+          <SearchableDropdown
+            label="Course"
+            value={formData.courseId}
+            onChange={(value) => setFormData({ ...formData, courseId: value })}
+            options={courseOptions}
+            placeholder="Select a course..."
+            error={formErrors.courseId}
+            required
+          />
 
           <FormField
             label="Description"

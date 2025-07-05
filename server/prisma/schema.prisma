@@ -200,6 +200,7 @@ model Question {
   quiz   Quiz @relation(fields: [quizId], references: [id])
   authorId String
   author   User @relation(fields: [authorId], references: [id])
+  answers    QuizAnswer[]
 
   @@map("questions")
 }
@@ -219,9 +220,28 @@ model QuizAttempt {
   student   User @relation(fields: [studentId], references: [id])
   quizId    String
   quiz      Quiz @relation(fields: [quizId], references: [id])
+  answers   QuizAnswer[]
 
   @@unique([studentId, quizId])
   @@map("quiz_attempts")
+}
+
+model QuizAnswer {
+  id        String   @id @default(cuid())
+  answer    String   @db.Text
+  isCorrect Boolean
+  marksEarned Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  attemptId String
+  attempt   QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@map("quiz_answers")
 }
 
 model Evaluation {

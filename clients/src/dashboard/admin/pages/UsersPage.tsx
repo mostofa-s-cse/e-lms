@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usersAPI, User } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
   showSuccessAlert, 
-  showErrorAlert, 
   showDeleteConfirmDialog, 
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
 import { Link } from 'react-router-dom';
+import { DataTable } from '../../../components';
 
 interface UsersResponse {
   data: User[];

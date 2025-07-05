@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { coursesAPI, usersAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import SearchableDropdown from '../../../components/SearchableDropdown';
@@ -12,6 +11,7 @@ import {
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
+import { DataTable } from '../../../components';
 
 interface Course {
   id: string;

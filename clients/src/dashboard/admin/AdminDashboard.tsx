@@ -21,8 +21,9 @@ import NoteViewPage from './pages/NoteViewPage';
 import VideosPage from './pages/VideosPage';
 import VideoDetailsPage from './pages/VideoDetailsPage';
 import QuizzesPage from './pages/QuizzesPage';
-import QuestionsPage from './pages/QuestionsPage';
+import QuizDetailsPage from './pages/QuizDetailsPage';
 import EvaluationsPage from './pages/EvaluationsPage';
+import EvaluationDetailsPage from './pages/EvaluationDetailsPage';
 
 const AdminDashboard = () => {
   const navigationItems = [
@@ -32,7 +33,6 @@ const AdminDashboard = () => {
     { path: '/admin/notes', label: 'Notes', icon: <FileText className="w-5 h-5" /> },
     { path: '/admin/videos', label: 'Videos', icon: <Video className="w-5 h-5" /> },
     { path: '/admin/quizzes', label: 'Quizzes', icon: <HelpCircle className="w-5 h-5" /> },
-    { path: '/admin/questions', label: 'Questions', icon: <HelpCircleIcon className="w-5 h-5" /> },
     { path: '/admin/evaluations', label: 'Evaluations', icon: <BarChart3 className="w-5 h-5" /> }
   ];
 
@@ -48,8 +48,9 @@ const AdminDashboard = () => {
       <Route path="videos" element={<VideosPage />} />
       <Route path="videos/:id" element={<VideoDetailsPage />} />
       <Route path="quizzes" element={<QuizzesPage />} />
-      <Route path="questions" element={<QuestionsPage />} />
+      <Route path="quizzes/:id" element={<QuizDetailsPage />} />
       <Route path="evaluations" element={<EvaluationsPage />} />
+      <Route path="evaluations/:id" element={<EvaluationDetailsPage />} />
     </>
   );
 

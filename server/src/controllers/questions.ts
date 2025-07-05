@@ -124,11 +124,9 @@ export const getQuestionsByQuiz = async (req: Request, res: Response, next: Next
 
 export const createQuestion = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, content, type, options, correctAnswer, points, quizId } = req.body;
+    const { question, type, options, correctAnswer, points, quizId } = req.body;
     const teacherId = req.user!.id;
     
-    // Map client fields to database fields
-    const question = title || content; // Use title or content as question
     const marks = points || 1; // Map points to marks
     
     // Check if user is the author of this quiz or admin
@@ -169,8 +167,7 @@ export const createQuestion = async (req: AuthRequest, res: Response, next: Next
     // Map the response to match client expectations
     const mappedQuestion = {
       id: questionData.id,
-      title: questionData.question, // Map question field to title
-      content: questionData.question, // Use question as content as well
+      question: questionData.question, // Map question field to title
       type: questionData.type,
       options: questionData.options,
       correctAnswer: questionData.correctAnswer,
@@ -189,12 +186,10 @@ export const createQuestion = async (req: AuthRequest, res: Response, next: Next
 
 export const updateQuestion = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, content, type, options, correctAnswer, points, isActive } = req.body;
+    const { question, type, options, correctAnswer, points, isActive } = req.body;
     const questionId = req.params.id;
     const teacherId = req.user!.id;
     
-    // Map client fields to database fields
-    const question = title || content; // Use title or content as question
     const marks = points; // Map points to marks
     
     // Check if user is the author of this question or admin
@@ -228,8 +223,7 @@ export const updateQuestion = async (req: AuthRequest, res: Response, next: Next
     // Map the response to match client expectations
     const mappedQuestion = {
       id: questionData.id,
-      title: questionData.question, // Map question field to title
-      content: questionData.question, // Use question as content as well
+      question: questionData.question, // Map question field to title
       type: questionData.type,
       options: questionData.options,
       correctAnswer: questionData.correctAnswer,

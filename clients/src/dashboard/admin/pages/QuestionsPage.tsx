@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { questionsAPI, quizzesAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import SearchableDropdown from '../../../components/SearchableDropdown';
@@ -10,6 +10,7 @@ import {
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
+import { DataTable } from '../../../components';
 
 interface Question {
   id: string;
@@ -47,6 +48,7 @@ interface QuizzesResponse {
 }
 
 const QuestionsPage = () => {
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,12 +106,38 @@ const QuestionsPage = () => {
     setShowModal(true);
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingQuestion(null);
+    setFormData({
+      question: '',
+      type: 'MULTIPLE_CHOICE',
+      options: ['', '', '', ''],
+      correctAnswer: '',
+      marks: 1,
+      isActive: true,
+      quizId: ''
+    });
+    setFormErrors({});
+  };
+
   const handleEdit = (question: Question) => {
     setEditingQuestion(question);
+    
+    // Ensure options array has 4 elements for multiple choice questions
+    let options = ['', '', '', ''];
+    if (question.type === 'MULTIPLE_CHOICE' && question.options) {
+      options = [...question.options];
+      // Pad with empty strings if less than 4 options
+      while (options.length < 4) {
+        options.push('');
+      }
+    }
+    
     setFormData({
       question: question.question,
       type: question.type,
-      options: question.options || ['', '', '', ''],
+      options: options,
       correctAnswer: question.correctAnswer,
       marks: question.marks,
       isActive: question.isActive,
@@ -173,10 +201,22 @@ const QuestionsPage = () => {
         await questionsAPI.create(submitData);
         await showSuccessAlert('Success', 'Question created successfully');
       }
+      
+      // Reset form and close modal
+      setFormData({
+        question: '',
+        type: 'MULTIPLE_CHOICE',
+        options: ['', '', '', ''],
+        correctAnswer: '',
+        marks: 1,
+        isActive: true,
+        quizId: ''
+      });
+      setEditingQuestion(null);
       setShowModal(false);
       fetchQuestions();
     } catch (error: any) {
-      handleApiError(error, 'Failed to save question');
+      handleApiError(error, editingQuestion ? 'Failed to update question' : 'Failed to create question');
     }
   };
 
@@ -195,8 +235,15 @@ const QuestionsPage = () => {
       label: 'Question',
       render: (question: string, questionObj: Question) => (
         <div>
-          <div className="text-sm font-medium text-gray-900">{question}</div>
-          <div className="text-sm text-gray-500">{questionObj.correctAnswer}</div>
+          <div className="text-sm font-medium text-gray-900 max-w-xs truncate">{question}</div>
+          <div className="text-sm text-gray-500">
+            {questionObj.type === 'MULTIPLE_CHOICE' && questionObj.options && (
+              <span>Options: {questionObj.options.length}</span>
+            )}
+            {questionObj.type === 'TRUE_FALSE' && (
+              <span>Answer: {questionObj.correctAnswer}</span>
+            )}
+          </div>
         </div>
       )
     },
@@ -248,6 +295,10 @@ const QuestionsPage = () => {
     }
   ];
 
+  const handleView = (question: Question) => {
+    navigate(`/admin/questions/${question.id}`);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -267,12 +318,13 @@ const QuestionsPage = () => {
         data={questions}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleView}
         loading={loading}
       />
 
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={handleCloseModal}
         title={editingQuestion ? 'Edit Question' : 'Create Question'}
         size="xl"
       >
@@ -311,7 +363,7 @@ const QuestionsPage = () => {
 
           <FormField
             label="Question Content"
-            name="question"
+            name="questionContent"
             type="textarea"
             value={formData.question}
             onChange={(value) => setFormData({ ...formData, question: value as string })}
@@ -325,7 +377,7 @@ const QuestionsPage = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Options
               </label>
-              {formData.options.map((option, index) => (
+              {formData.options && formData.options.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <input
                     type="radio"
@@ -337,7 +389,7 @@ const QuestionsPage = () => {
                   />
                   <input
                     type="text"
-                    value={option}
+                    value={option || ''}
                     onChange={(e) => handleOptionChange(index, e.target.value)}
                     placeholder={`Option ${index + 1}`}
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -409,7 +461,7 @@ const QuestionsPage = () => {
           </div>
 
           <FormActions
-            onCancel={() => setShowModal(false)}
+            onCancel={handleCloseModal}
             submitText={editingQuestion ? 'Update' : 'Create'}
           />
         </Form>

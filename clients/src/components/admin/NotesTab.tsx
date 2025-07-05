@@ -1,7 +1,7 @@
 import React from 'react';
-import DataTable from '../../pages/DataTable';
 import { Note } from './types';
 import { Link } from 'react-router-dom';
+import DataTable from '../DataTable';
 
 interface NotesTabProps {
   notes: Note[];

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { quizzesAPI, coursesAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
+import { useNavigate } from 'react-router-dom';
+import { quizzesAPI, coursesAPI, questionsAPI } from '../../../services/api';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import SearchableDropdown from '../../../components/SearchableDropdown';
@@ -10,6 +10,7 @@ import {
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
+import { DataTable } from '../../../components';
 
 interface Quiz {
   id: string;
@@ -50,7 +51,31 @@ interface CoursesResponse {
   data: Course[];
 }
 
+// Question interface for type safety
+interface Question {
+  id: string;
+  question: string;
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+  options?: string[];
+  correctAnswer: string;
+  marks: number;
+  isActive: boolean;
+  quizId: string;
+  quiz?: {
+    id: string;
+    title: string;
+  };
+  author?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 const QuizzesPage = () => {
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +93,22 @@ const QuizzesPage = () => {
     endTime: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Question creation state
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionFormData, setQuestionFormData] = useState({
+    question: '',
+    type: 'MULTIPLE_CHOICE' as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY',
+    options: ['', '', '', ''],
+    correctAnswer: '',
+    marks: 1,
+    isActive: true,
+    quizId: ''
+  });
+  const [questionFormErrors, setQuestionFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchQuizzes();
@@ -92,6 +133,15 @@ const QuizzesPage = () => {
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
       handleApiError(error, 'Failed to fetch courses');
+    }
+  };
+
+  const fetchQuestionsForQuiz = async (quizId: string) => {
+    try {
+      const response = await questionsAPI.getByQuiz(quizId);
+      setQuestions((response.data as any).data || []);
+    } catch (error) {
+      handleApiError(error, 'Failed to fetch questions');
     }
   };
 
@@ -176,6 +226,126 @@ const QuizzesPage = () => {
       handleApiError(error, 'Failed to save quiz');
     }
   };
+
+  const handleView = (quiz: Quiz) => {
+    navigate(`/admin/quizzes/${quiz.id}`);
+  };
+
+  // Question creation handlers
+  const handleCreateQuestion = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setEditingQuestion(null);
+    setQuestionFormData({
+      question: '',
+      type: 'MULTIPLE_CHOICE',
+      options: ['', '', '', ''],
+      correctAnswer: '',
+      marks: 1,
+      isActive: true,
+      quizId: quiz.id
+    });
+    setQuestionFormErrors({});
+    setShowQuestionModal(true);
+    fetchQuestionsForQuiz(quiz.id);
+  };
+
+  const handleEditQuestion = (question: Question) => {
+    setEditingQuestion(question);
+    setSelectedQuiz(quizzes.find(q => q.id === question.quizId) || null);
+    setQuestionFormData({
+      question: question.question,
+      type: question.type,
+      options: question.options || ['', '', '', ''],
+      correctAnswer: question.correctAnswer,
+      marks: question.marks,
+      isActive: question.isActive,
+      quizId: question.quizId
+    });
+    setQuestionFormErrors({});
+    setShowQuestionModal(true);
+  };
+
+  const handleDeleteQuestion = async (question: Question) => {
+    const result = await showDeleteConfirmDialog(`"${question.question}"`);
+    if (result.isConfirmed) {
+      try {
+        await questionsAPI.delete(question.id);
+        await showSuccessAlert('Success', 'Question deleted successfully');
+        if (selectedQuiz) {
+          fetchQuestionsForQuiz(selectedQuiz.id);
+        }
+      } catch (error) {
+        handleApiError(error, 'Failed to delete question');
+      }
+    }
+  };
+
+  const handleOptionChange = (index: number, value: string) => {
+    const newOptions = [...questionFormData.options];
+    newOptions[index] = value;
+    setQuestionFormData({ ...questionFormData, options: newOptions });
+  };
+
+  const handleQuestionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setQuestionFormErrors({});
+
+    // Basic validation
+    const errors: Record<string, string> = {};
+    if (!questionFormData.question.trim()) errors.question = 'Question is required';
+    if (!questionFormData.quizId) errors.quizId = 'Quiz is required';
+    if (questionFormData.marks < 1) errors.marks = 'Marks must be at least 1';
+
+    if (questionFormData.type === 'MULTIPLE_CHOICE') {
+      const validOptions = questionFormData.options.filter(opt => opt.trim());
+      if (validOptions.length < 2) errors.options = 'At least 2 options are required';
+      if (!questionFormData.correctAnswer.trim()) errors.correctAnswer = 'Correct answer is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      await showFormErrorAlert(errors);
+      setQuestionFormErrors(errors);
+      return;
+    }
+
+    try {
+      const submitData = {
+        ...questionFormData,
+        options: questionFormData.type === 'MULTIPLE_CHOICE' ? questionFormData.options.filter(opt => opt.trim()) : undefined
+      };
+
+      if (editingQuestion) {
+        await questionsAPI.update(editingQuestion.id, submitData);
+        await showSuccessAlert('Success', 'Question updated successfully');
+      } else {
+        await questionsAPI.create(submitData);
+        await showSuccessAlert('Success', 'Question created successfully');
+      }
+      
+      // Reset form and close modal
+      setQuestionFormData({
+        question: '',
+        type: 'MULTIPLE_CHOICE',
+        options: ['', '', '', ''],
+        correctAnswer: '',
+        marks: 1,
+        isActive: true,
+        quizId: ''
+      });
+      setSelectedQuiz(null);
+      setEditingQuestion(null);
+      setShowQuestionModal(false);
+    } catch (error: any) {
+      handleApiError(error, editingQuestion ? 'Failed to update question' : 'Failed to create question');
+    }
+  };
+
+  const questionTypeOptions = [
+    { value: 'MULTIPLE_CHOICE', label: 'Multiple Choice' },
+    { value: 'TRUE_FALSE', label: 'True/False' },
+    { value: 'SHORT_ANSWER', label: 'Short Answer' },
+    { value: 'ESSAY', label: 'Essay' }
+  ];
 
 
 
@@ -263,7 +433,16 @@ const QuizzesPage = () => {
         data={quizzes}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleView}
         loading={loading}
+        customActions={(row: Quiz) => (
+          <button
+            onClick={() => handleCreateQuestion(row)}
+            className="text-green-600 hover:text-green-900 px-2 py-1 rounded hover:bg-green-50"
+          >
+            Add Question
+          </button>
+        )}
       />
 
       <Modal
@@ -374,6 +553,161 @@ const QuizzesPage = () => {
           <FormActions
             onCancel={() => setShowModal(false)}
             submitText={editingQuiz ? 'Update' : 'Create'}
+          />
+        </Form>
+      </Modal>
+
+      {/* Question Creation Modal */}
+      <Modal
+        isOpen={showQuestionModal}
+        onClose={() => setShowQuestionModal(false)}
+        title={`${editingQuestion ? 'Edit' : 'Create'} Question for ${selectedQuiz?.title}`}
+        size="xl"
+      >
+        {/* Questions List */}
+        {questions.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Existing Questions</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {questions.map((question) => (
+                <div key={question.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{question.question}</p>
+                    <p className="text-xs text-gray-500">
+                      {question.type} • {question.marks} marks • {question.isActive ? 'Active' : 'Inactive'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditQuestion(question)}
+                      className="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded hover:bg-indigo-50 text-sm"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteQuestion(question)}
+                      className="text-red-600 hover:text-red-900 px-2 py-1 rounded hover:bg-red-50 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Form onSubmit={handleQuestionSubmit}>
+          <FormField
+            label="Question"
+            name="question"
+            value={questionFormData.question}
+            onChange={(value) => setQuestionFormData({ ...questionFormData, question: value as string })}
+            error={questionFormErrors.question}
+            required
+          />
+
+          <FormField
+            label="Question Type"
+            name="type"
+            type="select"
+            value={questionFormData.type}
+            onChange={(value) => setQuestionFormData({ ...questionFormData, type: value as any })}
+            options={questionTypeOptions}
+            required
+          />
+
+          {questionFormData.type === 'MULTIPLE_CHOICE' && (
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Options
+              </label>
+              {questionFormData.options.map((option, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    value={option}
+                    checked={questionFormData.correctAnswer === option}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, correctAnswer: e.target.value })}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <input
+                    type="text"
+                    value={option}
+                    onChange={(e) => handleOptionChange(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              ))}
+              {questionFormErrors.options && (
+                <p className="text-sm text-red-600">{questionFormErrors.options}</p>
+              )}
+              {questionFormErrors.correctAnswer && (
+                <p className="text-sm text-red-600">{questionFormErrors.correctAnswer}</p>
+              )}
+            </div>
+          )}
+
+          {questionFormData.type === 'TRUE_FALSE' && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Correct Answer
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    value="true"
+                    checked={questionFormData.correctAnswer === 'true'}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, correctAnswer: e.target.value })}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <span className="ml-2 text-sm text-gray-900">True</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    value="false"
+                    checked={questionFormData.correctAnswer === 'false'}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, correctAnswer: e.target.value })}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <span className="ml-2 text-sm text-gray-900">False</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          <FormField
+            label="Marks"
+            name="marks"
+            type="number"
+            value={questionFormData.marks}
+            onChange={(value) => setQuestionFormData({ ...questionFormData, marks: value as number })}
+            error={questionFormErrors.marks}
+            required
+          />
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isActive"
+              checked={questionFormData.isActive}
+              onChange={(e) => setQuestionFormData({ ...questionFormData, isActive: e.target.checked })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+              Active
+            </label>
+          </div>
+
+          <FormActions
+            onCancel={() => setShowQuestionModal(false)}
+            submitText={editingQuestion ? 'Update Question' : 'Create Question'}
           />
         </Form>
       </Modal>

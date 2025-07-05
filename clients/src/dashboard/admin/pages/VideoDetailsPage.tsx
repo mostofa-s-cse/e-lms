@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { videosAPI } from '../../../services/api';
 import { handleApiError } from '../../../utils/sweetAlert';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Maximize, Clock, User, BookOpen } from 'lucide-react';
+import { ArrowLeft, Clock, User, BookOpen } from 'lucide-react';
 import VideoPlayer from '../../../components/VideoPlayer';
 
 interface Video {

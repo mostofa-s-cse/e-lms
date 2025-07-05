@@ -16,6 +16,7 @@ import videoRoutes from './routes/videos';
 import quizRoutes from './routes/quizzes';
 import questionRoutes from './routes/questions';
 import evaluationRoutes from './routes/evaluations';
+import quizAttemptRoutes from './routes/quizAttempts';
 
 // Load environment variables
 dotenv.config();
@@ -117,6 +118,7 @@ app.use('/api/videos', videoRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/evaluations', evaluationRoutes);
+app.use('/api/quizAttempts', quizAttemptRoutes);
 
 // ===== 404 Fallback =====
 app.use('*', (req, res) => {

@@ -17,11 +17,11 @@ router.use(authenticateToken);
 // GET /api/questions - Get all questions
 router.get('/', getAllQuestions);
 
-// GET /api/questions/:id - Get question by ID
-router.get('/:id', getQuestionById);
-
 // GET /api/questions/quiz/:quizId - Get questions by quiz
 router.get('/quiz/:quizId', getQuestionsByQuiz);
+
+// GET /api/questions/:id - Get question by ID
+router.get('/:id', getQuestionById);
 
 // POST /api/questions - Create new question
 router.post('/', createQuestion);

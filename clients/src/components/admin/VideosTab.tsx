@@ -1,5 +1,5 @@
 import React from 'react';
-import DataTable from '../../pages/DataTable';
+import DataTable from '../DataTable';
 import { Video } from './types';
 
 interface VideosTabProps {

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { intakesAPI, coursesAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import SearchableDropdown from '../../../components/SearchableDropdown';
 import { 
   showSuccessAlert, 
-  showErrorAlert, 
   showDeleteConfirmDialog, 
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
+import { DataTable } from '../../../components';
 
 interface Course {
   id: string;
@@ -318,30 +318,19 @@ const IntakesPage = () => {
             error={formErrors.amount}
           />
 
-          <div className="mb-4">
-            <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-2">
-              Course <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="courseId"
-              value={formData.courseId}
-              onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                formErrors.courseId ? 'border-red-500' : 'border-gray-300'
-              }`}
-              disabled={!!editingIntake} // Disable course selection when editing
-            >
-              <option value="">Select a course</option>
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title} ({course.code})
-                </option>
-              ))}
-            </select>
-            {formErrors.courseId && (
-              <p className="mt-1 text-sm text-red-600">{formErrors.courseId}</p>
-            )}
-          </div>
+          <SearchableDropdown
+            label="Course"
+            value={formData.courseId}
+            onChange={(value) => setFormData({ ...formData, courseId: value })}
+            options={courses.map(course => ({
+              value: course.id,
+              label: `${course.code} - ${course.title}`
+            }))}
+            placeholder="Select a course..."
+            error={formErrors.courseId}
+            required
+            disabled={!!editingIntake} // Disable course selection when editing
+          />
 
           <div className="flex items-center">
             <input
