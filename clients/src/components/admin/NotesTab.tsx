@@ -1,6 +1,7 @@
 import React from 'react';
 import DataTable from '../../pages/DataTable';
 import { Note } from './types';
+import { Link } from 'react-router-dom';
 
 interface NotesTabProps {
   notes: Note[];
@@ -8,6 +9,7 @@ interface NotesTabProps {
   onEdit: (note: Note) => void;
   onDelete: (note: Note) => void;
   onCreate: () => void;
+  onView: (note: Note) => void;
 }
 
 const NotesTab: React.FC<NotesTabProps> = ({ 
@@ -15,7 +17,8 @@ const NotesTab: React.FC<NotesTabProps> = ({
   loading, 
   onEdit, 
   onDelete, 
-  onCreate 
+  onCreate,
+  onView
 }) => {
   return (
     <div className="space-y-6">
@@ -33,34 +36,36 @@ const NotesTab: React.FC<NotesTabProps> = ({
             key: 'title',
             label: 'Title',
             render: (title: string, note: Note) => (
-              <div>
+              <Link to={`/admin/notes/${note.id}`} className="text-sm font-medium text-gray-900">
+                <div>
                 <div className="text-sm font-medium text-gray-900">{title}</div>
                 <div className="text-sm text-gray-500 mt-1">
                   {note.description && note.description.length > 100 ? `${note.description.substring(0, 100)}...` : note.description || 'No description'}
                 </div>
-                {note.file && (
+                {note.attachment && (
                   <div className="text-sm text-blue-600 mt-1">
-                    {note.isImage ? '🖼️' : '📎'} {note.file.split('/').pop()}
-                    {note.fileSize && (
+                    {note.isImage ? '🖼️' : '📎'} {note.attachment.split('/').pop()}
+                    {note.attachmentSize && (
                       <span className="text-gray-500 ml-1">
-                        ({(note.fileSize / 1024 / 1024).toFixed(2)} MB)
+                        ({(note.attachmentSize / 1024 / 1024).toFixed(2)} MB)
                       </span>
                     )}
                   </div>
                 )}
               </div>
+              </Link>
             )
           },
           {
-            key: 'file',
+            key: 'attachment',
             label: 'File',
             render: (_: any, note: Note) => (
               <div className="text-sm text-gray-900">
-                {note.file ? (
+                {note.attachment ? (
                   <div className="flex items-center space-x-2">
                     {note.isImage ? (
                       <img
-                        src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${note.file}`}
+                        src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${note.attachment}`}
                         alt="Note file"
                         className="w-8 h-8 rounded object-cover"
                         onError={(e) => {
@@ -72,7 +77,7 @@ const NotesTab: React.FC<NotesTabProps> = ({
                         <span className="text-xs text-blue-600">📎</span>
                       </div>
                     )}
-                    <span>{note.file.split('/').pop()}</span>
+                    <span>{note.attachment.split('/').pop()}</span>
                   </div>
                 ) : (
                   'No file'
@@ -113,6 +118,7 @@ const NotesTab: React.FC<NotesTabProps> = ({
         data={notes}
         loading={loading}
         title="Course Notes"
+        onView={onView}
         onEdit={onEdit}
         onDelete={onDelete}
       />

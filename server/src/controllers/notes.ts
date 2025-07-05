@@ -140,9 +140,9 @@ export const createNote = async (req: AuthRequest, res: Response, next: NextFunc
       data: {
         title: title.trim(),
         description: description?.trim() || null,
-        file: `/uploads/notes/${req.file.filename}`,
-        fileSize: req.file.size,
-        fileType: req.file.mimetype,
+        attachment: `/uploads/notes/${req.file.filename}`,
+        attachmentSize: req.file.size,
+        attachmentType: req.file.mimetype,
         isImage,
         courseId,
         authorId: teacherId
@@ -209,8 +209,8 @@ export const updateNote = async (req: AuthRequest, res: Response, next: NextFunc
       }
       
       // Delete old file if it exists
-      if (existingNote.file) {
-        const oldFilePath = path.join(__dirname, '..', '..', existingNote.file);
+      if (existingNote.attachment) {
+        const oldFilePath = path.join(__dirname, '..', '..', existingNote.attachment);
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
         }
@@ -219,9 +219,9 @@ export const updateNote = async (req: AuthRequest, res: Response, next: NextFunc
       // Determine if the new file is an image
       const isImage = req.file.mimetype.startsWith('image/');
       
-      updateData.file = `/uploads/notes/${req.file.filename}`;
-      updateData.fileSize = req.file.size;
-      updateData.fileType = req.file.mimetype;
+      updateData.attachment = `/uploads/notes/${req.file.filename}`;
+      updateData.attachmentSize = req.file.size;
+      updateData.attachmentType = req.file.mimetype;
       updateData.isImage = isImage;
     }
     
@@ -265,8 +265,8 @@ export const deleteNote = async (req: AuthRequest, res: Response, next: NextFunc
     }
     
     // Delete the file from filesystem if it exists
-    if (existingNote.file) {
-      const filePath = path.join(__dirname, '..', '..', existingNote.file);
+    if (existingNote.attachment) {
+      const filePath = path.join(__dirname, '..', '..', existingNote.attachment);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -299,7 +299,7 @@ export const getNoteStats = async (req: Request, res: Response, next: NextFuncti
       prisma.note.count({ where: { ...whereClause, isImage: false } }),
       prisma.note.aggregate({
         where: whereClause,
-        _sum: { fileSize: true }
+        _sum: { attachmentSize: true }
       })
     ]);
     
@@ -307,8 +307,8 @@ export const getNoteStats = async (req: Request, res: Response, next: NextFuncti
       totalNotes,
       imageNotes,
       documentNotes,
-      totalSize: totalSize._sum.fileSize || 0,
-      averageSize: totalNotes > 0 ? Math.round((totalSize._sum.fileSize || 0) / totalNotes) : 0
+      totalSize: totalSize._sum.attachmentSize || 0,
+      averageSize: totalNotes > 0 ? Math.round((totalSize._sum.attachmentSize || 0) / totalNotes) : 0
     };
     
     res.json({ success: true, message: 'Note statistics fetched successfully', data: stats } as ApiResponse);

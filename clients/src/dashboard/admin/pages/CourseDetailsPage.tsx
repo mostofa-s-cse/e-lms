@@ -74,8 +74,13 @@ const CourseDetailsPage = () => {
   const [noteFormData, setNoteFormData] = useState({
     title: '',
     description: '',
-    courseId: ''
+    courseId: '',
+    attachmentSize: 0,
+    attachmentType: '',
+    isActive: true,
+    attachment: null as File | null
   });
+  const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
   const [quizFormData, setQuizFormData] = useState({
     title: '',
     description: '',
@@ -120,6 +125,16 @@ const CourseDetailsPage = () => {
     if (file) {
       setFormErrors(prev => ({ ...prev, thumbnail: '' }));
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] || null;
+    setNoteFormData({ 
+      ...noteFormData, 
+      attachment: selectedFile,
+      attachmentSize: selectedFile?.size || 0,
+      attachmentType: selectedFile?.type || ''
+    });
   };
 
   const handleCreate = () => {
@@ -292,8 +307,38 @@ const CourseDetailsPage = () => {
     // Basic validation
     const errors: Record<string, string> = {};
     if (!noteFormData.title.trim()) errors.title = 'Title is required';
-    if (!noteFormData.description.trim()) errors.description = 'Description is required';
+    if (!noteFormData.description?.trim()) errors.description = 'Description is required';
     if (!noteFormData.courseId) errors.courseId = 'Course is required';
+    
+    // File validation
+    if (!editingNote && !noteFormData.attachment) {
+      errors.attachment = 'File is required for new notes';
+    } else if (noteFormData.attachment) {
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (noteFormData.attachment.size > maxSize) {
+        errors.attachment = 'File size must be less than 10MB';
+      }
+      
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/csv'
+      ];
+      
+      if (!allowedTypes.includes(noteFormData.attachment.type)) {
+        errors.attachment = 'Please select a valid file type';
+      }
+    }
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -305,19 +350,41 @@ const CourseDetailsPage = () => {
       submitData.append('title', noteFormData.title);
       submitData.append('description', noteFormData.description);
       submitData.append('courseId', course?.id!);
+      submitData.append('isActive', noteFormData.isActive ? 'true' : 'false');
+      
+      if (noteFormData.attachment) {
+        submitData.append('attachment', noteFormData.attachment);
+        submitData.append('attachmentSize', noteFormData.attachment.size.toString());
+        submitData.append('attachmentType', noteFormData.attachment.type);
+      }
 
       if (editingNote) {
         await notesAPI.update(editingNote.id, submitData);
+        showSuccessAlert(
+          'Note Updated', 
+          `"${noteFormData.title}" has been successfully updated.`
+        );
       } else {
         await notesAPI.create(submitData);
+        showSuccessAlert(
+          'Note Created', 
+          `"${noteFormData.title}" has been successfully created.`
+        );
       }
-      
       setShowNoteModal(false);
       fetchCourseDetails(); // Refresh the data
     } catch (error: any) {
-      console.error('Failed to save note:', error);
-      if (error.response?.data?.message) {
-        setFormErrors({ general: error.response.data.message });
+      if (error.response?.data?.errors) {
+        // Handle field-specific errors from server
+        const serverErrors: Record<string, string> = {};
+        error.response.data.errors.forEach((err: any) => {
+          if (err.field) {
+            serverErrors[err.field] = err.message;
+          }
+        });
+        setFormErrors(serverErrors);
+      } else {
+        handleApiError(error, 'Failed to save note');
       }
     }
   };
@@ -659,8 +726,13 @@ const CourseDetailsPage = () => {
             setNoteFormData({
               title: note.title,
               description: note.description || '',
-              courseId: course?.id || ''
+              courseId: course?.id || '',
+              attachmentSize: note.attachmentSize || 0,
+              attachmentType: note.attachmentType || '',
+              isActive: note.isActive,
+              attachment: null
             });
+            setCurrentFileUrl(note.attachment || null);
             setShowNoteModal(true);
           }}
           onDelete={async (note: Note) => {
@@ -680,9 +752,17 @@ const CourseDetailsPage = () => {
             setNoteFormData({
               title: '',
               description: '',
-              courseId: course?.id || ''
+              courseId: course?.id || '',
+              attachmentSize: 0,
+              attachmentType: '',
+              isActive: true,
+              attachment: null
             });
+            setCurrentFileUrl(null);
             setShowNoteModal(true);
+          }}
+          onView={(note: Note) => {
+            navigate(`/admin/notes/${note.id}`);
           }}
         />
       )}
@@ -853,25 +933,32 @@ const CourseDetailsPage = () => {
       {/* Note Modal */}
       <Modal
         isOpen={showNoteModal}
-        onClose={() => setShowNoteModal(false)}
+        onClose={() => {
+          setShowNoteModal(false);
+          setCurrentFileUrl(null);
+        }}
         title={editingNote ? 'Edit Note' : 'Create Note'}
         size="lg"
       >
         <Form onSubmit={handleNoteSubmit}>
-          {formErrors.general && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {formErrors.general}
-            </div>
-          )}
-
           <FormField
             label="Title"
             name="title"
-            type="text"
             value={noteFormData.title}
             onChange={(value) => setNoteFormData({ ...noteFormData, title: value as string })}
             error={formErrors.title}
             required
+          />
+
+          <FormField
+            label="Course"
+            name="courseId"
+            type="text"
+            value={course?.title || ''}
+            onChange={() => {}} // Read-only since we're in course context
+            error={formErrors.courseId}
+            required
+            disabled
           />
 
           <FormField
@@ -885,9 +972,95 @@ const CourseDetailsPage = () => {
             rows={6}
           />
 
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                  checked={noteFormData.isActive}
+                onChange={(e) => setNoteFormData({ ...noteFormData, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">Active Status</span>
+            </label>
+            {formErrors.isActive && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.isActive}</p>
+            )} 
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Attachment {!editingNote && <span className="text-red-500">*</span>}
+            </label>
+            
+            {/* Current File Display */}
+            {currentFileUrl && !noteFormData.attachment && editingNote && (
+              <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Current File:</strong>
+                </p>
+                <div className="flex items-center space-x-2">
+                  {editingNote.isImage ? (
+                    <img
+                      src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${currentFileUrl}`}
+                      alt="Current note file"
+                      className="w-16 h-16 rounded object-cover border border-gray-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-blue-100 rounded flex items-center justify-center">
+                      <span className="text-xs text-blue-600">📎</span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">{currentFileUrl.split('/').pop()}</p>
+                            {editingNote.attachmentSize && (
+          <p className="text-xs text-gray-500">
+            {(editingNote.attachmentSize / (1024 * 1024)).toFixed(2)} MB
+          </p>
+        )}
+        {editingNote.attachmentType && (
+          <p className="text-xs text-gray-500">{editingNote.attachmentType}</p>
+        )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                formErrors.attachment ? 'border-red-500' : 'border-gray-300'
+              }`}
+              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx,.csv"
+            />
+            {noteFormData.attachment && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  <strong>Selected:</strong> {noteFormData.attachment.name}
+                </p>
+                <p className="text-xs text-green-600">
+                    Size: {(noteFormData.attachment.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+                <p className="text-xs text-green-600">
+                  Type: {noteFormData.attachment.type}
+                </p>
+              </div>
+            )}
+            {formErrors.attachment && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.attachment}</p>
+            )}
+            <p className="mt-1 text-sm text-gray-500">
+              Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, XLSX, XLS, PPT, PPTX, CSV (Max size: 10MB)
+              {editingNote && ' - Leave empty to keep existing file'}
+            </p>
+          </div>
+
           <FormActions
             onCancel={() => setShowNoteModal(false)}
-            submitText={editingNote ? 'Update Note' : 'Create Note'}
+            submitText={editingNote ? 'Update' : 'Create'}
           />
         </Form>
       </Modal>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { notesAPI, coursesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import { 
-  showSuccessAlert, 
-  showErrorAlert, 
+  showSuccessAlert,
   showDeleteConfirmDialog, 
   showFormErrorAlert,
   handleApiError 
@@ -15,10 +15,10 @@ interface Note {
   id: string;
   title: string;
   description?: string;
-  file?: string;
+  attachment?: string;
   isImage?: boolean;
-  fileSize?: number;
-  fileType?: string;
+  attachmentSize?: number;
+  attachmentType?: string;
   isActive: boolean;
   courseId: string;
   course?: {
@@ -50,6 +50,7 @@ interface CoursesResponse {
 }
 
 const NotesPage = () => {
+  const navigate = useNavigate();
   const [notes, setNotes] = useState<Note[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +60,10 @@ const NotesPage = () => {
     title: '',
     description: '',
     courseId: '',
-    file: null as File | null
+    attachmentSize: 0,
+    attachmentType: '',
+    isActive: true,
+    attachment: null as File | null
   });
   const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -94,9 +98,12 @@ const NotesPage = () => {
     setEditingNote(null);
     setFormData({
       title: '',
-      description: '',
+      description: '',  
       courseId: '',
-      file: null
+      attachment: null,
+      attachmentSize: 0,
+      attachmentType: '',
+      isActive: true,
     });
     setCurrentFileUrl(null);
     setFormErrors({});
@@ -109,11 +116,18 @@ const NotesPage = () => {
       title: note.title,
       description: note.description || '',
       courseId: note.courseId,
-      file: null
+      attachment: null,
+      attachmentSize: note.attachmentSize || 0,
+      attachmentType: note.attachmentType || '',
+      isActive: note.isActive,
     });
-    setCurrentFileUrl(note.file || null);
+    setCurrentFileUrl(note.attachment || null);
     setFormErrors({});
     setShowModal(true);
+  };
+
+  const handleView = (note: Note) => {
+    navigate(`/admin/notes/${note.id}`);
   };
 
   const handleDelete = async (note: Note) => {
@@ -134,8 +148,13 @@ const NotesPage = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData({ ...formData, file });
+    const selectedFile = e.target.files?.[0] || null;
+    setFormData({ 
+      ...formData, 
+      attachment: selectedFile,
+      attachmentSize: selectedFile?.size || 0,
+      attachmentType: selectedFile?.type || ''
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,12 +168,12 @@ const NotesPage = () => {
     if (!formData.courseId) errors.courseId = 'Course is required';
     
     // File validation
-    if (!editingNote && !formData.file) {
-      errors.file = 'File is required for new notes';
-    } else if (formData.file) {
+    if (!editingNote && !formData.attachment) {
+      errors.attachment = 'File is required for new notes';
+    } else if (formData.attachment) {
       const maxSize = 10 * 1024 * 1024; // 10MB
-      if (formData.file.size > maxSize) {
-        errors.file = 'File size must be less than 10MB';
+      if (formData.attachment.size > maxSize) {
+        errors.attachment = 'File size must be less than 10MB';
       }
       
       const allowedTypes = [
@@ -165,6 +184,7 @@ const NotesPage = () => {
         'image/jpeg',
         'image/jpg',
         'image/png',
+        'image/gif',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'application/vnd.ms-powerpoint',
@@ -172,8 +192,8 @@ const NotesPage = () => {
         'text/csv'
       ];
       
-      if (!allowedTypes.includes(formData.file.type)) {
-        errors.file = 'Please select a valid file type';
+      if (!allowedTypes.includes(formData.attachment.type)) {
+        errors.attachment = 'Please select a valid file type';
       }
     }
 
@@ -188,8 +208,12 @@ const NotesPage = () => {
       submitData.append('title', formData.title);
       submitData.append('description', formData.description);
       submitData.append('courseId', formData.courseId);
-      if (formData.file) {
-        submitData.append('file', formData.file);
+      submitData.append('isActive', formData.isActive ? 'true' : 'false');
+      
+      if (formData.attachment) {
+        submitData.append('attachment', formData.attachment);
+        submitData.append('attachmentSize', formData.attachment.size.toString());
+        submitData.append('attachmentType', formData.attachment.type);
       }
 
       if (editingNote) {
@@ -230,18 +254,23 @@ const NotesPage = () => {
   }));
 
   const columns = [
-    {
+        {
       key: 'title',
       label: 'Title',
       render: (title: string, note: Note) => (
         <div>
-          <div className="text-sm font-medium text-gray-900">{title}</div>
-          {note.file && (
+          <div 
+            className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 hover:underline"
+            onClick={() => handleView(note)}
+          >
+            {title}
+          </div>
+          {note.attachment && (
             <div className="text-sm text-blue-600">
-              {note.isImage ? '🖼️' : '📎'} {note.file.split('/').pop()}
-              {note.fileSize && (
+              {note.isImage ? '🖼️' : '📎'} {note.attachment.split('/').pop()}
+              {note.attachmentSize && (
                 <span className="text-gray-500 ml-1">
-                  ({(note.fileSize / 1024 / 1024).toFixed(2)} MB)
+                  ({(note.attachmentSize / 1024 / 1024).toFixed(2)} MB)
                 </span>
               )}
             </div>
@@ -311,6 +340,7 @@ const NotesPage = () => {
         title="Notes"
         subtitle="Manage academic notes and their details"
         data={notes}
+        onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
         loading={loading}
@@ -358,12 +388,27 @@ const NotesPage = () => {
           />
 
           <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">Active Status</span>
+            </label>
+            {formErrors.isActive && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.isActive}</p>
+            )} 
+          </div>
+
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Attachment {!editingNote && <span className="text-red-500">*</span>}
             </label>
             
             {/* Current File Display */}
-            {currentFileUrl && !formData.file && editingNote && (
+            {currentFileUrl && !formData.attachment && editingNote && (
               <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-md">
                 <p className="text-sm text-gray-700 mb-2">
                   <strong>Current File:</strong>
@@ -385,14 +430,14 @@ const NotesPage = () => {
                   )}
                   <div>
                     <p className="text-sm font-medium">{currentFileUrl.split('/').pop()}</p>
-                    {editingNote.fileSize && (
-                      <p className="text-xs text-gray-500">
-                        {(editingNote.fileSize / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    )}
-                    {editingNote.fileType && (
-                      <p className="text-xs text-gray-500">{editingNote.fileType}</p>
-                    )}
+                            {editingNote.attachmentSize && (
+          <p className="text-xs text-gray-500">
+            {(editingNote.attachmentSize / (1024 * 1024)).toFixed(2)} MB
+          </p>
+        )}
+        {editingNote.attachmentType && (
+          <p className="text-xs text-gray-500">{editingNote.attachmentType}</p>
+        )}
                   </div>
                 </div>
               </div>
@@ -404,24 +449,23 @@ const NotesPage = () => {
               className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 formErrors.file ? 'border-red-500' : 'border-gray-300'
               }`}
-              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.xlsx,.xls,.ppt,.pptx,.csv"
-              required={!editingNote}
+              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx,.csv"
             />
-            {formData.file && (
+            {formData.attachment && (
               <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
                 <p className="text-sm text-green-800">
-                  <strong>Selected:</strong> {formData.file.name}
+                  <strong>Selected:</strong> {formData.attachment.name}
                 </p>
                 <p className="text-xs text-green-600">
-                  Size: {(formData.file.size / (1024 * 1024)).toFixed(2)} MB
+                  Size: {(formData.attachment.size / (1024 * 1024)).toFixed(2)} MB
                 </p>
                 <p className="text-xs text-green-600">
-                  Type: {formData.file.type}
+                  Type: {formData.attachment.type}
                 </p>
               </div>
             )}
-            {formErrors.file && (
-              <p className="mt-1 text-sm text-red-600">{formErrors.file}</p>
+            {formErrors.attachment && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.attachment}</p>
             )}
             <p className="mt-1 text-sm text-gray-500">
               Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, XLSX, XLS, PPT, PPTX, CSV (Max size: 10MB)

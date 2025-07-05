@@ -8,9 +8,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Introduction to Programming Concepts',
       description: 'Comprehensive guide covering basic programming concepts, variables, data types, and control structures.',
-      file: '/uploads/notes/cs101-intro-programming.pdf',
-      fileSize: 2048576, // 2MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/cs101-intro-programming.pdf',
+      attachmentSize: 2048576, // 2MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'CS101')?.id,
@@ -19,9 +19,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Data Structures Overview',
       description: 'Detailed notes on arrays, linked lists, stacks, and queues with implementation examples.',
-      file: '/uploads/notes/cs201-data-structures.pdf',
-      fileSize: 3145728, // 3MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/cs201-data-structures.pdf',
+      attachmentSize: 3145728, // 3MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'CS201')?.id,
@@ -30,9 +30,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Web Development Fundamentals',
       description: 'HTML, CSS, and JavaScript basics with practical examples and best practices.',
-      file: '/uploads/notes/cs301-web-dev-fundamentals.pdf',
-      fileSize: 1572864, // 1.5MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/cs301-web-dev-fundamentals.pdf',
+      attachmentSize: 1572864, // 1.5MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'CS301')?.id,
@@ -41,9 +41,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Database Design Principles',
       description: 'Database normalization, ER diagrams, and SQL fundamentals for database design.',
-      file: '/uploads/notes/cs401-database-design.pdf',
-      fileSize: 2621440, // 2.5MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/cs401-database-design.pdf',
+      attachmentSize: 2621440, // 2.5MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'CS401')?.id,
@@ -54,9 +54,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Calculus Fundamentals',
       description: 'Limits, derivatives, and integrals with applications and problem-solving techniques.',
-      file: '/uploads/notes/math201-calculus.pdf',
-      fileSize: 3670016, // 3.5MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/math201-calculus.pdf',
+      attachmentSize: 3670016, // 3.5MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'MATH201')?.id,
@@ -65,9 +65,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Linear Algebra Essentials',
       description: 'Matrices, vectors, eigenvalues, and linear transformations with practical applications.',
-      file: '/uploads/notes/math201-linear-algebra.pdf',
-      fileSize: 2097152, // 2MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/math201-linear-algebra.pdf',
+      attachmentSize: 2097152, // 2MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'MATH201')?.id,
@@ -76,9 +76,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Statistical Methods',
       description: 'Descriptive statistics, probability distributions, and hypothesis testing methods.',
-      file: '/uploads/notes/math301-statistics.pdf',
-      fileSize: 2883584, // 2.75MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/math301-statistics.pdf',
+      attachmentSize: 2883584, // 2.75MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'MATH301')?.id,
@@ -89,9 +89,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Management Principles',
       description: 'Core management concepts, leadership styles, and organizational behavior theories.',
-      file: '/uploads/notes/bus301-management.pdf',
-      fileSize: 1835008, // 1.75MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/bus301-management.pdf',
+      attachmentSize: 1835008, // 1.75MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'BUS301')?.id,
@@ -100,9 +100,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Marketing Strategy',
       description: 'Market analysis, segmentation, targeting, and positioning strategies.',
-      file: '/uploads/notes/mkt201-marketing.pdf',
-      fileSize: 1572864, // 1.5MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/mkt201-marketing.pdf',
+      attachmentSize: 1572864, // 1.5MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'MKT201')?.id,
@@ -111,9 +111,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Financial Accounting Basics',
       description: 'Accounting principles, financial statements, and bookkeeping fundamentals.',
-      file: '/uploads/notes/acc201-accounting.pdf',
-      fileSize: 2359296, // 2.25MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/acc201-accounting.pdf',
+      attachmentSize: 2359296, // 2.25MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'ACC201')?.id,
@@ -122,9 +122,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'HR Management Practices',
       description: 'Recruitment, training, performance management, and employee relations.',
-      file: '/uploads/notes/hrm201-hr-practices.pdf',
-      fileSize: 1310720, // 1.25MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/hrm201-hr-practices.pdf',
+      attachmentSize: 1310720, // 1.25MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'HRM201')?.id,
@@ -135,9 +135,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Literary Analysis Techniques',
       description: 'Methods for analyzing poetry, prose, and drama with critical thinking approaches.',
-      file: '/uploads/notes/eng201-literary-analysis.pdf',
-      fileSize: 1048576, // 1MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/eng201-literary-analysis.pdf',
+      attachmentSize: 1048576, // 1MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'ENG201')?.id,
@@ -146,9 +146,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Creative Writing Workshop',
       description: 'Writing techniques, character development, and narrative structure for creative writing.',
-      file: '/uploads/notes/eng301-creative-writing.pdf',
-      fileSize: 786432, // 768KB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/eng301-creative-writing.pdf',
+      attachmentSize: 786432, // 768KB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'ENG301')?.id,
@@ -159,9 +159,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Mechanics and Motion',
       description: 'Newton\'s laws, kinematics, dynamics, and energy conservation principles.',
-      file: '/uploads/notes/phy101-mechanics.pdf',
-      fileSize: 3145728, // 3MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/phy101-mechanics.pdf',
+      attachmentSize: 3145728, // 3MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'PHY101')?.id,
@@ -170,9 +170,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Thermodynamics Fundamentals',
       description: 'Heat, temperature, entropy, and thermodynamic processes with practical applications.',
-      file: '/uploads/notes/phy101-thermodynamics.pdf',
-      fileSize: 2097152, // 2MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/phy101-thermodynamics.pdf',
+      attachmentSize: 2097152, // 2MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'PHY101')?.id,
@@ -181,9 +181,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Chemistry Laboratory Safety',
       description: 'Laboratory safety protocols, equipment usage, and experimental procedures.',
-      file: '/uploads/notes/chem101-lab-safety.pdf',
-      fileSize: 524288, // 512KB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/chem101-lab-safety.pdf',
+      attachmentSize: 524288, // 512KB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'CHEM101')?.id,
@@ -192,9 +192,9 @@ export async function seedNotes(prisma: PrismaClient, users: any[], courses: any
     {
       title: 'Digital Electronics Basics',
       description: 'Logic gates, Boolean algebra, and digital circuit design principles.',
-      file: '/uploads/notes/ee201-digital-electronics.pdf',
-      fileSize: 1835008, // 1.75MB
-      fileType: 'application/pdf',
+      attachment: '/uploads/notes/ee201-digital-electronics.pdf',
+      attachmentSize: 1835008, // 1.75MB
+      attachmentType: 'application/pdf',
       isImage: false,
       isActive: true,
       courseId: courses.find(c => c.code === 'EE201')?.id,

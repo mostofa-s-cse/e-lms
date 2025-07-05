@@ -73,10 +73,10 @@ export interface Note {
   id: string;
   title: string;
   description?: string;
-  file?: string;
+  attachment?: string;
   isImage?: boolean;
-  fileSize?: number;
-  fileType?: string;
+  attachmentSize?: number;
+  attachmentType?: string;
   isActive: boolean;
   courseId: string;
   course?: {

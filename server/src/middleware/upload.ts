@@ -14,35 +14,40 @@ const storage = multer.diskStorage({
     
     const base = path.join(__dirname, '../../uploads');
     
+    console.log('Destination check:', {
+      fieldname: file.fieldname,
+      path: req.path,
+      includesNotes: req.path?.includes('/notes')
+    });
+    
     if (file.fieldname === 'videoUrl') {
       const dir = path.join(base, 'videos');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      // console.log('Saving video to:', dir);
+      console.log('Saving video to:', dir);
       cb(null, dir);
     } else if (file.fieldname === 'thumbnail' && req.path?.includes('/courses')) {
       // Handle course thumbnail uploads
       const dir = path.join(base, 'thumbnails');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      // console.log('Saving course thumbnail to:', dir);
+      console.log('Saving course thumbnail to:', dir);
       cb(null, dir);
     } else if (file.fieldname === 'thumbnail') {
       const dir = path.join(base, 'thumbnails');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      // console.log('Saving thumbnail to:', dir);
+      console.log('Saving thumbnail to:', dir);
       cb(null, dir);
-    } else if (file.fieldname === 'file' && req.path?.includes('/notes')) {
-      // Handle notes file uploads
+    } else if (file.fieldname === 'attachment') {
       const dir = path.join(base, 'notes');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      // console.log('Saving note file to:', dir);
+      console.log('Saving note file to:', dir);
       cb(null, dir);
     } else if (file.fieldname === 'profilePicture') {
       const dir = path.join(base, 'profile');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      // console.log('Saving profile picture to:', dir);
+      console.log('Saving profile picture to:', dir);
       cb(null, dir);
     } else {
-      // console.log('Using fallback directory:', base);
+      console.log('Using fallback directory:', base);
       cb(null, base); // fallback
     }
   },
@@ -87,14 +92,20 @@ const allowedMimes = [
 ];
 
 // File filter function
-const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  console.log('File upload attempt:', {
+    fieldname: file.fieldname,
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    path: req.path
+  });
   
   if (allowedMimes.includes(file.mimetype)) {
-    console.log('File accepted');
+    console.log('File accepted - mimetype:', file.mimetype);
     cb(null, true);
   } else {
-    console.log('File rejected - invalid type');
-    cb(new Error('Invalid file type. Only images and videos are allowed.'));
+    console.log('File rejected - invalid mimetype:', file.mimetype);
+    cb(new Error(`Invalid file type: ${file.mimetype}. Allowed types: images, videos, and documents (PDF, Word, Excel, PowerPoint, text files).`));
   }
 };
 
@@ -111,7 +122,7 @@ const upload = multer({
 });
 
 // Export configured uploaders
-export const uploadSingle = upload.single('file');
+export const uploadNoteFile = upload.single('attachment');
 export const uploadMultiple = upload.array('files', 5);
 
 // Upload handler for course thumbnails
@@ -122,10 +133,6 @@ export const uploadVideoFiles = upload.fields([
   { name: 'videoUrl', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 }
 ]);
-
-// Upload handler for notes
-export const uploadNoteFile = upload.single('file');
-
 // Upload handler for profile pictures
 export const uploadProfilePicture = upload.single('profilePicture');
 

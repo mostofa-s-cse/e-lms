@@ -123,10 +123,10 @@ model Note {
   id          String   @id @default(cuid())
   title       String
   description String?  @db.Text
-  file        String?
+  attachment        String?
   isImage     Boolean?  @default(false)
-  fileSize    Int?
-  fileType    String?
+  attachmentSize    Int?
+  attachmentType    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -134,8 +134,16 @@ export const notesAPI = {
   getAll: () => api.get('/notes'),
   getById: (id: string) => api.get(`/notes/${id}`),
   getByCourse: (courseId: string) => api.get(`/notes/course/${courseId}`),
-  create: (data: any) => api.post('/notes', data),
-  update: (id: string, data: any) => api.put(`/notes/${id}`, data),
+  create: (data: any) =>{ 
+    const isFormData = data instanceof FormData;
+    const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
+    return api.post('/notes', data, { headers });
+  },
+  update: (id: string, data: any) => {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
+    return api.put(`/notes/${id}`, data, { headers });
+  },
   delete: (id: string) => api.delete(`/notes/${id}`),
 };
 

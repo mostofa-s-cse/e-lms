@@ -9,6 +9,7 @@ clients/.next
 server/uploads/videos
 server/uploads/thumbnails
 server/uploads/profile
+server/uploads/notes
 
 /.pnp
 .pnp.*

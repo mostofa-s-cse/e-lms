@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { coursesAPI, usersAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
@@ -255,8 +255,9 @@ const CoursesPage = () => {
     {
       key: 'thumbnail',
       label: 'Thumbnail',
-      render: (thumbnail: string | null) => (
-        <div className="flex items-center">
+      render: (thumbnail: string | null, course: Course) => (
+        <Link to={`/admin/courses/${course.id}`} className="cursor-pointer">
+          <div className="flex items-center">
           {thumbnail ? (
             <img
               src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${thumbnail}`}
@@ -272,14 +273,17 @@ const CoursesPage = () => {
             </div>
           )}
         </div>
+        </Link>
       )
     },
     {
       key: 'title',
       label: 'Title',
       sortable: true,
-      render: (title: string) => (
-        <div className="text-sm font-medium text-gray-900">{title}</div>
+      render: (title: string, course: Course) => (
+        <Link to={`/admin/courses/${course.id}`} className="cursor-pointer">
+          <div className="text-sm font-medium text-gray-900">{title}</div>
+        </Link>
       )
     },
     {
