@@ -12,6 +12,7 @@ import {
   ShieldUser
 } from 'lucide-react';
 import UsersPage from './pages/UsersPage';
+import UserDetailsPage from './pages/UserDetailsPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailsPage from './pages/CourseDetailsPage';
 import IntakesPage from './pages/IntakesPage';
@@ -37,6 +38,7 @@ const AdminDashboard = () => {
   const routes = (
     <>
       <Route path="users" element={<UsersPage />} />
+      <Route path="users/:id" element={<UserDetailsPage />} />
       <Route path="courses" element={<CoursesPage />} />
       <Route path="courses/:id" element={<CourseDetailsPage />} />
       <Route path="intakes" element={<IntakesPage />} />

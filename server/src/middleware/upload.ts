@@ -36,6 +36,11 @@ const storage = multer.diskStorage({
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
       // console.log('Saving note file to:', dir);
       cb(null, dir);
+    } else if (file.fieldname === 'profilePicture') {
+      const dir = path.join(base, 'profile');
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      // console.log('Saving profile picture to:', dir);
+      cb(null, dir);
     } else {
       // console.log('Using fallback directory:', base);
       cb(null, base); // fallback
@@ -58,6 +63,9 @@ const allowedMimes = [
   'image/png',
   'image/gif',
   'image/webp',
+  'image/jpg',
+  'image/svg',
+  'image/icon',
 
   // Videos
   'video/mp4',
@@ -117,6 +125,9 @@ export const uploadVideoFiles = upload.fields([
 
 // Upload handler for notes
 export const uploadNoteFile = upload.single('file');
+
+// Upload handler for profile pictures
+export const uploadProfilePicture = upload.single('profilePicture');
 
 // Error-handling middleware for uploads
 export const handleUploadError = (err: any, _req: any, res: any, next: any) => {

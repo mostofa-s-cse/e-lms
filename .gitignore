@@ -8,6 +8,7 @@ clients/build
 clients/.next
 server/uploads/videos
 server/uploads/thumbnails
+server/uploads/profile
 
 /.pnp
 .pnp.*

@@ -78,17 +78,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   }
 }));
 
-
-// Serve notes files specifically
-app.use('/uploads/notes', express.static(path.join(__dirname, '../uploads/notes'), {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.pdf') || filePath.endsWith('.docx') || filePath.endsWith('.png') || filePath.endsWith('.webp') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.JPG')) {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    }
-  }
-}));
-
 // Health check
 app.get('/health', (req, res) => {
   res.json({

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { usersAPI } from '../../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { usersAPI, User } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
@@ -10,33 +11,36 @@ import {
   showFormErrorAlert,
   handleApiError 
 } from '../../../utils/sweetAlert';
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'STUDENT' | 'TEACHER' | 'ADMIN';
-  isActive: boolean;
-  createdAt: string;
-}
+import { Link } from 'react-router-dom';
 
 interface UsersResponse {
   data: User[];
 }
 
 const UsersPage = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  console.log("editingUser",editingUser);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    role: 'STUDENT' as 'STUDENT' | 'TEACHER' | 'ADMIN'
+    role: 'STUDENT' as 'STUDENT' | 'TEACHER' | 'ADMIN',
+    isActive: true,
+    profile: {
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      profilePicture: ''
+    }
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const roleOptions = [
@@ -52,7 +56,7 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await usersAPI.getAll();
+      const response = await usersAPI.getAll('?includeProfile=true');
       setUsers((response.data as UsersResponse).data);
     } catch (error) {
       handleApiError(error, 'Failed to fetch users');
@@ -68,8 +72,18 @@ const UsersPage = () => {
       lastName: '',
       email: '',
       password: '',
-      role: 'STUDENT'
+      role: 'STUDENT',
+      isActive: true,
+      profile: {
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        profilePicture: ''
+      }
     });
+    setSelectedFile(null);
+    setPreviewUrl('');
     setFormErrors({});
     setShowModal(true);
   };
@@ -81,10 +95,33 @@ const UsersPage = () => {
       lastName: user.lastName,
       email: user.email,
       password: '',
-      role: user.role
+      role: user.role,
+      isActive: user.isActive,
+      profile: {
+        phone: user.profile?.phone || '',
+        address: user.profile?.address || '',
+        city: user.profile?.city || '',
+        state: user.profile?.state || '',
+        profilePicture: user.profile?.profilePicture || ''
+      }
     });
+    setSelectedFile(null);
+    setPreviewUrl(user.profile?.profilePicture || '');
     setFormErrors({});
     setShowModal(true);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleViewDetails = (user: User) => {
+    navigate(`/admin/users/${user.id}`);
   };
 
   const handleDelete = async (user: User) => {
@@ -122,19 +159,38 @@ const UsersPage = () => {
     }
 
     try {
+      const submitData = new FormData();
+      submitData.append('firstName', formData.firstName);
+      submitData.append('lastName', formData.lastName);
+      submitData.append('email', formData.email);
+      submitData.append('role', formData.role);
+      submitData.append('isActive', formData.isActive ? 'true' : 'false');
+      if (!editingUser) {
+        submitData.append('password', formData.password);
+      }
+
+      // Add profile data
+      const profileData = {
+        phone: formData.profile.phone,
+        address: formData.profile.address,
+        city: formData.profile.city,
+        state: formData.profile.state
+      };
+      submitData.append('profile', JSON.stringify(profileData));
+
+      // Add profile picture if selected
+      if (selectedFile) {
+        submitData.append('profilePicture', selectedFile);
+      }
+
       if (editingUser) {
-        await usersAPI.update(editingUser.id, {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          role: formData.role
-        });
+        await usersAPI.update(editingUser.id, submitData);
         showSuccessAlert(
           'User Updated', 
           `${formData.firstName} ${formData.lastName} has been successfully updated.`
         );
       } else {
-        await usersAPI.create(formData);
+        await usersAPI.create(submitData);
         showSuccessAlert(
           'User Created', 
           `${formData.firstName} ${formData.lastName} has been successfully created.`
@@ -165,12 +221,60 @@ const UsersPage = () => {
       label: 'Name',
       sortable: true,
       render: (_: any, user: User) => (
-        <div className="text-sm font-medium text-gray-900">
-          {user.firstName} {user.lastName}
+        <Link to={`/admin/users/${user.id}`}>
+          <div className="flex items-center space-x-3">
+          <div className="relative w-10 h-10 flex-shrink-0">
+            {user.profile?.profilePicture ? (
+              <img 
+                src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${user.profile.profilePicture}`} 
+                alt={`${user.firstName} ${user.lastName}`}
+                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.parentElement?.querySelector('.fallback') as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div className={`fallback absolute inset-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ${
+              user.profile?.profilePicture ? 'hidden' : ''
+            }`}>
+              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-900">
+              {user.firstName} {user.lastName}
+            </div>
+            {user.profile?.phone && (
+              <div className="text-xs text-gray-500">{user.profile.phone}</div>
+            )}
+          </div>
         </div>
+        </Link>
       )
     },
     { key: 'email', label: 'Email', sortable: true },
+    {
+      key: 'location',
+      label: 'Location',
+      sortable: false,
+      render: (_: any, user: User) => {
+        if (user.profile?.city || user.profile?.state) {
+          return (
+            <div className="text-sm text-gray-900">
+              {user.profile.city && user.profile.state 
+                ? `${user.profile.city}, ${user.profile.state}`
+                : user.profile.city || user.profile.state
+              }
+            </div>
+          );
+        }
+        return <span className="text-gray-400">Not specified</span>;
+      }
+    },
     {
       key: 'role',
       label: 'Role',
@@ -223,6 +327,7 @@ const UsersPage = () => {
         loading={loading}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleViewDetails}
         title="Users"
         subtitle="Manage system users and their roles"
         searchable={true}
@@ -285,6 +390,118 @@ const UsersPage = () => {
             error={formErrors.role}
             required
           />
+
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">Active Status</span>
+            </label>
+            {formErrors.isActive && (
+              <p className="mt-1 text-sm text-red-600">{formErrors.isActive}</p>
+            )}
+          </div>
+          
+          {/* Profile Section */}
+          <div className="border-t pt-6 mt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Information</h3>
+            
+            {/* Profile Picture Upload */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Profile Picture
+              </label>
+              <div className="flex-shrink-0 items-center space-x-16">
+                
+                 <div className="flex-shrink-0 relative">
+                   
+                 {editingUser?.profile?.profilePicture ? (
+              <img 
+                src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${editingUser.profile.profilePicture}`} 
+                alt={`${editingUser.firstName} ${editingUser.lastName}`}
+                className="w-14 h-14 absolute rounded-full object-cover border border-gray-200"
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.parentElement?.querySelector('.fallback') as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div className={`fallback absolute inset-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ${
+              editingUser?.profile?.profilePicture ? 'hidden' : ''
+            }`}>
+              {editingUser?.firstName.charAt(0)}{editingUser?.lastName.charAt(0)}
+            </div>
+                  
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    JPG, PNG, GIF up to 10MB
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Phone"
+                name="phone"
+                type="text"
+                value={formData.profile.phone}
+                onChange={(value) => setFormData({ 
+                  ...formData, 
+                  profile: { ...formData.profile, phone: value as string }
+                })}
+                error={formErrors.phone}
+              />
+              <FormField
+                label="Address"
+                name="address"
+                type="text"
+                value={formData.profile.address}
+                onChange={(value) => setFormData({ 
+                  ...formData, 
+                  profile: { ...formData.profile, address: value as string }
+                })}
+                error={formErrors.address}
+              />
+              <FormField
+                label="City"
+                name="city"
+                type="text"
+                value={formData.profile.city}
+                onChange={(value) => setFormData({ 
+                  ...formData, 
+                  profile: { ...formData.profile, city: value as string }
+                })}
+                error={formErrors.city}
+              />
+              <FormField
+                label="State"
+                name="state"
+                type="text"
+                value={formData.profile.state}
+                onChange={(value) => setFormData({ 
+                  ...formData, 
+                  profile: { ...formData.profile, state: value as string }
+                })}
+                error={formErrors.state}
+              />
+            </div>
+          </div>
+          
           <FormActions
             onCancel={() => setShowModal(false)}
             submitText={editingUser ? 'Update User' : 'Create User'}

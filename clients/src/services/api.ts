@@ -1,5 +1,34 @@
 import axios from 'axios';
 
+// API Response types
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+  error?: string;
+}
+
+// User types
+export interface UserProfile {
+  id: string;
+  phone: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  profilePicture?: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'STUDENT' | 'TEACHER' | 'ADMIN';
+  isActive: boolean;
+  createdAt: string;
+  profile?: UserProfile;
+}
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
 // Create axios instance
@@ -48,14 +77,20 @@ export const authAPI = {
 
 // Users API
 export const usersAPI = {
-  getAll: () => api.get('/users'),
-  getById: (id: string) => api.get(`/users/${id}`),
-  getTeachers: () => api.get('/users?role=TEACHER'),
-  create: (data: { email: string; password: string; firstName: string; lastName: string; role: string }) => 
-    api.post('/users', data),
-  update: (id: string, data: { firstName?: string; lastName?: string; email?: string; role?: string }) => 
-    api.put(`/users/${id}`, data),
-  delete: (id: string) => api.delete(`/users/${id}`),
+  getAll: (query?: string) => api.get<ApiResponse<User[]>>(`/users${query || ''}`),
+  getById: (id: string) => api.get<ApiResponse<User>>(`/users/${id}?includeProfile=true`),
+  getTeachers: () => api.get<ApiResponse<User[]>>('/users?role=TEACHER'),
+  create: (data: any) => {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
+    return api.post<ApiResponse<User>>('/users', data, { headers });
+  },
+  update: (id: string, data: any) => {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
+    return api.put<ApiResponse<User>>(`/users/${id}`, data, { headers });
+  },
+  delete: (id: string) => api.delete<ApiResponse>(`/users/${id}`),
 };
 
 // Courses API
