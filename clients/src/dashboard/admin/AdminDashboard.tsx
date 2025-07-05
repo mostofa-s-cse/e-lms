@@ -6,8 +6,7 @@ import {
   GraduationCap, 
   FileText, 
   Video, 
-  HelpCircle, 
-  HelpCircleIcon, 
+  HelpCircle,
   BarChart3, 
   ShieldUser
 } from 'lucide-react';
