@@ -3,6 +3,7 @@ import { evaluationsAPI, coursesAPI, usersAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import SearchableDropdown from '../../../components/SearchableDropdown';
 import { 
   showErrorAlert, 
   showSuccessAlert, 
@@ -352,13 +353,12 @@ const EvaluationsPage = () => {
               required
             />
 
-            <FormField
+            <SearchableDropdown
               label="Student"
-              name="studentId"
-              type="select"
               value={formData.studentId}
-              onChange={(value) => setFormData({ ...formData, studentId: value as string })}
+              onChange={(value) => setFormData({ ...formData, studentId: value })}
               options={studentOptions}
+              placeholder="Select a student..."
               error={formErrors.studentId}
               required
             />

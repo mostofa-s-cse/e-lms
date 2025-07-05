@@ -3,8 +3,8 @@ import { quizzesAPI, coursesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
+import SearchableDropdown from '../../../components/SearchableDropdown';
 import { 
-  showErrorAlert, 
   showSuccessAlert, 
   showDeleteConfirmDialog, 
   showFormErrorAlert,
@@ -177,10 +177,7 @@ const QuizzesPage = () => {
     }
   };
 
-  const courseOptions = courses.map(course => ({
-    value: course.id,
-    label: `${course.code} - ${course.title}`
-  }));
+
 
   const columns = [
     {
@@ -285,13 +282,15 @@ const QuizzesPage = () => {
             required
           />
 
-          <FormField
+          <SearchableDropdown
             label="Course"
-            name="courseId"
-            type="select"
             value={formData.courseId}
-            onChange={(value) => setFormData({ ...formData, courseId: value as string })}
-            options={courseOptions}
+            onChange={(value) => setFormData({ ...formData, courseId: value })}
+            options={courses.map(course => ({
+              value: course.id,
+              label: `${course.code} - ${course.title}`
+            }))}
+            placeholder="Select a course..."
             error={formErrors.courseId}
             required
           />
