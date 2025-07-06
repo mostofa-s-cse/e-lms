@@ -52,6 +52,9 @@ export const getNotesByCourse = async (req: Request, res: Response, next: NextFu
         isActive: true 
       },
       include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
         author: {
           select: { id: true, firstName: true, lastName: true }
         }

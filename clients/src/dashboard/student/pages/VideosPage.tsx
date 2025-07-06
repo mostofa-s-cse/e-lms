@@ -9,7 +9,8 @@ interface Video {
   id: string;
   title: string;
   description: string;
-  url: string;
+  videoUrl: string;
+  thumbnail?: string;
   duration: number;
   courseId: string;
   course?: {
@@ -17,12 +18,13 @@ interface Video {
     title: string;
     code: string;
   };
-  teacher?: {
+  author?: {
     id: string;
     firstName: string;
     lastName: string;
   };
   createdAt: string;
+  updatedAt: string;
 }
 
 interface Enrollment {
@@ -96,9 +98,10 @@ const VideosPage = () => {
   };
 
   const handleWatch = async (video: Video) => {
-    if (video.url) {
+    if (video.videoUrl) {
       try {
-        window.open(video.url, '_blank');
+        const videoUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${video.videoUrl}`;
+        window.open(videoUrl, '_blank');
         await showSuccessAlert('Video Opened', `Opening "${video.title}" in a new tab...`);
       } catch (error) {
         handleApiError(error, 'Failed to open video');
@@ -151,11 +154,11 @@ const VideosPage = () => {
       )
     },
     {
-      key: 'teacher',
-      label: 'Teacher',
+      key: 'author',
+      label: 'Author',
       render: (_: any, video: Video) => (
         <div className="text-sm text-gray-900">
-          {video.teacher ? `${video.teacher.firstName} ${video.teacher.lastName}` : 'N/A'}
+          {video.author ? `${video.author.firstName} ${video.author.lastName}` : 'N/A'}
         </div>
       )
     },
@@ -175,7 +178,7 @@ const VideosPage = () => {
           >
             View Details
           </button>
-          {video.url && (
+          {video.videoUrl && (
             <button
               onClick={() => handleWatch(video)}
               className="text-green-600 hover:text-green-800 text-sm font-medium"

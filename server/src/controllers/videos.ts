@@ -32,6 +32,9 @@ export const getVideosByCourse = async (req: Request, res: Response, next: NextF
         isActive: true 
       },
       include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
         author: {
           select: { id: true, firstName: true, lastName: true }
         }

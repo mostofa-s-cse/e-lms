@@ -12,7 +12,7 @@ interface Video {
   description: string;
   videoUrl: string;
   duration: number;
-  thumbnail: string | null;
+  thumbnail?: string;
   courseId: string;
   course?: {
     id: string;
@@ -20,14 +20,15 @@ interface Video {
     code: string;
     description: string;
     credits: number;
-    teacher?: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-    };
+  };
+  author?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
   };
   createdAt: string;
+  updatedAt: string;
 }
 
 interface Enrollment {
@@ -46,6 +47,7 @@ const VideoDetailsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [video, setVideo] = useState<Video | null>(null);
+  const [courseVideos, setCourseVideos] = useState<Video[]>([]);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,8 +66,28 @@ const VideoDetailsPage = () => {
       const videoData = (videoResponse.data as any).data || videoResponse.data;
       setVideo(videoData as Video);
 
-      // Fetch enrollment info for this course
+      // Fetch all videos for this course
       if (videoData.courseId) {
+        try {
+          console.log('Fetching videos for course:', videoData.courseId);
+          const courseVideosResponse = await videosAPI.getByCourse(videoData.courseId);
+          console.log('Course videos response:', courseVideosResponse);
+          
+          const courseVideosData = (courseVideosResponse.data as any).data || courseVideosResponse.data;
+          console.log('Course videos data:', courseVideosData);
+          
+          if (Array.isArray(courseVideosData)) {
+            setCourseVideos(courseVideosData as Video[]);
+          } else {
+            console.error('Course videos data is not an array:', courseVideosData);
+            setCourseVideos([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch course videos:', error);
+          setCourseVideos([]);
+        }
+
+        // Fetch enrollment info for this course
         try {
           const enrollmentResponse = await enrollmentsAPI.getByStudentAndCourse(user!.id, videoData.courseId);
           const enrollmentData = (enrollmentResponse.data as any).data || enrollmentResponse.data;
@@ -99,6 +121,10 @@ const VideoDetailsPage = () => {
       const url = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${video.videoUrl}`;
       window.open(url, '_blank');
     }
+  };
+
+  const handleVideoClick = (videoId: string) => {
+    navigate(`/student/videos/${videoId}`);
   };
 
   if (loading) {
@@ -167,6 +193,59 @@ const VideoDetailsPage = () => {
               </div>
             </div>
           )}
+
+          {/* Course Videos List */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h3 className="text-lg font-semibold mb-4">All Course Videos</h3>
+            {courseVideos.length > 0 ? (
+              <div className="space-y-3">
+                {courseVideos.map((courseVideo) => (
+                  <div
+                    key={courseVideo.id}
+                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                      courseVideo.id === video.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleVideoClick(courseVideo.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">
+                          {courseVideo.title}
+                          {courseVideo.id === video.id && (
+                            <span className="ml-2 text-blue-600 text-sm">(Current)</span>
+                          )}
+                        </h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {courseVideo.description.length > 100
+                            ? `${courseVideo.description.substring(0, 100)}...`
+                            : courseVideo.description}
+                        </p>
+                        <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                          <span className="flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {formatDuration(courseVideo.duration)}
+                          </span>
+                          <span>
+                            {new Date(courseVideo.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <Play className="w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No other videos found for this course.</p>
+                <p className="text-sm text-gray-400 mt-1">This might be the only video in the course.</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Video Details Sidebar */}
@@ -197,9 +276,9 @@ const VideoDetailsPage = () => {
               <div className="flex items-center space-x-3">
                 <User className="w-5 h-5 text-gray-500" />
                 <div>
-                  <p className="text-sm text-gray-600">Teacher</p>
+                  <p className="text-sm text-gray-600">Author</p>
                   <p className="font-medium">
-                    {video.course?.teacher ? `${video.course.teacher.firstName} ${video.course.teacher.lastName}` : 'N/A'}
+                    {video.author ? `${video.author.firstName} ${video.author.lastName}` : 'N/A'}
                   </p>
                 </div>
               </div>

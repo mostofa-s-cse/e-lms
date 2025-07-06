@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI, notesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
@@ -7,21 +8,25 @@ import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
 interface Note {
   id: string;
   title: string;
-  content: string;
-  fileUrl?: string;
-  fileName?: string;
+  description?: string;
+  attachment?: string;
+  isImage?: boolean;
+  attachmentSize?: number;
+  attachmentType?: string;
+  isActive: boolean;
   courseId: string;
   course?: {
     id: string;
     title: string;
     code: string;
   };
-  teacher?: {
+  author?: {
     id: string;
     firstName: string;
     lastName: string;
   };
   createdAt: string;
+  updatedAt: string;
 }
 
 interface Enrollment {
@@ -45,6 +50,7 @@ interface EnrollmentsResponse {
 }
 
 const NotesPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,14 +100,20 @@ const NotesPage = () => {
   };
 
   const handleDownload = async (note: Note) => {
-    if (note.fileUrl) {
+    if (note.attachment) {
       try {
-        window.open(note.fileUrl, '_blank');
-        await showSuccessAlert('Download Started', `Downloading ${note.fileName || 'file'}...`);
+        const fileUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${note.attachment}`;
+        window.open(fileUrl, '_blank');
+        const fileName = note.attachment.split('/').pop() || 'file';
+        await showSuccessAlert('Download Started', `Downloading ${fileName}...`);
       } catch (error) {
         handleApiError(error, 'Failed to download file');
       }
     }
+  };
+
+  const handleViewDetails = (note: Note) => {
+    navigate(`/student/notes/${note.id}`);
   };
 
   const columns = [
@@ -111,18 +123,18 @@ const NotesPage = () => {
       render: (title: string, note: Note) => (
         <div>
           <div className="text-sm font-medium text-gray-900">{title}</div>
-          {note.fileName && (
-            <div className="text-sm text-blue-600">📎 {note.fileName}</div>
+          {note.attachment && (
+            <div className="text-sm text-blue-600">📎 {note.attachment.split('/').pop()}</div>
           )}
         </div>
       )
     },
     {
-      key: 'content',
-      label: 'Content',
-      render: (content: string) => (
+      key: 'description',
+      label: 'Description',
+      render: (description: string) => (
         <div className="text-sm text-gray-900 max-w-xs truncate">
-          {content}
+          {description || 'No description'}
         </div>
       )
     },
@@ -136,11 +148,11 @@ const NotesPage = () => {
       )
     },
     {
-      key: 'teacher',
-      label: 'Teacher',
+      key: 'author',
+      label: 'Author',
       render: (_: any, note: Note) => (
         <div className="text-sm text-gray-900">
-          {note.teacher ? `${note.teacher.firstName} ${note.teacher.lastName}` : 'N/A'}
+          {note.author ? `${note.author.firstName} ${note.author.lastName}` : 'N/A'}
         </div>
       )
     },
@@ -153,11 +165,17 @@ const NotesPage = () => {
       key: 'actions',
       label: 'Actions',
       render: (_: any, note: Note) => (
-        <div className="text-sm font-medium">
-          {note.fileUrl && (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleViewDetails(note)}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            View Details
+          </button>
+          {note.attachment && (
             <button
               onClick={() => handleDownload(note)}
-              className="text-blue-600 hover:text-blue-900"
+              className="text-green-600 hover:text-green-800 text-sm font-medium"
             >
               Download
             </button>
