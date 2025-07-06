@@ -58,9 +58,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect to login if we're not on a public page
+      const publicPages = ['/', '/courses', '/courses/', '/about', '/contact', '/login', '/register'];
+      const currentPath = window.location.pathname;
+      
+      if (!publicPages.includes(currentPath) && !currentPath.startsWith('/courses/')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -209,6 +215,59 @@ export const quizAttemptsAPI = {
   getByQuiz: (quizId: string) => api.get(`/quizAttempts/quiz/${quizId}`),
   create: (attemptData: any) => api.post('/quizAttempts', attemptData),
   delete: (id: string) => api.delete(`/quizAttempts/${id}`),
+};
+
+// Enrollments API
+export const enrollmentsAPI = {
+  getAll: () => api.get('/enrollments'),
+  getById: (id: string) => api.get(`/enrollments/${id}`),
+  getByStudent: (studentId: string) => api.get(`/enrollments/student/${studentId}`),
+  getByCourse: (courseId: string) => api.get(`/enrollments/course/${courseId}`),
+  create: (enrollmentData: { courseId: string; intakeId?: string }) => api.post('/enrollments', enrollmentData),
+  updateStatus: (id: string, status: string) => api.patch(`/enrollments/${id}/status`, { status }),
+  delete: (id: string) => api.delete(`/enrollments/${id}`),
+};
+
+// Payments API
+export const paymentsAPI = {
+  getAll: () => api.get('/payments'),
+  getById: (id: string) => api.get(`/payments/${id}`),
+  getByUser: (userId: string) => api.get(`/payments/user/${userId}`),
+  getByEnrollment: (enrollmentId: string) => api.get(`/payments/enrollment/${enrollmentId}`),
+  create: (paymentData: {
+    userId: string;
+    enrollmentId: string;
+    amount: number;
+    currency?: string;
+    method: string;
+    referenceId?: string;
+  }) => api.post('/payments', paymentData),
+  update: (id: string, paymentData: any) => api.put(`/payments/${id}`, paymentData),
+  delete: (id: string) => api.delete(`/payments/${id}`),
+  markCompleted: (id: string, referenceId?: string) => api.patch(`/payments/${id}/complete`, { referenceId }),
+};
+
+// SSLCommerz API
+export const sslCommerzAPI = {
+  createPaymentSession: (data: any) => api.post('/payments/sslcommerz/create-session', data),
+  validatePayment: (data: any) => api.post('/payments/sslcommerz/validate', data),
+  createCartPaymentSession: (data: any) => api.post('/payments/sslcommerz/create-cart-session', data),
+};
+
+// Cart API
+export const cartAPI = {
+  getCart: (params: { userId?: string; sessionId?: string }) => 
+    api.get('/carts', { params }),
+  createOrUpdateCart: (data: { userId?: string; sessionId?: string; items: any[] }) => 
+    api.post('/carts', data),
+  addToCart: (data: { userId?: string; sessionId?: string; item: any }) => 
+    api.post('/carts/add', data),
+  removeFromCart: (itemId: string, params: { userId?: string; sessionId?: string }) => 
+    api.delete(`/carts/items/${itemId}`, { params }),
+  clearCart: (params: { userId?: string; sessionId?: string }) => 
+    api.delete('/carts/clear', { params }),
+  mergeGuestCart: (data: { userId: string; sessionId: string }) => 
+    api.post('/carts/merge', data),
 };
 
 export default api; 

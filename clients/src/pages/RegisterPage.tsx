@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { Form, FormField, FormActions } from '../components/Form';
 import { Navigation, Footer } from '../components';
 import { showSuccessAlert, showErrorAlert, showFormErrorAlert } from '../utils/sweetAlert';
@@ -36,7 +36,16 @@ const RegisterPage = () => {
   });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
+  const { register, setOnRegisterSuccess } = useAuth();
   const navigate = useNavigate();
+
+  // Set up register success callback to handle cart merging
+  useEffect(() => {
+    setOnRegisterSuccess((userId: string) => {
+      console.log('RegisterPage: Registration successful, cart will be merged on first login');
+      // The cart merging will happen automatically when the user logs in for the first time
+    });
+  }, [setOnRegisterSuccess]);
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
@@ -104,12 +113,12 @@ const RegisterPage = () => {
 
     try {
       const { confirmPassword, ...registerData } = formData;
-      await authAPI.register(registerData);
+      await register(registerData);
       
       // Registration successful - show success message and redirect
       showSuccessAlert(
         'Registration Successful!', 
-        'Your account has been created successfully. Please log in with your new account.'
+        'Your account has been created successfully. Please log in with your new account. Your cart items will be automatically transferred to your new account.'
       );
       
       // Redirect to login after a short delay

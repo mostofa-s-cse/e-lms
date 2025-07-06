@@ -13,6 +13,10 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
         },
         _count: {
           select: { enrollments: true, notes: true, videos: true, quizzes: true }
+        },
+        intakes: {
+          where: { isActive: true },
+          orderBy: { startDate: 'desc' }
         }
       }
     });

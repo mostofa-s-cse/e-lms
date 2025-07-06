@@ -35,6 +35,8 @@ model User {
   evaluations Evaluation[]
   quizAttempts QuizAttempt[]
   evaluationsGiven Evaluation[] @relation("Evaluations")
+  payments   Payment[]
+  carts      Cart[]
 
   @@map("users")
 }
@@ -78,6 +80,7 @@ model Course {
   videos      Video[]
   quizzes     Quiz[]
   enrollments Enrollment[]
+  cartItems   CartItem[]
 
   @@map("courses")
 }
@@ -114,10 +117,79 @@ model Enrollment {
   course    Course @relation(fields: [courseId], references: [id])
   intakeId  String
   intake    Intake @relation(fields: [intakeId], references: [id])
+  payments  Payment[]
 
   @@unique([studentId, courseId, intakeId])
   @@map("enrollments")
 }
+
+model Payment {
+  id           String   @id @default(cuid())
+  amount       Float
+  currency     String   @default("BDT")
+  status       PaymentStatus @default(PENDING)
+  method       PaymentMethod @default(SSLCOMMERZ)
+  referenceId  String?  @unique // SSLCommerz tran_id
+  validationId String?         // SSLCommerz val_id
+  gatewayUrl   String?         // URL for redirection or gateway callback
+  cardType     String?         // e.g., VISA, MasterCard
+  cardIssuer   String?         // e.g., City Bank
+  cardBrand    String?         // e.g., Mastercard
+  bankTranId   String?         // SSLCommerz bank transaction ID
+  errorReason  String?         // for logging failure reasons
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  enrollmentId String
+  enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id])
+
+  @@map("payments")
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String?  // null for guest users
+  sessionId String?  // for guest users
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+
+  @@unique([userId, sessionId])
+  @@map("carts")
+}
+
+model CartItem {
+  id          String   @id @default(cuid())
+  cartId      String
+  courseId    String
+  title       String
+  price       Float
+  isFree      Boolean  @default(false)
+  thumbnail   String?
+  teacherName String   // Store teacher name for cart items
+  courseCode  String?
+  intakeId    String?
+  intakeName  String?
+  intakeAmount Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  course      Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([cartId, courseId])
+  @@map("cart_items")
+}
+
 
 model Note {
   id          String   @id @default(cuid())
@@ -272,6 +344,7 @@ enum UserRole {
 }
 
 enum EnrollmentStatus {
+  PENDING
   ACTIVE
   COMPLETED
   DROPPED
@@ -290,5 +363,22 @@ enum EvaluationType {
   PROJECT
   PRESENTATION
   PARTICIPATION
+  OTHER
+}
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+  CASH
+  SSLCOMMERZ
   OTHER
 }

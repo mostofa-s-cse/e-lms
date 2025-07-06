@@ -1,12 +1,20 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import './utils/cartTest'; // Import cart test utility
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import CoursesPage from './pages/CoursesPage';
+import CourseDetailsPage from './pages/CourseDetailsPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentFailPage from './pages/PaymentFailPage';
+import PaymentCancelPage from './pages/PaymentCancelPage';
+import PaymentCheckoutPage from './pages/PaymentCheckoutPage';
+import CartCheckoutPage from './pages/CartCheckoutPage';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
 import TeacherDashboard from './dashboard/teacher/TeacherDashboard';
 import StudentDashboard from './dashboard/student/StudentDashboard';
@@ -87,11 +95,21 @@ const AppRoutes: React.FC = () => (
     <Route path="/" element={<HomePage />} />
     <Route path="/about" element={<AboutPage />} />
     <Route path="/courses" element={<CoursesPage />} />
+    <Route path="/courses/:id" element={<CourseDetailsPage />} />
     <Route path="/contact" element={<ContactPage />} />
     
     {/* Auth Pages */}
     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
     <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+    
+    {/* Payment Pages */}
+    <Route path="/payment/checkout" element={<PaymentCheckoutPage />} />
+    <Route path="/payment/success" element={<PaymentSuccessPage />} />
+    <Route path="/payment/fail" element={<PaymentFailPage />} />
+    <Route path="/payment/cancel" element={<PaymentCancelPage />} />
+    
+    {/* Cart Checkout Page */}
+    <Route path="/cart/checkout" element={<CartCheckoutPage />} />
     
     {/* Dashboard Routes */}
     <Route path="/dashboard" element={<DashboardRedirect />} />
@@ -107,9 +125,11 @@ const AppRoutes: React.FC = () => (
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
+      <CartProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </CartProvider>
     </AuthProvider>
   );
 }

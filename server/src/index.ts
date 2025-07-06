@@ -17,6 +17,10 @@ import quizRoutes from './routes/quizzes';
 import questionRoutes from './routes/questions';
 import evaluationRoutes from './routes/evaluations';
 import quizAttemptRoutes from './routes/quizAttempts';
+import enrollmentRoutes from './routes/enrollments';
+import paymentRoutes from './routes/payments';
+import sslCommerzRoutes from './routes/sslcommerz';
+import cartRoutes from './routes/carts';
 
 // Load environment variables
 dotenv.config();
@@ -119,6 +123,10 @@ app.use('/api/quizzes', quizRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/quizAttempts', quizAttemptRoutes);
+app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/payments/sslcommerz', sslCommerzRoutes);
+app.use('/api/carts', cartRoutes);
 
 // ===== 404 Fallback =====
 app.use('*', (req, res) => {

@@ -10,6 +10,7 @@ import { seedQuizzes } from './quizzes';
 import { seedQuestions } from './questions';
 import { seedQuizAttempts } from './quizAttempts';
 import { seedEvaluations } from './evaluations';
+import { seedPayments } from './payments';
 
 const prisma = new PrismaClient();
 
@@ -28,6 +29,7 @@ async function main() {
       
       // Clear existing data (optional - comment out if you want to keep existing data)
       console.log('🧹 Clearing existing data...');
+      await prisma.payment.deleteMany();
       await prisma.evaluation.deleteMany();
       await prisma.quizAttempt.deleteMany();
       await prisma.question.deleteMany();
@@ -91,6 +93,9 @@ async function main() {
 
     console.log('📈 Seeding evaluations...');
     await seedEvaluations(prisma, users);
+
+    console.log('💳 Seeding payments...');
+    await seedPayments();
 
     console.log('✅ Database seeding completed successfully!');
     console.log(`📊 Seeded ${users.length} users, ${profiles.length} profiles, ${courses.length} courses, ${intakes.length} intakes`);

@@ -1,0 +1,39 @@
+import express from 'express';
+import {
+  getAllEnrollments,
+  getEnrollmentById,
+  getEnrollmentsByStudent,
+  getEnrollmentsByCourse,
+  createEnrollment,
+  updateEnrollmentStatus,
+  deleteEnrollment,
+} from '../controllers/enrollments';
+import { authenticateToken } from '../middleware/auth';
+
+const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(authenticateToken);
+
+// Get all enrollments
+router.get('/', getAllEnrollments);
+
+// Get enrollment by ID
+router.get('/:id', getEnrollmentById);
+
+// Get enrollments by student
+router.get('/student/:studentId', getEnrollmentsByStudent);
+
+// Get enrollments by course
+router.get('/course/:courseId', getEnrollmentsByCourse);
+
+// Create new enrollment
+router.post('/', createEnrollment);
+
+// Update enrollment status
+router.patch('/:id/status', updateEnrollmentStatus);
+
+// Delete enrollment
+router.delete('/:id', deleteEnrollment);
+
+export default router; 

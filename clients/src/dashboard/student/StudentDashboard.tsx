@@ -7,7 +7,8 @@ import {
   Video, 
   HelpCircle, 
   BarChart3,
-  UserRound, 
+  UserRound,
+  CreditCard,
 } from 'lucide-react';
 import CoursesPage from './pages/CoursesPage';
 import IntakesPage from './pages/IntakesPage';
@@ -15,6 +16,7 @@ import NotesPage from './pages/NotesPage';
 import VideosPage from './pages/VideosPage';
 import QuizzesPage from './pages/QuizzesPage';
 import EvaluationsPage from './pages/EvaluationsPage';
+import PaymentsPage from './pages/PaymentsPage';
 
 const StudentDashboard = () => {
   const navigationItems = [
@@ -23,7 +25,8 @@ const StudentDashboard = () => {
     { path: '/student/notes', label: 'Course Notes', icon: <FileText className="w-5 h-5" /> },
     { path: '/student/videos', label: 'Course Videos', icon: <Video className="w-5 h-5" /> },
     { path: '/student/quizzes', label: 'My Quizzes', icon: <HelpCircle className="w-5 h-5" /> },
-    { path: '/student/evaluations', label: 'My Evaluations', icon: <BarChart3 className="w-5 h-5" /> }
+    { path: '/student/evaluations', label: 'My Evaluations', icon: <BarChart3 className="w-5 h-5" /> },
+    { path: '/student/payments', label: 'My Payments', icon: <CreditCard className="w-5 h-5" /> }
   ];
 
   const routes = (
@@ -34,6 +37,7 @@ const StudentDashboard = () => {
       <Route path="videos" element={<VideosPage />} />
       <Route path="quizzes" element={<QuizzesPage />} />
       <Route path="evaluations" element={<EvaluationsPage />} />
+      <Route path="payments" element={<PaymentsPage />} />
     </>
   );
 

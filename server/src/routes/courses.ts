@@ -6,9 +6,9 @@ import { uploadCourseThumbnail, handleUploadError } from '../middleware/upload';
 const router = Router();
 
 // Public endpoints (for authenticated users)
-router.get('/', authenticateToken, courseController.getAllCourses);
-router.get('/:id', authenticateToken, courseController.getCourseById);
-router.get('/:id/enrollments', authenticateToken, courseController.getCourseEnrollments);
+router.get('/',courseController.getAllCourses);
+router.get('/:id',courseController.getCourseById);
+router.get('/:id/enrollments',courseController.getCourseEnrollments);
 
 // Teacher/Admin endpoints
 router.post('/', authenticateToken, requireTeacher, uploadCourseThumbnail, handleUploadError, courseController.createCourse);
