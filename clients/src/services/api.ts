@@ -58,14 +58,21 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      console.log('API Interceptor: 401 error detected');
+      console.log('API Interceptor: Current path:', window.location.pathname);
+      
       // Only redirect to login if we're not on a public page
       const publicPages = ['/', '/courses', '/courses/', '/about', '/contact', '/login', '/register'];
       const currentPath = window.location.pathname;
       
       if (!publicPages.includes(currentPath) && !currentPath.startsWith('/courses/')) {
+        console.log('API Interceptor: Redirecting to login from protected page');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
+      } else {
+        console.log('API Interceptor: On public page, not redirecting');
+        // Don't clear auth data on public pages - just let the error pass through
       }
     }
     return Promise.reject(error);
@@ -75,7 +82,7 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (data: { email: string; password: string }) => 
-    api.post('auth/login', data),
+    api.post('/auth/login', data),
   register: (data: { email: string; password: string; firstName: string; lastName: string; role: string }) => 
     api.post('/auth/register', data),
   logout: () => api.post('/auth/logout'),

@@ -137,6 +137,13 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 const CART_STORAGE_KEY = 'edulms_cart';
 const CART_PRESERVE_FLAG = 'edulms_cart_preserve';
 
+// Helper function to check if we're on a public page
+const isPublicPage = () => {
+  const publicPages = ['/', '/courses', '/courses/', '/about', '/contact', '/login', '/register'];
+  const currentPath = window.location.pathname;
+  return publicPages.includes(currentPath) || currentPath.startsWith('/courses/');
+};
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
@@ -166,62 +173,88 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Set up login success callback
   useEffect(() => {
-    setOnLoginSuccess(async (userId: string) => {
+    const loginSuccessCallback = async (userId: string) => {
       console.log('CartProvider: User logged in, merging guest cart with user cart for user:', userId);
       
-      // Get the current session ID for guest cart
-      const sessionId = localStorage.getItem('edulms_session_id');
-      
-      // Check if this is a first-time login after registration
-      const shouldMergeOnLogin = localStorage.getItem('edulms_merge_cart_on_login');
-      
-      // Always attempt to merge if we have a session ID, regardless of current state
-      if (sessionId) {
-        try {
-          console.log('CartProvider: Attempting to merge guest cart with user cart...');
-          
-          // Call the merge API to move guest cart items to user cart
-          const response = await cartAPI.mergeGuestCart({ userId, sessionId });
-          const responseData = response.data as any;
-          
-          if (responseData.success) {
-            console.log('CartProvider: Guest cart merged successfully with user cart');
+      try {
+        // Get the current session ID for guest cart
+        const sessionId = localStorage.getItem('edulms_session_id');
+        
+        // Check if this is a first-time login after registration
+        const shouldMergeOnLogin = localStorage.getItem('edulms_merge_cart_on_login');
+        
+        // Always attempt to merge if we have a session ID, regardless of current state
+        if (sessionId) {
+          try {
+            console.log('CartProvider: Attempting to merge guest cart with user cart...');
             
-            // Clear the merge flag since we've successfully merged
-            localStorage.removeItem('edulms_merge_cart_on_login');
+            // Call the merge API to move guest cart items to user cart
+            const response = await cartAPI.mergeGuestCart({ userId, sessionId });
+            const responseData = response.data as any;
             
-            // Reload cart from server to get the merged data
-            const cartResponse = await cartAPI.getCart({ userId });
-            const cartData = cartResponse.data as any;
-            
-            if (cartData.success) {
-              console.log('CartProvider: Updated cart with merged data:', cartData.data);
-              dispatch({ type: 'SYNC_WITH_SERVER', payload: cartData.data });
+            if (responseData.success) {
+              console.log('CartProvider: Guest cart merged successfully with user cart');
+              
+              // Clear the merge flag since we've successfully merged
+              localStorage.removeItem('edulms_merge_cart_on_login');
+              
+              // Reload cart from server to get the merged data
+              const cartResponse = await cartAPI.getCart({ userId });
+              const cartData = cartResponse.data as any;
+              
+              if (cartData.success) {
+                console.log('CartProvider: Updated cart with merged data:', cartData.data);
+                dispatch({ type: 'SYNC_WITH_SERVER', payload: cartData.data });
+              }
+            } else {
+              console.warn('CartProvider: Failed to merge guest cart:', responseData.message);
+              // Fallback: try to sync with server to get user's existing cart
+              await syncWithServer(userId, sessionId);
             }
-          } else {
-            console.warn('CartProvider: Failed to merge guest cart:', responseData.message);
+          } catch (error) {
+            console.error('CartProvider: Error merging guest cart:', error);
             // Fallback: try to sync with server to get user's existing cart
             await syncWithServer(userId, sessionId);
           }
-        } catch (error) {
-          console.error('CartProvider: Error merging guest cart:', error);
-          // Fallback: try to sync with server to get user's existing cart
-          await syncWithServer(userId, sessionId);
+        } else {
+          console.log('CartProvider: No session ID found, syncing with server for user cart');
+          // Just sync with server to get user's existing cart
+          await syncWithServer(userId, undefined);
         }
-      } else {
-        console.log('CartProvider: No session ID found, syncing with server for user cart');
-        // Just sync with server to get user's existing cart
-        await syncWithServer(userId, undefined);
+      } catch (error) {
+        console.error('CartProvider: Critical error in login success callback:', error);
+        // Don't throw the error - login was successful, just cart merging failed
       }
-    });
-  }, [setOnLoginSuccess]);
+    };
+
+    setOnLoginSuccess(loginSuccessCallback);
+  }, []); // Remove setOnLoginSuccess dependency to prevent re-runs
 
   // Load cart from localStorage and server on mount
   useEffect(() => {
     const loadCart = async () => {
       console.log('CartProvider: Loading cart from localStorage and server...');
       
-      // First try to load from server
+      // If on public page and not authenticated, only load from localStorage
+      if (isPublicPage() && !isAuthenticated) {
+        console.log('CartProvider: On public page and not authenticated, loading from localStorage only');
+        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+        if (savedCart) {
+          try {
+            const cartData = JSON.parse(savedCart);
+            if (cartData && Array.isArray(cartData.items) && cartData.items.length > 0) {
+              dispatch({ type: 'LOAD_CART', payload: cartData });
+              localStorage.setItem(CART_PRESERVE_FLAG, 'true');
+              console.log('CartProvider: Cart loaded from localStorage with', cartData.items.length, 'items');
+            }
+          } catch (error) {
+            console.error('Error loading cart from localStorage:', error);
+          }
+        }
+        return;
+      }
+      
+      // For authenticated users or private pages, try server first
       try {
         const sessionId = localStorage.getItem('edulms_session_id');
         const userId = isAuthenticated && user ? user.id : undefined;
@@ -241,45 +274,50 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('CartProvider: Error loading cart from server:', error);
+        
+        // If it's a 401 error and we're on a public page, don't let it affect authentication
+        if (error.response?.status === 401) {
+          if (isPublicPage()) {
+            console.log('CartProvider: 401 error on public page, continuing with localStorage fallback');
+          } else {
+            console.error('CartProvider: 401 error on protected page, this might cause logout');
+          }
+        }
       }
       
-      // Fallback to localStorage only if user is not authenticated
-      if (!isAuthenticated) {
-        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-        if (savedCart) {
-          try {
-            const cartData = JSON.parse(savedCart);
-            console.log('CartProvider: Loaded cart data from localStorage:', cartData);
-            
-            // Validate cart data structure
-            if (cartData && Array.isArray(cartData.items) && cartData.items.length > 0) {
-              dispatch({ type: 'LOAD_CART', payload: cartData });
-              // Set preserve flag to prevent accidental clearing
-              localStorage.setItem(CART_PRESERVE_FLAG, 'true');
-              console.log('CartProvider: Cart loaded from localStorage with', cartData.items.length, 'items');
-            } else {
-              console.warn('CartProvider: Invalid cart data structure or empty cart, clearing');
-              localStorage.removeItem(CART_STORAGE_KEY);
-              localStorage.removeItem(CART_PRESERVE_FLAG);
-            }
-          } catch (error) {
-            console.error('Error loading cart from localStorage:', error);
-            // Clear corrupted cart data
+      // Fallback to localStorage
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        try {
+          const cartData = JSON.parse(savedCart);
+          console.log('CartProvider: Loaded cart data from localStorage:', cartData);
+          
+          // Validate cart data structure
+          if (cartData && Array.isArray(cartData.items) && cartData.items.length > 0) {
+            dispatch({ type: 'LOAD_CART', payload: cartData });
+            // Set preserve flag to prevent accidental clearing
+            localStorage.setItem(CART_PRESERVE_FLAG, 'true');
+            console.log('CartProvider: Cart loaded from localStorage with', cartData.items.length, 'items');
+          } else {
+            console.warn('CartProvider: Invalid cart data structure or empty cart, clearing');
             localStorage.removeItem(CART_STORAGE_KEY);
             localStorage.removeItem(CART_PRESERVE_FLAG);
           }
-        } else {
-          console.log('CartProvider: No saved cart found in localStorage');
+        } catch (error) {
+          console.error('Error loading cart from localStorage:', error);
+          // Clear corrupted cart data
+          localStorage.removeItem(CART_STORAGE_KEY);
+          localStorage.removeItem(CART_PRESERVE_FLAG);
         }
       } else {
-        console.log('CartProvider: User is authenticated, relying on server cart data');
+        console.log('CartProvider: No saved cart found in localStorage');
       }
     };
     
     loadCart();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]); // Only depend on user ID, not the entire user object
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -320,6 +358,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = async (item: Omit<CartItem, 'id'>) => {
     console.log('CartProvider: Adding item to cart:', item);
+    
+    // If on public page and not authenticated, only update local state
+    if (isPublicPage() && !isAuthenticated) {
+      console.log('CartProvider: On public page and not authenticated, adding to local cart only');
+      const cartItem: CartItem = {
+        ...item,
+        id: `${item.courseId}_${Date.now()}`
+      };
+      dispatch({ type: 'ADD_ITEM', payload: cartItem });
+      return;
+    }
     
     try {
       // Get session ID for guest users or user ID for logged-in users
@@ -379,6 +428,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('CartProvider: removeFromCart called with ID:', id);
     console.log('CartProvider: Current cart items before removal:', state.items);
     
+    // If on public page and not authenticated, only update local state
+    if (isPublicPage() && !isAuthenticated) {
+      console.log('CartProvider: On public page and not authenticated, removing from local cart only');
+      dispatch({ type: 'REMOVE_ITEM', payload: id });
+      
+      // Check if this is the last item being removed
+      const isLastItem = state.items.length === 1;
+      if (isLastItem) {
+        console.log('CartProvider: Last item removed, maintaining preserve flag');
+        localStorage.setItem(CART_PRESERVE_FLAG, 'true');
+      }
+      return;
+    }
+    
     try {
       // Get session ID for guest users or user ID for logged-in users
       const sessionId = localStorage.getItem('edulms_session_id');
@@ -425,6 +488,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = async () => {
     console.log('CartProvider: clearCart called - this will clear the cart');
+    
+    // If on public page and not authenticated, only update local state
+    if (isPublicPage() && !isAuthenticated) {
+      console.log('CartProvider: On public page and not authenticated, clearing local cart only');
+      localStorage.removeItem(CART_PRESERVE_FLAG);
+      localStorage.removeItem(CART_STORAGE_KEY);
+      dispatch({ type: 'CLEAR_CART' });
+      return;
+    }
     
     try {
       // Get session ID for guest users or user ID for logged-in users

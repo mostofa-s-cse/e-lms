@@ -27,10 +27,25 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
+      console.log('LoginPage: Attempting login with email:', email);
       await login(email, password);
-      showSuccessAlert('Login Successful!', 'Welcome back to EduLMS');
+      console.log('LoginPage: Login successful, navigating to home page');
+      
+      // Navigate immediately without showing alert first
       navigate('/');
+      
+      // Show success message after navigation
+      setTimeout(() => {
+        try {
+          showSuccessAlert('Login Successful!', 'Welcome back to EduLMS');
+        } catch (alertError) {
+          console.error('LoginPage: Error showing success alert:', alertError);
+        }
+      }, 500);
     } catch (error: any) {
+      console.error('LoginPage: Login error:', error);
+      console.error('LoginPage: Error message:', error.message);
+      console.error('LoginPage: Error response:', error.response);
       showErrorAlert('Login Failed', error.message || 'Invalid email or password');
     } finally {
       setLoading(false);

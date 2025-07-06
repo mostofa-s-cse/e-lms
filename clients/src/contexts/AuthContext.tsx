@@ -56,28 +56,75 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     
+    console.log('AuthContext: Checking authentication on mount');
+    console.log('AuthContext: Token exists:', !!token);
+    console.log('AuthContext: Saved user exists:', !!savedUser);
+    
     if (token && savedUser) {
       try {
         const userData = JSON.parse(savedUser);
+        console.log('AuthContext: Setting user from localStorage:', userData);
         setUser(userData);
         // Preserve cart for existing logged-in user
         localStorage.setItem('edulms_cart_preserve', 'true');
-        // Call login success callback if set
-        if (onLoginSuccess) {
-          onLoginSuccess(userData.id);
-        }
+        // Don't call login success callback here - it will be called by the separate effect
       } catch (error) {
+        console.error('AuthContext: Error parsing saved user:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+    } else {
+      console.log('AuthContext: No saved authentication found');
     }
     setLoading(false);
-  }, [onLoginSuccess]);
+  }, []); // Remove onLoginSuccess dependency to prevent re-runs
+
+  // Add a check to prevent unnecessary re-renders
+  useEffect(() => {
+    console.log('AuthContext: Authentication state changed:', {
+      isAuthenticated: !!user,
+      userId: user?.id,
+      userEmail: user?.email
+    });
+  }, [user]);
+
+  // Set up login success callback when it changes
+  useEffect(() => {
+    if (onLoginSuccess && user && typeof onLoginSuccess === 'function') {
+      console.log('AuthContext: Login success callback set, calling for existing user:', user.id);
+      try {
+        onLoginSuccess(user.id);
+      } catch (error) {
+        console.error('AuthContext: Error in login success callback:', error);
+      }
+    }
+  }, [onLoginSuccess, user?.id]);
 
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password });
-      const { token, user: userData } = (response.data as LoginResponse).data;
+      console.log('Login response:', response);
+      
+      // Handle different response structures
+      let token: string;
+      let userData: User;
+      
+      const responseData = response.data as any;
+      
+      if (responseData && responseData.data) {
+        // If response has nested data structure
+        token = responseData.data.token;
+        userData = responseData.data.user;
+      } else if (responseData && responseData.token) {
+        // If response has direct token and user
+        token = responseData.token;
+        userData = responseData.user;
+      } else {
+        throw new Error('Invalid response structure from login API');
+      }
+      
+      console.log('Extracted token:', token);
+      console.log('Extracted user:', userData);
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
@@ -85,10 +132,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Preserve cart for logged-in user
       localStorage.setItem('edulms_cart_preserve', 'true');
       // Call login success callback if set
-      if (onLoginSuccess) {
-        onLoginSuccess(userData.id);
+      if (onLoginSuccess && typeof onLoginSuccess === 'function') {
+        try {
+          console.log('AuthContext: Calling login success callback for user:', userData.id);
+          onLoginSuccess(userData.id);
+          console.log('AuthContext: Login success callback completed');
+        } catch (callbackError) {
+          console.error('AuthContext: Error in login success callback:', callbackError);
+          // Don't throw the error - login was successful, just the callback failed
+        }
       }
     } catch (error: any) {
+      console.error('Login error:', error);
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   };
@@ -142,6 +197,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     onRegisterSuccess,
     setOnRegisterSuccess
   };
+
+  // Debug authentication state
+  console.log('AuthContext: Current state:', {
+    user: user ? `${user.firstName} ${user.lastName} (${user.email})` : null,
+    isAuthenticated: !!user,
+    loading,
+    hasToken: !!localStorage.getItem('token'),
+    hasSavedUser: !!localStorage.getItem('user')
+  });
 
   return (
     <AuthContext.Provider value={value}>

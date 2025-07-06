@@ -4,7 +4,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigation, Footer } from '../components';
 
 const HomePage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+
+  // Debug authentication status
+  console.log('HomePage: Authentication status:', {
+    isAuthenticated,
+    user: user ? `${user.firstName} ${user.lastName}` : null,
+    loading
+  });
 
   const features = [
     {
@@ -45,6 +52,18 @@ const HomePage = () => {
     { number: "100+", label: "Courses Available" },
     { number: "95%", label: "Success Rate" }
   ];
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
