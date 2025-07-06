@@ -19,12 +19,17 @@ interface Payment {
       title: string;
       code: string;
     };
-    intake: {
+    intake?: {
       id: string;
       name: string;
       amount: number;
     };
   };
+}
+
+interface PaymentsResponse {
+  success: boolean;
+  data: Payment[];
 }
 
 const PaymentsPage = () => {
@@ -42,13 +47,16 @@ const PaymentsPage = () => {
     try {
       setLoading(true);
       const response = await paymentsAPI.getByUser(user!.id);
-      const data = response.data as { success: boolean; data: Payment[] };
+      const data = response.data as PaymentsResponse;
       if (data.success) {
         setPayments(data.data);
+      } else {
+        setPayments([]);
       }
     } catch (error) {
       console.error('Error fetching payments:', error);
       showErrorAlert('Error', 'Failed to fetch payments');
+      setPayments([]);
     } finally {
       setLoading(false);
     }
@@ -108,7 +116,7 @@ const PaymentsPage = () => {
   }
 
   return (
-    <div className="p-6">
+    <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">My Payments</h1>
         <p className="text-gray-600">View your payment history and transaction details</p>

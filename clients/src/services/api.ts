@@ -235,6 +235,33 @@ export const enrollmentsAPI = {
   delete: (id: string) => api.delete(`/enrollments/${id}`),
 };
 
+// Student-specific API endpoints
+export const studentAPI = {
+  // Get student's enrolled courses
+  getEnrolledCourses: (studentId: string) => api.get(`/students/${studentId}/courses`),
+  
+  // Get student's enrolled intakes
+  getEnrolledIntakes: (studentId: string) => api.get(`/students/${studentId}/intakes`),
+  
+  // Get student's course notes
+  getCourseNotes: (studentId: string) => api.get(`/students/${studentId}/notes`),
+  
+  // Get student's course videos
+  getCourseVideos: (studentId: string) => api.get(`/students/${studentId}/videos`),
+  
+  // Get student's course quizzes
+  getCourseQuizzes: (studentId: string) => api.get(`/students/${studentId}/quizzes`),
+  
+  // Get student's evaluations
+  getEvaluations: (studentId: string) => api.get(`/students/${studentId}/evaluations`),
+  
+  // Get student's quiz attempts
+  getQuizAttempts: (studentId: string) => api.get(`/students/${studentId}/quiz-attempts`),
+  
+  // Get student's profile
+  getProfile: (studentId: string) => api.get(`/students/${studentId}/profile`),
+};
+
 // Payments API
 export const paymentsAPI = {
   getAll: () => api.get('/payments'),

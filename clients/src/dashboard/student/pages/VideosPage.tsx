@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { videosAPI } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import { studentAPI, enrollmentsAPI, videosAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
 
@@ -23,25 +24,70 @@ interface Video {
   createdAt: string;
 }
 
+interface Enrollment {
+  id: string;
+  courseId: string;
+  course: {
+    id: string;
+    title: string;
+    code: string;
+  };
+}
+
 interface VideosResponse {
+  success: boolean;
   data: Video[];
 }
 
+interface EnrollmentsResponse {
+  success: boolean;
+  data: Enrollment[];
+}
+
 const VideosPage = () => {
+  const { user } = useAuth();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchVideos();
-  }, []);
+    if (user?.id) {
+      fetchCourseVideos();
+    }
+  }, [user?.id]);
 
-  const fetchVideos = async () => {
+  const fetchCourseVideos = async () => {
     try {
       setLoading(true);
-      const response = await videosAPI.getAll();
-      setVideos((response.data as VideosResponse).data);
+      
+      // First get student's enrollments to get course IDs
+      const enrollmentsResponse = await enrollmentsAPI.getByStudent(user!.id);
+      const enrollmentsData = enrollmentsResponse.data as EnrollmentsResponse;
+      
+      if (enrollmentsData.success && enrollmentsData.data.length > 0) {
+        // Get course IDs from enrollments
+        const courseIds = enrollmentsData.data.map(enrollment => enrollment.courseId);
+        
+        // Fetch videos for all enrolled courses
+        const allVideos: Video[] = [];
+        
+        for (const courseId of courseIds) {
+          try {
+            const videosResponse = await videosAPI.getByCourse(courseId);
+            const videosData = videosResponse.data as VideosResponse;
+            if (videosData.success && videosData.data.length > 0) {
+              allVideos.push(...videosData.data);
+            }
+          } catch (error) {
+            console.error(`Failed to fetch videos for course ${courseId}:`, error);
+          }
+        }
+        
+        setVideos(allVideos);
+      } else {
+        setVideos([]);
+      }
     } catch (error) {
-      handleApiError(error, 'Failed to fetch videos');
+      handleApiError(error, 'Failed to fetch course videos');
     } finally {
       setLoading(false);
     }
@@ -140,7 +186,7 @@ const VideosPage = () => {
       <DataTable
         columns={columns}
         data={videos}
-        title="Videos"
+        title="Course Videos"
         subtitle="Watch educational videos for your enrolled courses"
         loading={loading}
       />

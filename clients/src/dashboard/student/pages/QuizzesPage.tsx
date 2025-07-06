@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { quizzesAPI } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import { studentAPI, enrollmentsAPI, quizzesAPI, quizAttemptsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError, showInfoAlert } from '../../../utils/sweetAlert';
 
@@ -25,28 +26,119 @@ interface Quiz {
   createdAt: string;
 }
 
+interface QuizAttempt {
+  id: string;
+  quizId: string;
+  studentId: string;
+  score?: number;
+  maxScore?: number;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  startedAt: string;
+  completedAt?: string;
+}
+
+interface Enrollment {
+  id: string;
+  courseId: string;
+  course: {
+    id: string;
+    title: string;
+    code: string;
+  };
+}
+
 interface QuizzesResponse {
+  success: boolean;
   data: Quiz[];
 }
 
+interface QuizAttemptsResponse {
+  success: boolean;
+  data: QuizAttempt[];
+}
+
+interface EnrollmentsResponse {
+  success: boolean;
+  data: Enrollment[];
+}
+
 const QuizzesPage = () => {
+  const { user } = useAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchQuizzes();
-  }, []);
+    if (user?.id) {
+      fetchCourseQuizzes();
+      fetchQuizAttempts();
+    }
+  }, [user?.id]);
 
-  const fetchQuizzes = async () => {
+  const fetchCourseQuizzes = async () => {
     try {
       setLoading(true);
-      const response = await quizzesAPI.getAll();
-      setQuizzes((response.data as QuizzesResponse).data);
+      
+      // First get student's enrollments to get course IDs
+      const enrollmentsResponse = await enrollmentsAPI.getByStudent(user!.id);
+      const enrollmentsData = enrollmentsResponse.data as EnrollmentsResponse;
+      
+      if (enrollmentsData.success && enrollmentsData.data.length > 0) {
+        // Get course IDs from enrollments
+        const courseIds = enrollmentsData.data.map(enrollment => enrollment.courseId);
+        
+        // Fetch quizzes for all enrolled courses
+        const allQuizzes: Quiz[] = [];
+        
+        for (const courseId of courseIds) {
+          try {
+            const quizzesResponse = await quizzesAPI.getByCourse(courseId);
+            const quizzesData = quizzesResponse.data as QuizzesResponse;
+            if (quizzesData.success && quizzesData.data.length > 0) {
+              allQuizzes.push(...quizzesData.data);
+            }
+          } catch (error) {
+            console.error(`Failed to fetch quizzes for course ${courseId}:`, error);
+          }
+        }
+        
+        setQuizzes(allQuizzes);
+      } else {
+        setQuizzes([]);
+      }
     } catch (error) {
-      handleApiError(error, 'Failed to fetch quizzes');
+      handleApiError(error, 'Failed to fetch course quizzes');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchQuizAttempts = async () => {
+    try {
+      const response = await quizAttemptsAPI.getAll();
+      const data = response.data as QuizAttemptsResponse;
+      if (data.success) {
+        // Filter attempts for current student
+        const studentAttempts = data.data.filter(attempt => attempt.studentId === user!.id);
+        setQuizAttempts(studentAttempts);
+      }
+    } catch (error) {
+      console.error('Failed to fetch quiz attempts:', error);
+    }
+  };
+
+  const getQuizAttempts = (quizId: string) => {
+    return quizAttempts.filter(attempt => attempt.quizId === quizId);
+  };
+
+  const getBestScore = (quizId: string) => {
+    const attempts = getQuizAttempts(quizId);
+    if (attempts.length === 0) return null;
+    
+    const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED' && attempt.score !== undefined);
+    if (completedAttempts.length === 0) return null;
+    
+    return Math.max(...completedAttempts.map(attempt => attempt.score!));
   };
 
   const handleTakeQuiz = async (quiz: Quiz) => {
@@ -91,6 +183,34 @@ const QuizzesPage = () => {
           {passingScore}%
         </span>
       )
+    },
+    {
+      key: 'bestScore',
+      label: 'Best Score',
+      render: (_: any, quiz: Quiz) => {
+        const bestScore = getBestScore(quiz.id);
+        const attempts = getQuizAttempts(quiz.id);
+        
+        if (bestScore !== null) {
+          return (
+            <div>
+              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                {bestScore}%
+              </span>
+              <div className="text-xs text-gray-500">{attempts.length} attempts</div>
+            </div>
+          );
+        } else if (attempts.length > 0) {
+          return (
+            <div>
+              <span className="text-xs text-gray-500">In Progress</span>
+              <div className="text-xs text-gray-500">{attempts.length} attempts</div>
+            </div>
+          );
+        } else {
+          return <span className="text-xs text-gray-500">Not attempted</span>;
+        }
+      }
     },
     {
       key: 'maxAttempts',
@@ -138,7 +258,7 @@ const QuizzesPage = () => {
       <DataTable
         columns={columns}
         data={quizzes}
-        title="Quizzes"
+        title="Course Quizzes"
         subtitle="Take quizzes for your enrolled courses"
         loading={loading}
       />

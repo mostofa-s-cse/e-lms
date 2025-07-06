@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { coursesAPI } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import { studentAPI, enrollmentsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
 
@@ -20,25 +21,44 @@ interface Course {
   };
 }
 
-interface CoursesResponse {
-  data: Course[];
+interface Enrollment {
+  id: string;
+  status: string;
+  enrolledAt: string;
+  course: Course;
+  intake?: {
+    id: string;
+    name: string;
+    amount: number;
+  };
+}
+
+interface EnrollmentsResponse {
+  success: boolean;
+  data: Enrollment[];
 }
 
 const CoursesPage = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const { user } = useAuth();
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    if (user?.id) {
+      fetchEnrolledCourses();
+    }
+  }, [user?.id]);
 
-  const fetchCourses = async () => {
+  const fetchEnrolledCourses = async () => {
     try {
       setLoading(true);
-      const response = await coursesAPI.getAll();
-      setCourses((response.data as CoursesResponse).data);
+      const response = await enrollmentsAPI.getByStudent(user!.id);
+      const data = response.data as EnrollmentsResponse;
+      if (data.success) {
+        setEnrollments(data.data);
+      }
     } catch (error) {
-      handleApiError(error, 'Failed to fetch courses');
+      handleApiError(error, 'Failed to fetch enrolled courses');
     } finally {
       setLoading(false);
     }
@@ -46,66 +66,84 @@ const CoursesPage = () => {
 
   const columns = [
     {
-      key: 'title',
+      key: 'course',
       label: 'Course',
-      render: (title: string, course: Course) => (
+      render: (_: any, enrollment: Enrollment) => (
         <div>
-          <div className="text-sm font-medium text-gray-900">{title}</div>
-          <div className="text-sm text-gray-500">{course.code}</div>
+          <div className="text-sm font-medium text-gray-900">{enrollment.course.title}</div>
+          <div className="text-sm text-gray-500">{enrollment.course.code}</div>
         </div>
       )
     },
     {
       key: 'description',
       label: 'Description',
-      render: (description: string) => (
+      render: (_: any, enrollment: Enrollment) => (
         <div className="text-sm text-gray-900 max-w-xs truncate">
-          {description}
+          {enrollment.course.description}
         </div>
       )
     },
     {
       key: 'teacher',
       label: 'Teacher',
-      render: (_: any, course: Course) => (
+      render: (_: any, enrollment: Enrollment) => (
         <div className="text-sm text-gray-900">
-          {course.teacher ? `${course.teacher.firstName} ${course.teacher.lastName}` : 'N/A'}
+          {enrollment.course.teacher ? `${enrollment.course.teacher.firstName} ${enrollment.course.teacher.lastName}` : 'N/A'}
+        </div>
+      )
+    },
+    {
+      key: 'intake',
+      label: 'Intake',
+      render: (_: any, enrollment: Enrollment) => (
+        <div className="text-sm text-gray-900">
+          {enrollment.intake ? (
+            <div>
+              <div className="font-medium">{enrollment.intake.name}</div>
+              <div className="text-xs text-gray-500">BDT {enrollment.intake.amount}</div>
+            </div>
+          ) : (
+            <span className="text-gray-500">No intake</span>
+          )}
         </div>
       )
     },
     {
       key: 'credits',
       label: 'Credits',
-      render: (credits: number) => (
+      render: (_: any, enrollment: Enrollment) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-          {credits} credits
-        </span>
-      )
-    },
-    {
-      key: 'price',
-      label: 'Price',
-      render: (price: number) => (
-        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-          ${price.toFixed(2)}
+          {enrollment.course.credits} credits
         </span>
       )
     },
     {
       key: 'duration',
       label: 'Duration',
-      render: (duration: number) => (
-        <span className="text-sm text-gray-900">{duration} weeks</span>
+      render: (_: any, enrollment: Enrollment) => (
+        <span className="text-sm text-gray-900">{enrollment.course.duration} weeks</span>
       )
     },
     {
-      key: 'isActive',
-      label: 'Status',
-      render: (isActive: boolean) => (
+      key: 'status',
+      label: 'Enrollment Status',
+      render: (_: any, enrollment: Enrollment) => (
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          enrollment.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+          enrollment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-red-100 text-red-800'
         }`}>
-          {isActive ? 'Active' : 'Inactive'}
+          {enrollment.status}
+        </span>
+      )
+    },
+    {
+      key: 'enrolledAt',
+      label: 'Enrolled',
+      render: (_: any, enrollment: Enrollment) => (
+        <span className="text-sm text-gray-900">
+          {new Date(enrollment.enrolledAt).toLocaleDateString()}
         </span>
       )
     }
@@ -120,9 +158,9 @@ const CoursesPage = () => {
 
       <DataTable
         columns={columns}
-        title="Courses"
+        title="Enrolled Courses"
         subtitle="View all your enrolled courses and their details"
-        data={courses}
+        data={enrollments}
         loading={loading}
       />
     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { notesAPI } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import { studentAPI, enrollmentsAPI, notesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
 
@@ -23,25 +24,70 @@ interface Note {
   createdAt: string;
 }
 
+interface Enrollment {
+  id: string;
+  courseId: string;
+  course: {
+    id: string;
+    title: string;
+    code: string;
+  };
+}
+
 interface NotesResponse {
+  success: boolean;
   data: Note[];
 }
 
+interface EnrollmentsResponse {
+  success: boolean;
+  data: Enrollment[];
+}
+
 const NotesPage = () => {
+  const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (user?.id) {
+      fetchCourseNotes();
+    }
+  }, [user?.id]);
 
-  const fetchNotes = async () => {
+  const fetchCourseNotes = async () => {
     try {
       setLoading(true);
-      const response = await notesAPI.getAll();
-      setNotes((response.data as NotesResponse).data);
+      
+      // First get student's enrollments to get course IDs
+      const enrollmentsResponse = await enrollmentsAPI.getByStudent(user!.id);
+      const enrollmentsData = enrollmentsResponse.data as EnrollmentsResponse;
+      
+      if (enrollmentsData.success && enrollmentsData.data.length > 0) {
+        // Get course IDs from enrollments
+        const courseIds = enrollmentsData.data.map(enrollment => enrollment.courseId);
+        
+        // Fetch notes for all enrolled courses
+        const allNotes: Note[] = [];
+        
+        for (const courseId of courseIds) {
+          try {
+            const notesResponse = await notesAPI.getByCourse(courseId);
+            const notesData = notesResponse.data as NotesResponse;
+            if (notesData.success && notesData.data.length > 0) {
+              allNotes.push(...notesData.data);
+            }
+          } catch (error) {
+            console.error(`Failed to fetch notes for course ${courseId}:`, error);
+          }
+        }
+        
+        setNotes(allNotes);
+      } else {
+        setNotes([]);
+      }
     } catch (error) {
-      handleApiError(error, 'Failed to fetch notes');
+      handleApiError(error, 'Failed to fetch course notes');
     } finally {
       setLoading(false);
     }
@@ -131,7 +177,7 @@ const NotesPage = () => {
       <DataTable
         columns={columns}
         data={notes}
-        title="Notes"
+        title="Course Notes"
         subtitle="Access all notes and materials for your enrolled courses"
         loading={loading}
       />
