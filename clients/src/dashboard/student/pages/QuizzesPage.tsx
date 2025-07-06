@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI, quizzesAPI, quizAttemptsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
@@ -9,8 +10,9 @@ interface Quiz {
   title: string;
   description: string;
   duration: number;
-  passingScore: number;
-  maxAttempts: number;
+  totalMarks: number;
+  passingMarks: number;
+  maxAttempts?: number;
   isActive: boolean;
   courseId: string;
   course?: {
@@ -18,12 +20,18 @@ interface Quiz {
     title: string;
     code: string;
   };
-  teacher?: {
+  author?: {
     id: string;
     firstName: string;
     lastName: string;
   };
+  questions?: Array<{
+    id: string;
+    question: string;
+    type: string;
+  }>;
   createdAt: string;
+  updatedAt: string;
 }
 
 interface QuizAttempt {
@@ -63,6 +71,7 @@ interface EnrollmentsResponse {
 }
 
 const QuizzesPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
@@ -142,8 +151,30 @@ const QuizzesPage = () => {
   };
 
   const handleTakeQuiz = async (quiz: Quiz) => {
-    // This would typically navigate to a quiz taking interface
-    await showInfoAlert('Quiz Starting', `Starting quiz: ${quiz.title}`);
+    // Check if student has already attempted this quiz
+    const attempts = getQuizAttempts(quiz.id);
+    const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED');
+    
+    if (completedAttempts.length > 0) {
+      await showInfoAlert('Quiz Already Attempted', 'You have already completed this quiz. You can view your results in the quiz details.');
+      navigate(`/student/quizzes/${quiz.id}`);
+      return;
+    }
+    
+    // Check if there's an in-progress attempt
+    const inProgressAttempt = attempts.find(attempt => attempt.status === 'IN_PROGRESS');
+    if (inProgressAttempt) {
+      await showInfoAlert('Quiz In Progress', 'You have an unfinished attempt for this quiz. Please complete it first.');
+      navigate(`/student/quizzes/${quiz.id}`);
+      return;
+    }
+    
+    // Navigate to quiz taking page
+    navigate(`/student/quizzes/${quiz.id}/take`);
+  };
+
+  const handleViewQuiz = (quiz: Quiz) => {
+    navigate(`/student/quizzes/${quiz.id}`);
   };
 
   const columns = [
@@ -176,11 +207,20 @@ const QuizzesPage = () => {
       )
     },
     {
-      key: 'passingScore',
+      key: 'author',
+      label: 'Author',
+      render: (_: any, quiz: Quiz) => (
+        <div className="text-sm text-gray-900">
+          {quiz.author ? `${quiz.author.firstName} ${quiz.author.lastName}` : 'N/A'}
+        </div>
+      )
+    },
+    {
+      key: 'passingMarks',
       label: 'Passing Score',
-      render: (passingScore: number) => (
+      render: (passingMarks: number, quiz: Quiz) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-          {passingScore}%
+          {Math.round((passingMarks / quiz.totalMarks) * 100)}%
         </span>
       )
     },
@@ -213,10 +253,12 @@ const QuizzesPage = () => {
       }
     },
     {
-      key: 'maxAttempts',
-      label: 'Max Attempts',
-      render: (maxAttempts: number) => (
-        <span className="text-sm text-gray-900">{maxAttempts}</span>
+      key: 'questions',
+      label: 'Questions',
+      render: (_: any, quiz: Quiz) => (
+        <span className="text-sm text-gray-900">
+          {quiz.questions ? quiz.questions.length : 0} questions
+        </span>
       )
     },
     {
@@ -234,11 +276,17 @@ const QuizzesPage = () => {
       key: 'actions',
       label: 'Actions',
       render: (_: any, quiz: Quiz) => (
-        <div className="text-sm font-medium">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleViewQuiz(quiz)}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            View Details
+          </button>
           {quiz.isActive && (
             <button
               onClick={() => handleTakeQuiz(quiz)}
-              className="text-blue-600 hover:text-blue-900"
+              className="text-green-600 hover:text-green-800 text-sm font-medium"
             >
               Take Quiz
             </button>

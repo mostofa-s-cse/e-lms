@@ -18,6 +18,8 @@ import NoteViewPage from './pages/NoteViewPage';
 import VideosPage from './pages/VideosPage';
 import VideoDetailsPage from './pages/VideoDetailsPage';
 import QuizzesPage from './pages/QuizzesPage';
+import QuizDetailsPage from './pages/QuizDetailsPage';
+import QuizTakingPage from './pages/QuizTakingPage';
 import EvaluationsPage from './pages/EvaluationsPage';
 import PaymentsPage from './pages/PaymentsPage';
 
@@ -42,6 +44,8 @@ const StudentDashboard = () => {
       <Route path="videos" element={<VideosPage />} />
       <Route path="videos/:id" element={<VideoDetailsPage />} />
       <Route path="quizzes" element={<QuizzesPage />} />
+      <Route path="quizzes/:id" element={<QuizDetailsPage />} />
+      <Route path="quizzes/:id/take" element={<QuizTakingPage />} />
       <Route path="evaluations" element={<EvaluationsPage />} />
       <Route path="payments" element={<PaymentsPage />} />
     </>
