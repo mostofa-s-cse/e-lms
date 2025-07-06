@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
@@ -39,6 +40,7 @@ interface EnrollmentsResponse {
 }
 
 const CoursesPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,10 @@ const CoursesPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewDetails = (enrollment: Enrollment) => {
+    navigate(`/student/courses/${enrollment.course.id}`);
   };
 
   const columns = [
@@ -145,6 +151,18 @@ const CoursesPage = () => {
         <span className="text-sm text-gray-900">
           {new Date(enrollment.enrolledAt).toLocaleDateString()}
         </span>
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_: any, enrollment: Enrollment) => (
+        <button
+          onClick={() => handleViewDetails(enrollment)}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+        >
+          View Details
+        </button>
       )
     }
   ];

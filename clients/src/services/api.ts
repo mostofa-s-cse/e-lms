@@ -67,9 +67,9 @@ api.interceptors.response.use(
       
       if (!publicPages.includes(currentPath) && !currentPath.startsWith('/courses/')) {
         console.log('API Interceptor: Redirecting to login from protected page');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
       } else {
         console.log('API Interceptor: On public page, not redirecting');
         // Don't clear auth data on public pages - just let the error pass through
@@ -230,6 +230,7 @@ export const enrollmentsAPI = {
   getById: (id: string) => api.get(`/enrollments/${id}`),
   getByStudent: (studentId: string) => api.get(`/enrollments/student/${studentId}`),
   getByCourse: (courseId: string) => api.get(`/enrollments/course/${courseId}`),
+  getByStudentAndCourse: (studentId: string, courseId: string) => api.get(`/enrollments/student/${studentId}/course/${courseId}`),
   create: (enrollmentData: { courseId: string; intakeId?: string }) => api.post('/enrollments', enrollmentData),
   updateStatus: (id: string, status: string) => api.patch(`/enrollments/${id}/status`, { status }),
   delete: (id: string) => api.delete(`/enrollments/${id}`),

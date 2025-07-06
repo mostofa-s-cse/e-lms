@@ -11,9 +11,11 @@ import {
   CreditCard,
 } from 'lucide-react';
 import CoursesPage from './pages/CoursesPage';
+import CourseDetailsPage from './pages/CourseDetailsPage';
 import IntakesPage from './pages/IntakesPage';
 import NotesPage from './pages/NotesPage';
 import VideosPage from './pages/VideosPage';
+import VideoDetailsPage from './pages/VideoDetailsPage';
 import QuizzesPage from './pages/QuizzesPage';
 import EvaluationsPage from './pages/EvaluationsPage';
 import PaymentsPage from './pages/PaymentsPage';
@@ -32,9 +34,11 @@ const StudentDashboard = () => {
   const routes = (
     <>
       <Route path="courses" element={<CoursesPage />} />
+      <Route path="courses/:id" element={<CourseDetailsPage />} />
       <Route path="intakes" element={<IntakesPage />} />
       <Route path="notes" element={<NotesPage />} />
       <Route path="videos" element={<VideosPage />} />
+      <Route path="videos/:id" element={<VideoDetailsPage />} />
       <Route path="quizzes" element={<QuizzesPage />} />
       <Route path="evaluations" element={<EvaluationsPage />} />
       <Route path="payments" element={<PaymentsPage />} />

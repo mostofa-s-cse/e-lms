@@ -69,7 +69,7 @@ const CourseDetailsPage = () => {
         setError(null);
         
         const courseResponse = await coursesAPI.getById(id);
-        
+
         if ((courseResponse.data as any).success) {
           setCourse((courseResponse.data as any).data);
         } else {
@@ -131,11 +131,11 @@ const CourseDetailsPage = () => {
       // If course is free, enroll directly
       if (amount === 0) {
         const enrollmentPayload = { courseId: course.id };
-        const response = await enrollmentsAPI.create(enrollmentPayload);
+      const response = await enrollmentsAPI.create(enrollmentPayload);
 
-        if ((response.data as any).success) {
-          showSuccessAlert('Success', 'Successfully enrolled in course!');
-          setShowEnrollmentModal(false);
+      if ((response.data as any).success) {
+        showSuccessAlert('Success', 'Successfully enrolled in course!');
+        setShowEnrollmentModal(false);
         } else {
           throw new Error((response.data as any).message || 'Enrollment failed');
         }
@@ -267,7 +267,7 @@ const CourseDetailsPage = () => {
             >
               ← Back to Courses
             </Link>
-          </div>
+            </div>
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -341,7 +341,7 @@ const CourseDetailsPage = () => {
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-2">Status</h3>
-                    <p className="text-gray-600">
+            <p className="text-gray-600">
                       {course.isActive ? 'Active' : 'Inactive'}
                     </p>
                   </div>
@@ -368,7 +368,7 @@ const CourseDetailsPage = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+          </div>
 
               {/* Instructor Info */}
               <div className="bg-white rounded-lg shadow-md p-8">
@@ -392,16 +392,16 @@ const CourseDetailsPage = () => {
               <div className="bg-white rounded-lg shadow-md p-6 sticky top-8">
                 <div className="text-center mb-6">
                   <div className="text-4xl mb-4">
-                    {course.thumbnail ? (
-                      <img 
-                        src={`http://localhost:5000${course.thumbnail}`} 
-                        alt={course.title}
+                        {course.thumbnail ? (
+                          <img 
+                            src={`http://localhost:5000${course.thumbnail}`} 
+                            alt={course.title}
                         className="w-20 h-20 mx-auto object-cover rounded"
-                      />
-                    ) : (
-                      '📚'
-                    )}
-                  </div>
+                          />
+                        ) : (
+                          '📚'
+                        )}
+                      </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{course.title}</h3>
                   <div className="text-3xl font-bold text-blue-600 mb-4">
                     {course.intakes?.length > 0 ? (
@@ -412,24 +412,24 @@ const CourseDetailsPage = () => {
                     ) : (
                       course.isFree ? 'Free' : `$${course.price}`
                     )}
-                  </div>
-                </div>
+                      </div>
+                      </div>
 
                 {user ? (
-                  <button
+                            <button
                     onClick={handleEnrollClick}
                     className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors mb-4"
-                  >
-                    Enroll Now
-                  </button>
-                ) : (
-                  <Link
-                    to="/register"
+                            >
+                              Enroll Now
+                            </button>
+                        ) : (
+                          <Link 
+                            to="/register" 
                     className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors mb-4 inline-block text-center"
-                  >
-                    Get Started
-                  </Link>
-                )}
+                          >
+                            Get Started
+                          </Link>
+                        )}
 
                 {course.intakes?.length > 0 && (
                   <div className="mt-6 pt-6 border-t">
@@ -442,7 +442,7 @@ const CourseDetailsPage = () => {
                             {new Date(intake.startDate).toLocaleDateString()} - {new Date(intake.endDate).toLocaleDateString()}
                           </div>
                           <div className="text-sm font-semibold text-blue-600">${intake.amount}</div>
-                        </div>
+                      </div>
                       ))}
                     </div>
                   </div>
@@ -484,19 +484,19 @@ const CourseDetailsPage = () => {
                       <div className="text-sm text-green-800 mb-3">
                         💡 Select your preferred intake (required):
                       </div>
-                      <select
-                        value={selectedIntake}
-                        onChange={(e) => setSelectedIntake(e.target.value)}
+                  <select
+                    value={selectedIntake}
+                    onChange={(e) => setSelectedIntake(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         required
-                      >
-                        <option value="">Choose an intake...</option>
+                  >
+                    <option value="">Choose an intake...</option>
                         {course.intakes.map((intake) => (
-                          <option key={intake.id} value={intake.id}>
+                      <option key={intake.id} value={intake.id}>
                             {intake.name} - ${intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
-                          </option>
-                        ))}
-                      </select>
+                      </option>
+                    ))}
+                  </select>
                     </div>
                   </div>
                   
@@ -578,7 +578,7 @@ const CourseDetailsPage = () => {
               <span>Already have an account? </span>
               <Link to="/login" className="text-blue-400 hover:text-blue-300 underline">
                 Sign In
-              </Link>
+            </Link>
             </div>
           </div>
         </div>

@@ -121,6 +121,14 @@ export const getEnrollmentsByStudent = async (req: Request, res: Response, next:
             credits: true,
             price: true,
             isFree: true,
+            teacher: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
           },
         },
         intake: {
@@ -175,6 +183,65 @@ export const getEnrollmentsByCourse = async (req: Request, res: Response, next: 
     res.json({
       success: true,
       data: enrollments,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get enrollment by student and course
+export const getEnrollmentByStudentAndCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { studentId, courseId } = req.params;
+
+    const enrollment = await prisma.enrollment.findFirst({
+      where: { 
+        studentId,
+        courseId
+      },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+            description: true,
+            credits: true,
+            price: true,
+            isFree: true,
+            teacher: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        },
+        intake: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            amount: true,
+          },
+        },
+      },
+    });
+
+    if (!enrollment) {
+      res.status(404).json({
+        success: false,
+        message: 'Enrollment not found',
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: enrollment,
     });
   } catch (error) {
     next(error);

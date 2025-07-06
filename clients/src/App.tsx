@@ -126,9 +126,9 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
+      <Router>
+        <AppRoutes />
+      </Router>
       </CartProvider>
     </AuthProvider>
   );

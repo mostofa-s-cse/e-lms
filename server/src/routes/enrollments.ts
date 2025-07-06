@@ -4,6 +4,7 @@ import {
   getEnrollmentById,
   getEnrollmentsByStudent,
   getEnrollmentsByCourse,
+  getEnrollmentByStudentAndCourse,
   createEnrollment,
   updateEnrollmentStatus,
   deleteEnrollment,
@@ -26,6 +27,9 @@ router.get('/student/:studentId', getEnrollmentsByStudent);
 
 // Get enrollments by course
 router.get('/course/:courseId', getEnrollmentsByCourse);
+
+// Get enrollment by student and course
+router.get('/student/:studentId/course/:courseId', getEnrollmentByStudentAndCourse);
 
 // Create new enrollment
 router.post('/', createEnrollment);

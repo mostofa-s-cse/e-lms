@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI, videosAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
@@ -45,6 +46,7 @@ interface EnrollmentsResponse {
 }
 
 const VideosPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,6 +104,10 @@ const VideosPage = () => {
         handleApiError(error, 'Failed to open video');
       }
     }
+  };
+
+  const handleViewDetails = (video: Video) => {
+    navigate(`/student/videos/${video.id}`);
   };
 
   const formatDuration = (seconds: number) => {
@@ -162,11 +168,17 @@ const VideosPage = () => {
       key: 'actions',
       label: 'Actions',
       render: (_: any, video: Video) => (
-        <div className="text-sm font-medium">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleViewDetails(video)}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            View Details
+          </button>
           {video.url && (
             <button
               onClick={() => handleWatch(video)}
-              className="text-blue-600 hover:text-blue-900"
+              className="text-green-600 hover:text-green-800 text-sm font-medium"
             >
               Watch
             </button>
