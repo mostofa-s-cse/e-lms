@@ -21,6 +21,7 @@ import VideoDetailsPage from './pages/VideoDetailsPage';
 import QuizzesPage from './pages/QuizzesPage';
 import QuizDetailsPage from './pages/QuizDetailsPage';
 import QuizTakingPage from './pages/QuizTakingPage';
+import QuizResultPage from './pages/QuizResultPage';
 import EvaluationsPage from './pages/EvaluationsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import ProfilePage from './pages/ProfilePage';
@@ -49,6 +50,7 @@ const StudentDashboard = () => {
       <Route path="quizzes" element={<QuizzesPage />} />
       <Route path="quizzes/:id" element={<QuizDetailsPage />} />
       <Route path="quizzes/:id/take" element={<QuizTakingPage />} />
+      <Route path="quizzes/:id/result" element={<QuizResultPage />} />
       <Route path="evaluations" element={<EvaluationsPage />} />
       <Route path="payments" element={<PaymentsPage />} />
       <Route path="profile" element={<ProfilePage />} />

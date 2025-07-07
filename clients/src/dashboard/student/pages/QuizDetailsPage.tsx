@@ -201,6 +201,10 @@ const QuizDetailsPage = () => {
     navigate(`/student/quiz-attempts/${attemptId}`);
   };
 
+  const handleViewResult = (attemptId: string) => {
+    navigate(`/student/quiz-attempts/${attemptId}`);
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'COMPLETED':
@@ -225,6 +229,17 @@ const QuizDetailsPage = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getScorePercentage = (score: number, totalMarks: number) => {
+    return Math.round((score / totalMarks) * 100);
+  };
+
+  const getScoreColor = (percentage: number) => {
+    if (percentage >= 80) return 'text-green-600';
+    if (percentage >= 70) return 'text-blue-600';
+    if (percentage >= 60) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   if (loading) {
@@ -349,8 +364,7 @@ const QuizDetailsPage = () => {
                 {quizAttempts.map((attempt) => (
                   <div
                     key={attempt.id}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors cursor-pointer"
-                    onClick={() => handleViewAttempt(attempt.id)}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -369,11 +383,34 @@ const QuizDetailsPage = () => {
                           {attempt.status}
                         </span>
                         {attempt.score !== undefined && (
-                          <p className="text-sm font-medium text-gray-900 mt-1">
-                            {attempt.score}/{attempt.maxScore || quiz.totalMarks} marks
-                          </p>
+                          <div className="mt-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {attempt.score}/{attempt.maxScore || quiz.totalMarks} marks
+                            </p>
+                            <p className={`text-xs font-medium ${getScoreColor(getScorePercentage(attempt.score, attempt.maxScore || quiz.totalMarks))}`}>
+                              {getScorePercentage(attempt.score, attempt.maxScore || quiz.totalMarks)}%
+                            </p>
+                          </div>
                         )}
                       </div>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="mt-3 flex space-x-2">
+                      {attempt.status === 'COMPLETED' && (
+                        <button
+                          onClick={() => handleViewResult(attempt.id)}
+                          className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                        >
+                          View Result
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleViewAttempt(attempt.id)}
+                        className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
+                      >
+                        View Details
+                      </button>
                     </div>
                   </div>
                 ))}

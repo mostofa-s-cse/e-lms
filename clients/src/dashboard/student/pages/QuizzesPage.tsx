@@ -195,6 +195,55 @@ const QuizzesPage = () => {
     }
   };
 
+  const handleViewResults = async (quiz: Quiz) => {
+    if (!user?.id) return;
+    
+    try {
+      const paymentResult = await checkPaymentAccess(user.id);
+      if (paymentResult.hasAccess) {
+        // Find the best completed attempt for this quiz
+        const attempts = getQuizAttempts(quiz.id);
+        const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED');
+        
+        if (completedAttempts.length > 0) {
+          // Navigate to the most recent completed attempt
+          const latestAttempt = completedAttempts.sort((a, b) => 
+            new Date(b.completedAt || b.startedAt).getTime() - new Date(a.completedAt || a.startedAt).getTime()
+          )[0];
+          navigate(`/student/quiz-attempts/${latestAttempt.id}`);
+        } else {
+          navigate(`/student/quizzes/${quiz.id}`);
+        }
+      } else {
+        setPaymentMessage(paymentResult.message);
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      setPaymentMessage('Unable to verify payment status. Please contact our support team.');
+      setShowPaymentModal(true);
+    }
+  };
+
+  const handleViewQuizResult = async (quiz: Quiz) => {
+    if (!user?.id) return;
+    
+    try {
+      const paymentResult = await checkPaymentAccess(user.id);
+      if (paymentResult.hasAccess) {
+        // Navigate to quiz result page
+        navigate(`/student/quizzes/${quiz.id}/result`);
+      } else {
+        setPaymentMessage(paymentResult.message);
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      setPaymentMessage('Unable to verify payment status. Please contact our support team.');
+      setShowPaymentModal(true);
+    }
+  };
+
   const columns = [
     {
       key: 'title',
@@ -293,16 +342,38 @@ const QuizzesPage = () => {
     {
       key: 'actions',
       label: 'Actions',
-      render: (_: any, quiz: Quiz) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handleViewQuiz(quiz)}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            View Details
-          </button>
-        </div>
-      )
+      render: (_: any, quiz: Quiz) => {
+        const attempts = getQuizAttempts(quiz.id);
+        const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED');
+        const hasCompletedAttempts = completedAttempts.length > 0;
+        
+        return (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => handleViewQuiz(quiz)}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              View Details
+            </button>
+            {hasCompletedAttempts && (
+              <button
+                onClick={() => handleViewResults(quiz)}
+                className="text-green-600 hover:text-green-800 text-sm font-medium"
+              >
+                View Results
+              </button>
+            )}
+            {/* {hasCompletedAttempts && ( */}
+              <button
+                onClick={() => handleViewQuizResult(quiz)}
+                className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+              >
+                View Result
+              </button>
+            {/* )} */}
+          </div>
+        );
+      }
     }
   ];
 
