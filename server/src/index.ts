@@ -109,24 +109,25 @@ app.get('/health', (req, res) => {
     status: 'OK',
     message: 'LMS Server is running',
     timestamp: new Date().toISOString(),
+    apiVersion: 'v1',
   });
 });
 
 // ===== API Routes =====
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/courses', courseRoutes);
-app.use('/api/intakes', intakeRoutes);
-app.use('/api/notes', noteRoutes);
-app.use('/api/videos', videoRoutes);
-app.use('/api/quizzes', quizRoutes);
-app.use('/api/questions', questionRoutes);
-app.use('/api/evaluations', evaluationRoutes);
-app.use('/api/quizAttempts', quizAttemptRoutes);
-app.use('/api/enrollments', enrollmentRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/payments/sslcommerz', sslCommerzRoutes);
-app.use('/api/carts', cartRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/intakes', intakeRoutes);
+app.use('/api/v1/notes', noteRoutes);
+app.use('/api/v1/videos', videoRoutes);
+app.use('/api/v1/quizzes', quizRoutes);
+app.use('/api/v1/questions', questionRoutes);
+app.use('/api/v1/evaluations', evaluationRoutes);
+app.use('/api/v1/quizAttempts', quizAttemptRoutes);
+app.use('/api/v1/enrollments', enrollmentRoutes);
+app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/payments/sslcommerz', sslCommerzRoutes);
+app.use('/api/v1/carts', cartRoutes);
 
 // ===== 404 Fallback =====
 app.use('*', (req, res) => {
@@ -143,7 +144,7 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 LMS Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+  console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
 });
 
 export default app;
