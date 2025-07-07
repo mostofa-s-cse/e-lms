@@ -104,7 +104,7 @@ const VideosPage = () => {
   const handleWatch = async (video: Video) => {
     if (video.videoUrl) {
       try {
-        const videoUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${video.videoUrl}`;
+        const videoUrl = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${video.videoUrl}`;
         window.open(videoUrl, '_blank');
         await showSuccessAlert('Video Opened', `Opening "${video.title}" in a new tab...`);
       } catch (error) {

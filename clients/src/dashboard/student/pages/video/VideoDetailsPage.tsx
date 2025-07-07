@@ -132,7 +132,7 @@ const VideoDetailsPage = () => {
 
   const handleDownload = () => {
     if (video?.videoUrl) {
-      const url = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${video.videoUrl}`;
+      const url = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${video.videoUrl}`;
       window.open(url, '_blank');
     }
   };
@@ -236,7 +236,7 @@ const VideoDetailsPage = () => {
                     <div className="flex-shrink-0">
                       {courseVideo.thumbnail ? (
                         <img
-                          src={`${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${courseVideo.thumbnail}`}
+                          src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${courseVideo.thumbnail}`}
                           alt={courseVideo.title}
                           className="w-20 h-12 object-cover rounded"
                         />
