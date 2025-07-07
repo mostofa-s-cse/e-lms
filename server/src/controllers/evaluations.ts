@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { AuthRequest } from '../types';
 
 export const prisma = new PrismaClient();
 
@@ -24,12 +25,66 @@ export const getAllEvaluations = async (req: Request, res: Response, next: NextF
             email: true,
           },
         },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+        },
       },
     });
 
     res.json({
       success: true,
       data: evaluations,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get evaluations by teacher
+export const getEvaluationsByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    const evaluations = await prisma.evaluation.findMany({
+      where: { 
+        evaluatorId: teacherId
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        evaluator: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({
+      success: true,
+      data: evaluations,
+      message: 'Teacher evaluations fetched successfully',
     });
   } catch (error) {
     next(error);
@@ -60,6 +115,13 @@ export const getEvaluationById = async (req: Request, res: Response, next: NextF
             email: true,
           },
         },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+        },
       },
     });
 
@@ -80,17 +142,45 @@ export const getEvaluationById = async (req: Request, res: Response, next: NextF
   }
 };
 
-// Get evaluations by course (this would need to be implemented differently since Evaluation doesn't have courseId)
+// Get evaluations by course
 export const getEvaluationsByCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { courseId } = req.params;
 
-    // Since Evaluation doesn't have courseId, we'll return an empty array for now
-    // This would need to be implemented differently based on your business logic
+    const evaluations = await prisma.evaluation.findMany({
+      where: { courseId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        evaluator: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
     res.json({
       success: true,
-      data: [],
-      message: 'Course-based evaluations not implemented yet',
+      data: evaluations,
+      message: 'Course evaluations fetched successfully',
     });
   } catch (error) {
     next(error);
@@ -98,7 +188,7 @@ export const getEvaluationsByCourse = async (req: Request, res: Response, next: 
 };
 
 // Create new evaluation
-export const createEvaluation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createEvaluation = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { 
       title,
@@ -107,14 +197,15 @@ export const createEvaluation = async (req: Request, res: Response, next: NextFu
       score,
       maxScore,
       feedback,
-      studentId
+      studentId,
+      courseId
     } = req.body;
 
     // Validate required fields
-    if (!title || !studentId || !type || !maxScore) {
+    if (!title || !studentId || !courseId || !type || !maxScore) {
       res.status(400).json({
         success: false,
-        message: 'Title, studentId, type, and maxScore are required',
+        message: 'Title, studentId, courseId, type, and maxScore are required',
       });
       return;
     }
@@ -132,6 +223,19 @@ export const createEvaluation = async (req: Request, res: Response, next: NextFu
       return;
     }
 
+    // Check if course exists
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      res.status(404).json({
+        success: false,
+        message: 'Course not found',
+      });
+      return;
+    }
+
     const evaluation = await prisma.evaluation.create({
       data: {
         title,
@@ -141,7 +245,8 @@ export const createEvaluation = async (req: Request, res: Response, next: NextFu
         maxScore: parseFloat(maxScore),
         feedback,
         studentId,
-        evaluatorId: (req as any).user.id,
+        courseId,
+        evaluatorId: req.user!.id,
       },
       include: {
         student: {
@@ -160,6 +265,13 @@ export const createEvaluation = async (req: Request, res: Response, next: NextFu
             email: true,
           },
         },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+        },
       },
     });
 
@@ -174,7 +286,7 @@ export const createEvaluation = async (req: Request, res: Response, next: NextFu
 };
 
 // Update evaluation
-export const updateEvaluation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateEvaluation = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { title, description, type, score, maxScore, feedback } = req.body;
@@ -219,6 +331,13 @@ export const updateEvaluation = async (req: Request, res: Response, next: NextFu
             email: true,
           },
         },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+        },
       },
     });
 
@@ -233,7 +352,7 @@ export const updateEvaluation = async (req: Request, res: Response, next: NextFu
 };
 
 // Delete evaluation
-export const deleteEvaluation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const deleteEvaluation = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 

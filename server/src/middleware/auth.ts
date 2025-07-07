@@ -7,6 +7,9 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
+  console.log('authenticateToken: Auth header:', authHeader);
+  console.log('authenticateToken: Token:', token ? 'exists' : 'missing');
+
   if (!token) {
     res.status(401).json({ 
       success: false, 
@@ -31,9 +34,14 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
       role: UserRole;
     };
     
+    console.log('authenticateToken: Decoded token:', decoded);
+    console.log('authenticateToken: Decoded role:', decoded.role);
+    console.log('authenticateToken: Decoded role type:', typeof decoded.role);
+    
     req.user = decoded;
     next();
   } catch (error) {
+    console.error('authenticateToken: JWT verification error:', error);
     res.status(403).json({ 
       success: false, 
       message: 'Invalid or expired token' 
@@ -43,7 +51,15 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
 
 export const requireRole = (roles: UserRole[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    console.log('requireRole: Checking roles:', roles);
+    console.log('requireRole: User:', req.user);
+    console.log('requireRole: User role:', req.user?.role);
+    console.log('requireRole: User role type:', typeof req.user?.role);
+    console.log('requireRole: Roles array:', roles);
+    console.log('requireRole: Roles array types:', roles.map(r => typeof r));
+    
     if (!req.user) {
+      console.log('requireRole: No user found - authentication required');
       res.status(401).json({ 
         success: false, 
         message: 'Authentication required' 
@@ -51,7 +67,16 @@ export const requireRole = (roles: UserRole[]) => {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    // Convert both to strings for comparison to handle any type mismatches
+    const userRoleString = String(req.user.role);
+    const rolesStrings = roles.map(r => String(r));
+    
+    console.log('requireRole: User role string:', userRoleString);
+    console.log('requireRole: Required roles strings:', rolesStrings);
+    console.log('requireRole: Includes check:', rolesStrings.includes(userRoleString));
+    
+    if (!rolesStrings.includes(userRoleString)) {
+      console.log('requireRole: Insufficient permissions - user role:', req.user.role, 'required roles:', roles);
       res.status(403).json({ 
         success: false, 
         message: 'Insufficient permissions' 
@@ -59,6 +84,7 @@ export const requireRole = (roles: UserRole[]) => {
       return;
     }
 
+    console.log('requireRole: Access granted for role:', req.user.role);
     next();
   };
 };

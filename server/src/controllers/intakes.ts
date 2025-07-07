@@ -22,6 +22,35 @@ export const getAllIntakes = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const getIntakesByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    // Get intakes for courses that the teacher teaches
+    const intakes = await prisma.intake.findMany({
+      where: { 
+        isActive: true,
+        course: {
+          teacherId: teacherId
+        }
+      },
+      include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        _count: {
+          select: { enrollments: true }
+        }
+      },
+      orderBy: { startDate: 'desc' }
+    });
+    
+    res.json({ success: true, message: 'Teacher intakes fetched successfully', data: intakes } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getIntakeById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const intake = await prisma.intake.findUnique({

@@ -4,6 +4,13 @@ export async function seedEvaluations(prisma: PrismaClient, users: any[]) {
   const students = users.filter(user => user.role === UserRole.STUDENT);
   const teachers = users.filter(user => user.role === UserRole.TEACHER);
 
+  // Get courses to assign to evaluations
+  const courses = await prisma.course.findMany();
+  if (courses.length === 0) {
+    console.log('⚠️ No courses found. Skipping evaluation seeding.');
+    return [];
+  }
+
   const evaluationsData = [
     // Programming Assignment Evaluations
     {
@@ -251,8 +258,14 @@ export async function seedEvaluations(prisma: PrismaClient, users: any[]) {
     }
   ];
 
+  // Add courseId to each evaluation (cycling through available courses)
+  const evaluationsWithCourseId = evaluationsData.map((evaluation, index) => ({
+    ...evaluation,
+    courseId: courses[index % courses.length].id
+  }));
+
   const evaluations = await Promise.all(
-    evaluationsData.map(evaluationData => 
+    evaluationsWithCourseId.map(evaluationData => 
       prisma.evaluation.create({
         data: evaluationData
       })

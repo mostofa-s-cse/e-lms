@@ -81,6 +81,7 @@ model Course {
   quizzes     Quiz[]
   enrollments Enrollment[]
   cartItems   CartItem[]
+  evaluations Evaluation[]
 
   @@map("courses")
 }
@@ -333,6 +334,8 @@ model Evaluation {
   student   User @relation(fields: [studentId], references: [id])
   evaluatorId String
   evaluator   User @relation("Evaluations", fields: [evaluatorId], references: [id])
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
 
   @@map("evaluations")
 }

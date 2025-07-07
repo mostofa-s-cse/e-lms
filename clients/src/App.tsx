@@ -16,9 +16,9 @@ import PaymentCancelPage from './pages/PaymentCancelPage';
 import PaymentCheckoutPage from './pages/PaymentCheckoutPage';
 import CartCheckoutPage from './pages/CartCheckoutPage';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
-import TeacherDashboard from './dashboard/teacher/TeacherDashboard';
 import StudentDashboard from './dashboard/student/StudentDashboard';
 import NotFoundPage from './pages/NotFoundPage';
+import TeacherDashboard from './dashboard/teacher/TeacherDashboard';
 
 // Protected Route Component - for dashboard access
 const ProtectedRoute: React.FC<{ 

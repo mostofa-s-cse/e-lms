@@ -42,6 +42,32 @@ export const getAllNotes = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const getNotesByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    const notes = await prisma.note.findMany({
+      where: { 
+        authorId: teacherId,
+        isActive: true 
+      },
+      include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        author: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ success: true, message: 'Teacher notes fetched successfully', data: notes } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getNotesByCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const courseId = req.params.courseId;

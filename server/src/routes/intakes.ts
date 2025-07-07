@@ -6,6 +6,7 @@ const router = Router();
 
 // Public endpoints (for authenticated users)
 router.get('/', authenticateToken, intakeController.getAllIntakes);
+router.get('/teacher', authenticateToken, requireTeacher, intakeController.getIntakesByTeacher);
 router.get('/:id', authenticateToken, intakeController.getIntakeById);
 router.get('/:id/enrollments', authenticateToken, intakeController.getIntakeEnrollments);
 

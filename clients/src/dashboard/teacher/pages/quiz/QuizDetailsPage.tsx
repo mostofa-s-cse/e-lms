@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { quizzesAPI, questionsAPI, quizAttemptsAPI } from '../../../../services/api';
 import { handleApiError } from '../../../../utils/sweetAlert';
@@ -135,7 +135,7 @@ const QuizDetailsPage = () => {
     } catch (error) {
       console.error('Error fetching quiz details:', error);
       handleApiError(error, 'Failed to fetch quiz details');
-      navigate('/admin/quizzes');
+      navigate('/teacher/quizzes');
     } finally {
       setLoading(false);
     }
@@ -233,7 +233,7 @@ const QuizDetailsPage = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => navigate('/admin/quizzes')}
+            onClick={() => navigate('/teacher/quizzes')}
             className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -424,13 +424,13 @@ const QuizDetailsPage = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
             <div className="space-y-3">
               <button
-                onClick={() => navigate(`/admin/quizzes/${quiz.id}/edit`)}
+                onClick={() => navigate(`/teacher/quizzes/${quiz.id}/edit`)}
                 className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
               >
                 Edit Quiz
               </button>
               <button
-                onClick={() => navigate(`/admin/courses/${quiz.courseId}`)}
+                onClick={() => navigate(`/teacher/courses/${quiz.courseId}`)}
                 className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
               >
                 View Course

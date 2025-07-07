@@ -219,57 +219,58 @@ const VideoDetailsPage = () => {
           )}
 
           {/* Course Videos List */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 className="text-lg font-semibold mb-4">All Course Videos</h3>
-            {courseVideos.length > 0 ? (
-              <div className="space-y-3">
+          {courseVideos.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+              <h3 className="text-lg font-semibold mb-4">Course Videos</h3>
+              <div className="space-y-4">
                 {courseVideos.map((courseVideo) => (
                   <div
                     key={courseVideo.id}
-                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                    className={`flex items-center space-x-4 p-4 rounded-lg border cursor-pointer transition-colors ${
                       courseVideo.id === video.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                     }`}
                     onClick={() => handleVideoClick(courseVideo.id)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {courseVideo.title}
-                          {courseVideo.id === video.id && (
-                            <span className="ml-2 text-blue-600 text-sm">(Current)</span>
-                          )}
-                        </h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {courseVideo.description.length > 100
-                            ? `${courseVideo.description.substring(0, 100)}...`
-                            : courseVideo.description}
-                        </p>
-                        <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                          <span className="flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {formatDuration(courseVideo.duration)}
-                          </span>
-                          <span>
-                            {new Date(courseVideo.createdAt).toLocaleDateString()}
-                          </span>
+                    <div className="flex-shrink-0">
+                      {courseVideo.thumbnail ? (
+                        <img
+                          src={`${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${courseVideo.thumbnail}`}
+                          alt={courseVideo.title}
+                          className="w-20 h-12 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-20 h-12 bg-gray-300 rounded flex items-center justify-center">
+                          <Play className="w-6 h-6 text-gray-500" />
                         </div>
-                      </div>
-                      <div className="ml-4">
-                        <Play className="w-5 h-5 text-gray-400" />
-                      </div>
+                      )}
                     </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                        {courseVideo.title}
+                      </h4>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Duration: {formatDuration(courseVideo.duration)}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(courseVideo.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    
+                    {courseVideo.id === video.id && (
+                      <div className="flex-shrink-0">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Playing
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No other videos found for this course.</p>
-                <p className="text-sm text-gray-400 mt-1">This might be the only video in the course.</p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Video Details Sidebar */}
@@ -384,6 +385,14 @@ const VideoDetailsPage = () => {
                   className="w-full text-left text-blue-600 hover:text-blue-800 text-sm py-2"
                 >
                   ← Back to Course
+                </button>
+              )}
+              {courseVideos.length > 0 && (
+                <button
+                  onClick={() => navigate(`/student/courses/${video.courseId}`)}
+                  className="w-full text-left text-blue-600 hover:text-blue-800 text-sm py-2"
+                >
+                  📹 View All Course Videos ({courseVideos.length})
                 </button>
               )}
             </div>

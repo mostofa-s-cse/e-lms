@@ -6,13 +6,15 @@ import {
   createQuiz, 
   updateQuiz, 
   deleteQuiz,
-  getQuizzesByCourse
+  getQuizzesByCourse,
+  getQuizzesByTeacher
 } from '../controllers/quizzes';
 
 const router = express.Router();
 
 // Public routes (for students to view quizzes)
 router.get('/', authenticateToken, getAllQuizzes);
+router.get('/teacher', authenticateToken, authorizeRoles(['TEACHER', 'ADMIN']), getQuizzesByTeacher);
 router.get('/course/:courseId', authenticateToken, getQuizzesByCourse);
 router.get('/:id', authenticateToken, getQuizById);
 

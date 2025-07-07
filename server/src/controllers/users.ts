@@ -46,6 +46,54 @@ export const getAllUsers = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
+export const getTeachers = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teachers = await prisma.user.findMany({
+      where: { 
+        role: 'TEACHER',
+        isActive: true
+      },
+      select: { 
+        id: true, 
+        email: true, 
+        firstName: true, 
+        lastName: true, 
+        role: true, 
+        isActive: true, 
+        createdAt: true 
+      },
+      orderBy: { firstName: 'asc' }
+    });
+    res.json({ success: true, message: 'Teachers fetched', data: teachers } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getStudents = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const students = await prisma.user.findMany({
+      where: { 
+        role: 'STUDENT',
+        isActive: true
+      },
+      select: { 
+        id: true, 
+        email: true, 
+        firstName: true, 
+        lastName: true, 
+        role: true, 
+        isActive: true, 
+        createdAt: true 
+      },
+      orderBy: { firstName: 'asc' }
+    });
+    res.json({ success: true, message: 'Students fetched', data: students } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getUserById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { includeProfile } = req.query;

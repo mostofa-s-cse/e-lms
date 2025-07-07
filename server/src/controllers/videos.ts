@@ -73,6 +73,32 @@ export const getVideoById = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const getVideosByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    const videos = await prisma.video.findMany({
+      where: { 
+        authorId: teacherId,
+        isActive: true 
+      },
+      include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        author: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ success: true, message: 'Teacher videos fetched successfully', data: videos } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createVideo = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
  console.log("CREATE VIDEO - Request:", req.files);
   try {

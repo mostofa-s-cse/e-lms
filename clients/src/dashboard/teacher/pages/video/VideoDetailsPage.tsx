@@ -118,7 +118,7 @@ const VideoDetailsPage = () => {
     } catch (error) {
       console.error('Error fetching video:', error);
       handleApiError(error, 'Failed to fetch video details');
-      navigate('/admin/videos');
+      navigate('/teacher/videos');
     } finally {
       setLoading(false);
     }
@@ -238,7 +238,7 @@ const VideoDetailsPage = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => navigate('/admin/videos')}
+            onClick={() => navigate('/teacher/videos')}
             className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -273,7 +273,7 @@ const VideoDetailsPage = () => {
                         ? 'bg-blue-50 border-blue-200'
                         : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                     }`}
-                    onClick={() => navigate(`/admin/videos/${courseVideo.id}`)}
+                    onClick={() => navigate(`/teacher/videos/${courseVideo.id}`)}
                   >
                     <div className="flex-shrink-0">
                       {courseVideo.thumbnail ? (
@@ -353,22 +353,28 @@ const VideoDetailsPage = () => {
             </div>
           </div>
 
-          
-
-          {/* Action Buttons */}
+          {/* Quick Navigation */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Actions</h3>
-            <div className="space-y-3">
+            <h3 className="text-lg font-semibold mb-4">Quick Navigation</h3>
+            <div className="space-y-2">
               <button
-                onClick={() => navigate(`/admin/courses/${video.courseId}`)}
-                className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                onClick={() => navigate('/teacher/videos')}
+                className="w-full text-left text-blue-600 hover:text-blue-800 text-sm py-2"
               >
-                View Course
+                ← Back to Videos
               </button>
+              {video.course && (
+                <button
+                  onClick={() => navigate(`/teacher/courses/${video.courseId}`)}
+                  className="w-full text-left text-blue-600 hover:text-blue-800 text-sm py-2"
+                >
+                  ← Back to Course
+                </button>
+              )}
               {courseVideos.length > 0 && (
                 <button
-                  onClick={() => navigate(`/admin/courses/${video.courseId}`)}
-                  className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                  onClick={() => navigate(`/teacher/courses/${video.courseId}`)}
+                  className="w-full text-left text-blue-600 hover:text-blue-800 text-sm py-2"
                 >
                   📹 View All Course Videos ({courseVideos.length})
                 </button>

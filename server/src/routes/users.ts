@@ -7,6 +7,8 @@ const router = Router();
 
 // User endpoints
 router.get('/', authenticateToken, requireAdmin, userController.getAllUsers);
+router.get('/teachers', authenticateToken, requireTeacher, userController.getTeachers);
+router.get('/students', authenticateToken, requireTeacher, userController.getStudents);
 router.get('/:id', authenticateToken, userController.getUserById);
 
 // Profile endpoints

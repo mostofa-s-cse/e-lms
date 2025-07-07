@@ -23,6 +23,33 @@ export const getAllQuizzes = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+// Get quizzes by teacher
+export const getQuizzesByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    const quizzes = await prisma.quiz.findMany({
+      where: { 
+        authorId: teacherId,
+        isActive: true 
+      },
+      include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        author: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ success: true, message: 'Teacher quizzes fetched successfully', data: quizzes } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get quiz by ID
 export const getQuizById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

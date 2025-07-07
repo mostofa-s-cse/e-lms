@@ -26,6 +26,45 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const getCoursesByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    console.log('getCoursesByTeacher: Request user:', req.user);
+    console.log('getCoursesByTeacher: User ID:', req.user?.id);
+    console.log('getCoursesByTeacher: User role:', req.user?.role);
+    
+    const teacherId = req.user!.id;
+    
+    console.log('getCoursesByTeacher: Fetching courses for teacher ID:', teacherId);
+    
+    const courses = await prisma.course.findMany({
+      where: { 
+        teacherId: teacherId,
+        isActive: true 
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        teacher: {
+          select: { id: true, firstName: true, lastName: true, email: true }
+        },
+        _count: {
+          select: { enrollments: true, notes: true, videos: true, quizzes: true }
+        },
+        intakes: {
+          where: { isActive: true },
+          orderBy: { startDate: 'desc' }
+        }
+      }
+    });
+    
+    console.log('getCoursesByTeacher: Found courses:', courses.length);
+    
+    res.json({ success: true, message: 'Teacher courses fetched successfully', data: courses } as ApiResponse);
+  } catch (error) {
+    console.error('getCoursesByTeacher: Error:', error);
+    next(error);
+  }
+};
+
 export const getCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const course = await prisma.course.findUnique({
