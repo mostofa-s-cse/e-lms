@@ -168,7 +168,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('edulms_merge_cart_on_login', 'true');
       }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      // Pass through the original error so the RegisterPage can handle it properly
+      throw error;
     }
   };
 

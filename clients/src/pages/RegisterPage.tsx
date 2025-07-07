@@ -127,10 +127,17 @@ const RegisterPage = () => {
       }, 2000);
     } catch (error: any) {
       console.error('Registration failed:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      // Handle different error response formats
       if (error.response?.data?.message) {
+        // Handle simple message format like "Email already exists"
+        console.log('Showing error message:', error.response.data.message);
         showErrorAlert('Registration Failed', error.response.data.message);
       } else if (error.response?.data?.errors) {
         // Handle field-specific errors from server
+        console.log('Showing field-specific errors:', error.response.data.errors);
         const serverErrors: FormErrors = {};
         error.response.data.errors.forEach((err: any) => {
           if (err.field) {
@@ -141,7 +148,12 @@ const RegisterPage = () => {
           Object.entries(serverErrors).filter(([_, value]) => value !== undefined)
         ) as Record<string, string>;
         showFormErrorAlert(filteredServerErrors);
+      } else if (error.message) {
+        // Handle error.message if available
+        console.log('Showing error.message:', error.message);
+        showErrorAlert('Registration Failed', error.message);
       } else {
+        console.log('Showing generic error message');
         showErrorAlert('Registration Failed', 'An error occurred during registration. Please try again.');
       }
     } finally {

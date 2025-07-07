@@ -44,7 +44,7 @@ const VideoDetailsPage = () => {
       // Test server connectivity first
       const testServer = async () => {
         try {
-          const serverUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+          const serverUrl = process.env.REACT_APP_IMG_URL || 'http://localhost:4000';
           console.log('Testing server connectivity to:', serverUrl);
           const response = await fetch(`${serverUrl}/health`);
           console.log('Server health check:', response.status, response.statusText);
@@ -85,10 +85,10 @@ const VideoDetailsPage = () => {
       setVideo(videoData as Video);
       
       // Debug video URL
-      const videoUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${videoData.videoUrl}`;
+      const videoUrl = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${videoData.videoUrl}`;
       console.log('Video URL:', videoUrl);
       console.log('Video data:', videoData);
-      console.log('Environment API URL:', process.env.REACT_APP_API_URL);
+      console.log('Environment API URL:', process.env.REACT_APP_IMG_URL);
       console.log('Video URL from database:', videoData.videoUrl);
       console.log('Thumbnail from database:', videoData.thumbnail);
       
@@ -278,7 +278,7 @@ const VideoDetailsPage = () => {
                     <div className="flex-shrink-0">
                       {courseVideo.thumbnail ? (
                         <img
-                          src={`${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${courseVideo.thumbnail}`}
+                          src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${courseVideo.thumbnail}`}
                           alt={courseVideo.title}
                           className="w-20 h-12 object-cover rounded"
                         />
