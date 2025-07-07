@@ -223,6 +223,8 @@ const NoteViewPage = () => {
     );
   };
 
+
+
   const handleDownload = async () => {
     if (!note?.attachment) return;
     const fileUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${note.attachment}`;
@@ -378,6 +380,26 @@ const NoteViewPage = () => {
               </div>
             </div>
           )}
+          {/* Quick Navigation */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Quick Navigation</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => navigate('/student/notes')}
+                className="w-full text-left text-blue-600 hover:text-blue-800 text-sm py-2"
+              >
+                ← Back to Notes
+              </button>
+                {note.course && (
+                <button
+                  onClick={() => navigate(`/student/courses/${note.courseId}`)}
+                  className="w-full text-left text-blue-600 hover:text-blue-800 text-sm py-2"
+                >
+                  ← Back to Course
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

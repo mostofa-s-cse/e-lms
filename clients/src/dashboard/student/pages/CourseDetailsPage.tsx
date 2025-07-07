@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { coursesAPI, videosAPI, notesAPI, quizzesAPI, enrollmentsAPI } from '../../../services/api';
 import { handleApiError } from '../../../utils/sweetAlert';
 import { checkPaymentAccess } from '../../../utils/paymentVerification';
 import PaymentRequired from '../../../components/PaymentRequired';
-import { ArrowLeft, Play, Download, FileText, Clock, Award, User, Calendar } from 'lucide-react';
+import { ArrowLeft, Play, Download, FileText, Clock, Award, User, Calendar, Eye } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -462,6 +462,12 @@ const CourseDetailsPage = () => {
                     </div>
                   </div>
                   {note.attachment && (
+                    <>
+                    <Link to={`/student/notes/${note.id}`} className='bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center'>
+                    <Eye className="w-4 h-4 mr-1" />
+                      View
+                    </Link>
+                    
                     <button
                       onClick={() => handleNoteDownload(note)}
                       className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center"
@@ -469,6 +475,7 @@ const CourseDetailsPage = () => {
                       <Download className="w-4 h-4 mr-1" />
                       Download
                     </button>
+                    </>
                   )}
                 </div>
               </div>
