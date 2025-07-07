@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
-import { studentAPI, enrollmentsAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
-import { handleApiError } from '../../../utils/sweetAlert';
-import { checkPaymentAccess } from '../../../utils/paymentVerification';
-import PaymentRequiredModal from '../../../components/PaymentRequiredModal';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { studentAPI, enrollmentsAPI } from '../../../../services/api';
+import DataTable from '../../../../pages/DataTable';
+import { handleApiError } from '../../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../../utils/paymentVerification';
+import PaymentRequiredModal from '../../../../components/PaymentRequiredModal';
 
 interface Course {
   id: string;

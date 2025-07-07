@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
-import { studentAPI, enrollmentsAPI, notesAPI } from '../../../services/api';
-import DataTable from '../../../pages/DataTable';
-import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
-import { checkPaymentAccess } from '../../../utils/paymentVerification';
-import PaymentRequiredModal from '../../../components/PaymentRequiredModal';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { studentAPI, enrollmentsAPI, notesAPI } from '../../../../services/api';
+import DataTable from '../../../../pages/DataTable';
+import { handleApiError, showSuccessAlert } from '../../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../../utils/paymentVerification';
+import PaymentRequiredModal from '../../../../components/PaymentRequiredModal';
 
 interface Note {
   id: string;

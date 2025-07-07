@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
-import { coursesAPI, videosAPI, notesAPI, quizzesAPI, enrollmentsAPI } from '../../../services/api';
-import { handleApiError } from '../../../utils/sweetAlert';
-import { checkPaymentAccess } from '../../../utils/paymentVerification';
-import PaymentRequired from '../../../components/PaymentRequired';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { coursesAPI, videosAPI, notesAPI, quizzesAPI, enrollmentsAPI } from '../../../../services/api';
+import { handleApiError } from '../../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../../utils/paymentVerification';
+import PaymentRequired from '../../../../components/PaymentRequired';
 import { ArrowLeft, Play, Download, FileText, Clock, Award, User, Calendar, Eye } from 'lucide-react';
 
 interface Course {

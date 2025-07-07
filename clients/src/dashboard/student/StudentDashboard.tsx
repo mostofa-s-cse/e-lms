@@ -11,17 +11,17 @@ import {
   CreditCard,
   User,
 } from 'lucide-react';
-import CoursesPage from './pages/CoursesPage';
-import CourseDetailsPage from './pages/CourseDetailsPage';
+import CoursesPage from './pages/course/CoursesPage';
+import CourseDetailsPage from './pages/course/CourseDetailsPage';
 import IntakesPage from './pages/IntakesPage';
-import NotesPage from './pages/NotesPage';
-import NoteViewPage from './pages/NoteViewPage';
-import VideosPage from './pages/VideosPage';
-import VideoDetailsPage from './pages/VideoDetailsPage';
-import QuizzesPage from './pages/QuizzesPage';
-import QuizDetailsPage from './pages/QuizDetailsPage';
-import QuizTakingPage from './pages/QuizTakingPage';
-import QuizResultPage from './pages/QuizResultPage';
+import NotesPage from './pages/notes/NotesPage';
+import NoteViewPage from './pages/notes/NoteViewPage';
+import VideosPage from './pages/video/VideosPage';
+import VideoDetailsPage from './pages/video/VideoDetailsPage';
+import QuizzesPage from './pages/quiz/QuizzesPage';
+import QuizDetailsPage from './pages/quiz/QuizDetailsPage';
+import QuizTakingPage from './pages/quiz/QuizTakingPage';
+import QuizResultPage from './pages/quiz/QuizResultPage';
 import EvaluationsPage from './pages/EvaluationsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import ProfilePage from './pages/ProfilePage';

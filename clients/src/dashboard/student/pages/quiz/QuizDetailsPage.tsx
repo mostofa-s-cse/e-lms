@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
-import { quizzesAPI, quizAttemptsAPI, enrollmentsAPI } from '../../../services/api';
-import { handleApiError, showSuccessAlert, showInfoAlert } from '../../../utils/sweetAlert';
-import { checkPaymentAccess } from '../../../utils/paymentVerification';
-import PaymentRequired from '../../../components/PaymentRequired';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { quizzesAPI, quizAttemptsAPI, enrollmentsAPI } from '../../../../services/api';
+import { handleApiError, showSuccessAlert, showInfoAlert } from '../../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../../utils/paymentVerification';
+import PaymentRequired from '../../../../components/PaymentRequired';
 import { ArrowLeft, Clock, User, BookOpen, Play, Award, Calendar, CheckCircle, XCircle } from 'lucide-react';
 
 

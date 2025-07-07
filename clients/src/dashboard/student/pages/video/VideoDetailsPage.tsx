@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
-import { videosAPI, enrollmentsAPI } from '../../../services/api';
-import { handleApiError } from '../../../utils/sweetAlert';
-import { checkPaymentAccess } from '../../../utils/paymentVerification';
-import PaymentRequired from '../../../components/PaymentRequired';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { videosAPI, enrollmentsAPI } from '../../../../services/api';
+import { handleApiError } from '../../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../../utils/paymentVerification';
+import PaymentRequired from '../../../../components/PaymentRequired';
 import { ArrowLeft, Clock, User, BookOpen, Play, Download } from 'lucide-react';
-import VideoPlayer from '../../../components/VideoPlayer';
+import VideoPlayer from '../../../../components/VideoPlayer';
 
 
 interface Video {
