@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import { usersAPI, User } from '../../../services/api';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
@@ -9,18 +9,15 @@ import {
   showFormErrorAlert
 } from '../../../utils/sweetAlert';
 
-const UserDetailsPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+const ProfilePage = () => {
+  const { user, updateUser } = useAuth();
+  console.log("user",user);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    role: 'STUDENT' as 'STUDENT' | 'TEACHER' | 'ADMIN',
-    isActive: true,
     profile: {
       phone: '',
       address: '',
@@ -33,31 +30,34 @@ const UserDetailsPage = () => {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const roleOptions = [
-    { value: 'STUDENT', label: 'Student' },
-    { value: 'TEACHER', label: 'Teacher' },
-    { value: 'ADMIN', label: 'Admin' }
-  ];
-
   useEffect(() => {
-    if (id) {
-      fetchUser();
+    if (user) {
+      fetchUserProfile();
     }
-  }, [id]);
+  }, [user]);
 
-  const fetchUser = async () => {
+  const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      const response = await usersAPI.getById(id!);
-      console.log("response",response);
+      const response = await usersAPI.getById(user!.id);
       if (response.data.data) {
-        setUser(response.data.data);
-      } else {
-        setUser(null);
+        const userData = response.data.data;
+        setFormData({
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          profile: {
+            phone: userData.profile?.phone || '',
+            address: userData.profile?.address || '',
+            city: userData.profile?.city || '',
+            state: userData.profile?.state || '',
+            profilePicture: userData.profile?.profilePicture || ''
+          }
+        });
+        setPreviewUrl(userData.profile?.profilePicture || '');
       }
     } catch (error) {
-      handleApiError(error, 'Failed to fetch user details');
-      navigate('/admin/users');
+      handleApiError(error, 'Failed to fetch profile details');
     } finally {
       setLoading(false);
     }
@@ -73,24 +73,6 @@ const UserDetailsPage = () => {
   };
 
   const handleEdit = () => {
-    if (!user) return;
-    
-    setFormData({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
-      isActive: user.isActive,
-      profile: {
-        phone: user.profile?.phone || '',
-        address: user.profile?.address || '',
-        city: user.profile?.city || '',
-        state: user.profile?.state || '',
-        profilePicture: user.profile?.profilePicture || ''
-      }
-    });
-    setSelectedFile(null);
-    setPreviewUrl(user.profile?.profilePicture || '');
     setFormErrors({});
     setShowEditModal(true);
   };
@@ -125,8 +107,8 @@ const UserDetailsPage = () => {
       submitData.append('firstName', formData.firstName);
       submitData.append('lastName', formData.lastName);
       submitData.append('email', formData.email);
-      submitData.append('role', formData.role);
-      submitData.append('isActive', formData.isActive ? 'true' : 'false');
+      submitData.append('role', user!.role);
+      submitData.append('isActive', 'true');
 
       // Add profile data
       const profileData = {
@@ -142,13 +124,22 @@ const UserDetailsPage = () => {
         submitData.append('profilePicture', selectedFile);
       }
 
-      await usersAPI.update(user!.id, submitData);
-      showSuccessAlert(
-        'User Updated', 
-        `${formData.firstName} ${formData.lastName} has been successfully updated.`
-      );
-      setShowEditModal(false);
-      fetchUser(); // Refresh user data
+      const response = await usersAPI.updateProfile(submitData);
+      
+      if (response.data.success) {
+        // Update the user context with new data
+        const updatedUser = response.data.data;
+        if (updatedUser) {
+          updateUser(updatedUser);
+        }
+        
+        showSuccessAlert(
+          'Profile Updated', 
+          'Your profile has been successfully updated.'
+        );
+        setShowEditModal(false);
+        fetchUserProfile(); // Refresh profile data
+      }
     } catch (error: any) {
       if (error.response?.data?.errors) {
         // Handle field-specific errors from server
@@ -161,7 +152,7 @@ const UserDetailsPage = () => {
         showFormErrorAlert(serverErrors);
         setFormErrors(serverErrors);
       } else {
-        handleApiError(error, 'Failed to update user');
+        handleApiError(error, 'Failed to update profile');
       }
     }
   };
@@ -177,14 +168,8 @@ const UserDetailsPage = () => {
   if (!user) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">User Not Found</h2>
-        <p className="text-gray-600 mb-6">The user you're looking for doesn't exist.</p>
-        <button
-          onClick={() => navigate('/admin/users')}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Back to Users
-        </button>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h2>
+        <p className="text-gray-600 mb-6">Unable to load your profile information.</p>
       </div>
     );
   }
@@ -194,21 +179,21 @@ const UserDetailsPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Details</h1>
-          <p className="text-gray-600 mt-1">View detailed information about this user</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          <p className="text-gray-600 mt-1">Manage your personal information and settings</p>
         </div>
         <button
-          onClick={() => navigate('/admin/users')}
-          className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+          onClick={handleEdit}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
         >
-          Back to Users
+          Edit Profile
         </button>
       </div>
 
-      {/* User Card */}
+      {/* Profile Card */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8 text-white">
+        <div className="bg-gradient-to-r from-green-600 to-blue-600 px-6 py-8 text-white">
           <div className="flex items-center space-x-6">
             <div className="relative w-24 h-24 flex-shrink-0">
               {user.profile?.profilePicture ? (
@@ -225,7 +210,7 @@ const UserDetailsPage = () => {
                   }}
                 />
               ) : null}
-              <div className={`fallback absolute inset-0 w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-4 border-white ${
+              <div className={`fallback absolute inset-0 w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center border-4 border-white ${
                 user.profile?.profilePicture ? 'hidden' : ''
               }`}>
                 <span className="text-2xl font-bold text-white">
@@ -235,22 +220,22 @@ const UserDetailsPage = () => {
             </div>
             <div>
               <h2 className="text-3xl font-bold">{user.firstName} {user.lastName}</h2>
-              <p className="text-blue-100 text-lg">{user.email}</p>
+              <p className="text-green-100 text-lg">{user.email}</p>
               <div className="flex items-center space-x-4 mt-2">
                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getRoleColor(user.role)}`}>
                   {user.role}
                 </span>
                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                  user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  user.isActive === true ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
-                  {user.isActive ? 'Active' : 'Inactive'}
+                  {user.isActive === true ? 'Active' : 'Inactive'}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* User Information */}
+        {/* Profile Information */}
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Basic Information */}
@@ -274,14 +259,14 @@ const UserDetailsPage = () => {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Status</label>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    user.isActive === true ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {user.isActive ? 'Active' : 'Inactive'}
+                    {user.isActive === true ? 'Active' : 'Inactive'}
                   </span>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Member Since</label>
-                  <p className="text-gray-900">{new Date(user.createdAt).toLocaleDateString()}</p>
+                  <p className="text-gray-900">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Not available'}</p>
                 </div>
               </div>
             </div>
@@ -326,24 +311,18 @@ const UserDetailsPage = () => {
                 onClick={handleEdit}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
               >
-                Edit User
-              </button>
-              <button
-                onClick={() => navigate('/admin/users')}
-                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-              >
-                Back to Users
+                Edit Profile
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Edit User Modal */}
+      {/* Edit Profile Modal */}
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Edit User"
+        title="Edit Profile"
       >
         <Form onSubmit={handleSubmit}>
           <FormField
@@ -373,30 +352,6 @@ const UserDetailsPage = () => {
             error={formErrors.email}
             required
           />
-          <FormField
-            label="Role"
-            name="role"
-            type="select"
-            value={formData.role}
-            onChange={(value) => setFormData({ ...formData, role: value as 'STUDENT' | 'TEACHER' | 'ADMIN' })}
-            options={roleOptions}
-            error={formErrors.role}
-            required
-          />
-          <div className="mb-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-              />
-              <span className="ml-2 text-sm font-medium text-gray-700">Active Status</span>
-            </label>
-            {formErrors.isActive && (
-              <p className="mt-1 text-sm text-red-600">{formErrors.isActive}</p>
-            )}
-          </div>
           
           {/* Profile Section */}
           <div className="border-t pt-6 mt-6">
@@ -408,27 +363,25 @@ const UserDetailsPage = () => {
                 Profile Picture
               </label>
               <div className="flex-shrink-0 items-center space-x-16">
-                 <div className="flex-shrink-0 relative"> 
-                 {user.profile?.profilePicture ? (
-              <img 
-                src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${user.profile.profilePicture}`} 
-                alt={`${user.firstName} ${user.lastName}`}
-                className="w-14 h-14 absolute rounded-full object-cover border border-gray-200"
-                onError={(e) => {
-                  // Fallback to initials if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const fallback = target.parentElement?.querySelector('.fallback') as HTMLElement;
-                  if (fallback) fallback.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div className={`fallback absolute inset-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ${
+                 <div className="flex-shrink-0 relative">
+                  {previewUrl ? (
+                    <img 
+                      src={previewUrl.startsWith('blob:') ? previewUrl : `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${previewUrl}`}
+                      alt="Profile preview"
+                      className="w-14 h-14 rounded-full object-cover border border-gray-200"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.parentElement?.querySelector('.fallback') as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`fallback absolute inset-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ${
               user.profile?.profilePicture ? 'hidden' : ''
             }`}>
-              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-            </div>
-                  
+                    {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
+                  </div>
                 </div>
                 <div className="flex-1">
                   <input
@@ -494,7 +447,7 @@ const UserDetailsPage = () => {
           
           <FormActions
             onCancel={() => setShowEditModal(false)}
-            submitText="Update User"
+            submitText="Update Profile"
           />
         </Form>
       </Modal>
@@ -502,4 +455,4 @@ const UserDetailsPage = () => {
   );
 };
 
-export default UserDetailsPage; 
+export default ProfilePage; 

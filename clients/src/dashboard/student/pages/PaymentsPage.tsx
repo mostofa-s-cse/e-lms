@@ -77,7 +77,16 @@ const PaymentsPage = () => {
     );
   };
 
-  const getMethodBadge = (method: string) => {
+  const getMethodBadge = (method: string, amount: number) => {
+    // Special case for free courses
+    if (method === 'OTHER' && amount === 0) {
+      return (
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          Free Course
+        </span>
+      );
+    }
+    
     const methodColors = {
       CREDIT_CARD: 'bg-purple-100 text-purple-800',
       DEBIT_CARD: 'bg-indigo-100 text-indigo-800',
@@ -97,12 +106,41 @@ const PaymentsPage = () => {
     return payments.reduce((total, payment) => total + payment.amount, 0);
   };
 
+  const getCompletedAmount = () => {
+    return getCompletedPayments().reduce((total, payment) => {
+      // Only count non-free payments in the total
+      if (payment.amount > 0) {
+        return total + payment.amount;
+      }
+      return total;
+    }, 0);
+  };
+
   const getCompletedPayments = () => {
     return payments.filter(payment => payment.status === 'COMPLETED');
   };
 
   const getPendingPayments = () => {
     return payments.filter(payment => payment.status === 'PENDING');
+  };
+
+  const getFailedPayments = () => {
+    return payments.filter(payment => payment.status === 'FAILED');
+  };
+
+  const getPrimaryCurrency = () => {
+    // Get the most common currency from payments, or default to BDT
+    if (payments.length === 0) return 'BDT';
+    
+    const currencyCounts = payments.reduce((acc, payment) => {
+      acc[payment.currency] = (acc[payment.currency] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const mostCommonCurrency = Object.entries(currencyCounts)
+      .sort(([,a], [,b]) => b - a)[0][0];
+    
+    return mostCommonCurrency;
   };
 
   if (loading) {
@@ -123,7 +161,7 @@ const PaymentsPage = () => {
       </div>
 
       {/* Payment Summary Cards */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
+      <div className="grid md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -165,6 +203,20 @@ const PaymentsPage = () => {
             </div>
           </div>
         </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Failed</p>
+              <p className="text-2xl font-bold text-gray-900">{getFailedPayments().length}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Total Amount Card */}
@@ -173,7 +225,7 @@ const PaymentsPage = () => {
           <div>
             <p className="text-blue-100 text-sm font-medium">Total Amount Paid</p>
             <p className="text-3xl font-bold text-white">
-              {payments.length > 0 ? `${payments[0].currency} ${getTotalAmount().toFixed(2)}` : 'BDT 0.00'}
+              {getCompletedAmount() > 0 ? `${getPrimaryCurrency()} ${getCompletedAmount().toFixed(2)}` : 'Free Courses Only'}
             </p>
           </div>
           <div className="p-3 bg-white bg-opacity-20 rounded-lg">
@@ -241,11 +293,11 @@ const PaymentsPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {payment.currency} {payment.amount.toFixed(2)}
+                        {payment.amount === 0 ? 'Free' : `${payment.currency} ${payment.amount.toFixed(2)}`}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getMethodBadge(payment.method)}
+                      {getMethodBadge(payment.method, payment.amount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(payment.status)}

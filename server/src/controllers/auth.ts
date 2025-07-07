@@ -27,7 +27,9 @@ export const register = async (req: Request, res: Response, next: NextFunction):
         email: user.email, 
         firstName: user.firstName, 
         lastName: user.lastName, 
-        role: user.role 
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: user.createdAt
       } 
     } as ApiResponse);
   } catch (error) {
@@ -72,7 +74,9 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
           email: user.email, 
           firstName: user.firstName, 
           lastName: user.lastName, 
-          role: user.role 
+          role: user.role,
+          isActive: user.isActive,
+          createdAt: user.createdAt
         } 
       } 
     } as ApiResponse);

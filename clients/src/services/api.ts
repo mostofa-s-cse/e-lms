@@ -103,6 +103,11 @@ export const usersAPI = {
     const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
     return api.put<ApiResponse<User>>(`/users/${id}`, data, { headers });
   },
+  updateProfile: (data: any) => {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' };
+    return api.put<ApiResponse<User>>('/users/profile/me', data, { headers });
+  },
   delete: (id: string) => api.delete<ApiResponse>(`/users/${id}`),
 };
 

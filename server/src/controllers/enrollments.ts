@@ -366,6 +366,13 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
       return;
     }
 
+    // Check if this is a free course (either course is free or intake amount is 0)
+    const intake = await prisma.intake.findUnique({
+      where: { id: finalIntakeId }
+    });
+    
+    const isFreeCourse = course.isFree || (intake && intake.amount === 0);
+
     const enrollment = await prisma.enrollment.create({
       data: {
         studentId,
@@ -404,6 +411,22 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
         },
       },
     });
+
+    // For free courses, create a completed payment record with 0 amount
+    if (isFreeCourse) {
+      await prisma.payment.create({
+        data: {
+          userId: studentId,
+          enrollmentId: enrollment.id,
+          amount: 0,
+          currency: 'BDT',
+          method: 'OTHER',
+          status: 'COMPLETED',
+          referenceId: `FREE_${enrollment.id}`,
+          paidAt: new Date(),
+        },
+      });
+    }
 
     res.status(201).json({
       success: true,

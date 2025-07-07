@@ -12,8 +12,8 @@ router.get('/:id', authenticateToken, userController.getUserById);
 // Profile endpoints
 router.get('/profile/me', authenticateToken, userController.getUserProfile);
 router.get('/profile/:userId', authenticateToken, userController.getUserProfile);
-router.put('/profile/me', authenticateToken, userController.updateUserProfile);
-router.put('/profile/:userId', authenticateToken, requireAdmin, userController.updateUserProfile);
+router.put('/profile/me', authenticateToken, uploadProfilePicture, handleUploadError, userController.updateUserProfile);
+router.put('/profile/:userId', authenticateToken, requireAdmin, uploadProfilePicture, handleUploadError, userController.updateUserProfile);
 
 // Admin/Teacher endpoints
 router.post('/', authenticateToken, requireAdmin, uploadProfilePicture, handleUploadError, userController.createUser);

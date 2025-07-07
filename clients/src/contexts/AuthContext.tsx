@@ -8,6 +8,15 @@ interface User {
   firstName: string;
   lastName: string;
   role: 'STUDENT' | 'TEACHER' | 'ADMIN';
+  isActive?: boolean;
+  createdAt?: string;
+  profile?: {
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    profilePicture?: string;
+  };
 }
 
 interface AuthContextType {
@@ -17,6 +26,7 @@ interface AuthContextType {
   register: (userData: { email: string; password: string; firstName: string; lastName: string; role: string }) => Promise<void>;
   logout: () => void;
   logoutWithConfirmation: () => Promise<void>;
+  updateUser: (userData: User) => void;
   isAuthenticated: boolean;
   onLoginSuccess?: (userId: string) => void;
   setOnLoginSuccess: (callback: (userId: string) => void) => void;
@@ -184,6 +194,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   const value = {
     user,
     loading,
@@ -191,6 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     logoutWithConfirmation,
+    updateUser,
     isAuthenticated: !!user,
     onLoginSuccess,
     setOnLoginSuccess,

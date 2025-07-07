@@ -266,43 +266,114 @@ export const getUserProfile = async (req: AuthRequest, res: Response, next: Next
 export const updateUserProfile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.params.userId || req.user?.id;
-    const { phone, address, city, state, profilePicture } = req.body;
+    const { firstName, lastName, email, phone, address, city, state, profile } = req.body;
 
     if (!userId) {
       res.status(400).json({ success: false, message: 'User ID is required' });
       return;
     }
 
-    const profile = await prisma.userProfile.update({
-      where: { userId },
-      data: {
-        phone,
-        address,
-        city,
-        state,
-        profilePicture
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            role: true
-          }
+    // Handle profile picture upload
+    let profilePictureUrl = null;
+    if (req.file) {
+      profilePictureUrl = `/uploads/profile/${req.file.filename}`;
+    }
+
+    // Update user data if provided
+    let updatedUser = null;
+    if (firstName || lastName || email) {
+      const userUpdateData: any = {};
+      if (firstName) userUpdateData.firstName = firstName;
+      if (lastName) userUpdateData.lastName = lastName;
+      if (email) userUpdateData.email = email;
+
+      updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: userUpdateData,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+          createdAt: true
+        }
+      });
+    }
+
+    // Handle profile data
+    let userProfile = null;
+    const profileData = profile ? JSON.parse(profile) : {};
+    
+    // Add profile picture if uploaded
+    if (profilePictureUrl) {
+      profileData.profilePicture = profilePictureUrl;
+    }
+
+    // Add direct profile fields if provided
+    if (phone) profileData.phone = phone;
+    if (address) profileData.address = address;
+    if (city) profileData.city = city;
+    if (state) profileData.state = state;
+
+    if (Object.keys(profileData).length > 0) {
+      // Try to update profile, if not found, create
+      try {
+        userProfile = await prisma.userProfile.update({
+          where: { userId },
+          data: profileData
+        });
+      } catch (error: any) {
+        if (error.code === 'P2025') {
+          // Not found, create it
+          userProfile = await prisma.userProfile.create({
+            data: {
+              userId,
+              ...profileData
+            }
+          });
+        } else {
+          throw error;
         }
       }
-    });
+    }
+
+    // Prepare response data
+    let responseData: any = updatedUser;
+    
+    // If no user update was performed, fetch current user data
+    if (!responseData) {
+      const currentUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+          createdAt: true
+        }
+      });
+      
+      if (currentUser) {
+        responseData = currentUser;
+      }
+    }
+
+    if (userProfile) {
+      responseData.profile = userProfile;
+    }
 
     res.json({ 
       success: true, 
       message: 'User profile updated', 
-      data: profile 
+      data: responseData 
     } as ApiResponse);
   } catch (error: any) {
-    if (error.code === 'P2025') {
-      res.status(404).json({ success: false, message: 'User profile not found' });
+    if (error.code === 'P2002') {
+      res.status(409).json({ success: false, message: 'Email already exists' });
       return;
     }
     next(error);

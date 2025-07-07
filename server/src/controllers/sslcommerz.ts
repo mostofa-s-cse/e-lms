@@ -116,82 +116,122 @@ export const createPaymentSession = async (req: Request, res: Response) => {
       });
     }
 
-    // Create enrollment first (pending status)
-    const enrollment = await prisma.enrollment.create({
-      data: {
-        studentId: userId,
-        courseId: courseId,
-        intakeId: intakeId || null,
-        status: 'PENDING'
-      }
-    });
+    // Check if this is a free course
+    if (expectedAmount === 0) {
+      // For free courses, create enrollment and payment directly
+      const enrollment = await prisma.enrollment.create({
+        data: {
+          studentId: userId,
+          courseId: courseId,
+          intakeId: intakeId || null,
+          status: 'ACTIVE' // Directly activate for free courses
+        }
+      });
 
-    // Create pending payment record
-    const payment = await prisma.payment.create({
-      data: {
-        userId: userId,
-        enrollmentId: enrollment.id,
-        amount: expectedAmount, // Use validated amount
-        currency: 'BDT',
-        method: 'SSLCOMMERZ',
-        status: 'PENDING',
-        referenceId: sslCommerzService.generateTransactionId()
-      }
-    });
+      // Create completed payment record for free course
+      const payment = await prisma.payment.create({
+        data: {
+          userId: userId,
+          enrollmentId: enrollment.id,
+          amount: 0,
+          currency: 'BDT',
+          method: 'OTHER',
+          status: 'COMPLETED',
+          referenceId: `FREE_${enrollment.id}`,
+          paidAt: new Date()
+        }
+      });
 
-    // Prepare payment data for SSLCommerz
-    const paymentData: PaymentRequest = {
-      tran_id: payment.referenceId!,
-      total_amount: expectedAmount, // Use validated amount
-      currency: 'BDT',
-      product_category: 'Education',
-      product_name: course.title,
-      product_profile: 'general',
-      cus_name: `${user.firstName} ${user.lastName}`,
-      cus_email: user.email,
-      cus_add1: user.profile?.address || 'N/A',
-      cus_city: user.profile?.city || 'N/A',
-      cus_postcode: '1000',
-      cus_country: 'Bangladesh',
-      cus_phone: user.profile?.phone || 'N/A',
-      ship_name: `${user.firstName} ${user.lastName}`,
-      ship_add1: user.profile?.address || 'N/A',
-      ship_city: user.profile?.city || 'N/A',
-      ship_postcode: '1000',
-      ship_country: 'Bangladesh',
-      multi_card_name: '',
-      value_a: courseId,
-      value_b: enrollment.id,
-      value_c: userId,
-      value_d: intakeId || ''
-    };
-
-    // Create payment session
-    const paymentSession = await sslCommerzService.createPaymentSession(paymentData);
-
-    if (paymentSession.status === 'SUCCESS') {
       return res.json({
         success: true,
         data: {
-          sessionkey: paymentSession.sessionkey,
-          gatewayPageURL: paymentSession.gatewayPageURL,
-          tran_id: paymentSession.tran_id,
+          sessionkey: null,
+          gatewayPageURL: null,
+          tran_id: payment.referenceId,
           paymentId: payment.id,
           enrollmentId: enrollment.id
         },
-        message: 'Payment session created successfully'
+        message: 'Free course enrolled successfully'
       });
     } else {
-      // Update payment status to failed
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: { status: 'FAILED' }
+      // For paid courses, proceed with SSLCommerz
+      // Create enrollment first (pending status)
+      const enrollment = await prisma.enrollment.create({
+        data: {
+          studentId: userId,
+          courseId: courseId,
+          intakeId: intakeId || null,
+          status: 'PENDING'
+        }
       });
 
-      return res.status(400).json({
-        success: false,
-        message: paymentSession.failedreason || 'Failed to create payment session'
+      // Create pending payment record
+      const payment = await prisma.payment.create({
+        data: {
+          userId: userId,
+          enrollmentId: enrollment.id,
+          amount: expectedAmount, // Use validated amount
+          currency: 'BDT',
+          method: 'SSLCOMMERZ',
+          status: 'PENDING',
+          referenceId: sslCommerzService.generateTransactionId()
+        }
       });
+
+      // Prepare payment data for SSLCommerz
+      const paymentData: PaymentRequest = {
+        tran_id: payment.referenceId!,
+        total_amount: expectedAmount, // Use validated amount
+        currency: 'BDT',
+        product_category: 'Education',
+        product_name: course.title,
+        product_profile: 'general',
+        cus_name: `${user.firstName} ${user.lastName}`,
+        cus_email: user.email,
+        cus_add1: user.profile?.address || 'N/A',
+        cus_city: user.profile?.city || 'N/A',
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: user.profile?.phone || 'N/A',
+        ship_name: `${user.firstName} ${user.lastName}`,
+        ship_add1: user.profile?.address || 'N/A',
+        ship_city: user.profile?.city || 'N/A',
+        ship_postcode: '1000',
+        ship_country: 'Bangladesh',
+        multi_card_name: '',
+        value_a: courseId,
+        value_b: enrollment.id,
+        value_c: userId,
+        value_d: intakeId || ''
+      };
+
+      // Create payment session
+      const paymentSession = await sslCommerzService.createPaymentSession(paymentData);
+
+      if (paymentSession.status === 'SUCCESS') {
+        return res.json({
+          success: true,
+          data: {
+            sessionkey: paymentSession.sessionkey,
+            gatewayPageURL: paymentSession.gatewayPageURL,
+            tran_id: paymentSession.tran_id,
+            paymentId: payment.id,
+            enrollmentId: enrollment.id
+          },
+          message: 'Payment session created successfully'
+        });
+      } else {
+        // Update payment status to failed
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { status: 'FAILED' }
+        });
+
+        return res.status(400).json({
+          success: false,
+          message: paymentSession.failedreason || 'Failed to create payment session'
+        });
+      }
     }
   } catch (error) {
     console.error('Error creating payment session:', error);

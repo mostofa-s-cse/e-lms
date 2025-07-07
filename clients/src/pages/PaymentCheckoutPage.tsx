@@ -165,23 +165,44 @@ const PaymentCheckoutPage = () => {
     try {
       setProcessing(true);
       
-      // Send payment request with validated data
-      const response = await sslCommerzAPI.createPaymentSession({
-        courseId: paymentDetails.courseId,
-        intakeId: paymentDetails.intakeId,
-        amount: paymentDetails.amount // Server will validate this amount
-      });
+      // Check if this is a free course (amount is 0)
+      if (paymentDetails.amount === 0) {
+        // For free courses, create enrollment directly
+        const response = await sslCommerzAPI.createPaymentSession({
+          courseId: paymentDetails.courseId,
+          intakeId: paymentDetails.intakeId,
+          amount: 0
+        });
 
-      if ((response.data as any).success) {
-        const { gatewayPageURL } = (response.data as any).data;
-        showSuccessAlert('Success', 'Redirecting to payment gateway...');
-        
-        // Small delay to show the success message
-        setTimeout(() => {
-          window.location.href = gatewayPageURL;
-        }, 1000);
+        if ((response.data as any).success) {
+          showSuccessAlert('Success', 'Free course enrolled successfully!');
+          
+          // Redirect to course details or dashboard after a short delay
+          setTimeout(() => {
+            navigate(`/courses/${paymentDetails.courseId}`);
+          }, 1500);
+        } else {
+          showErrorAlert('Error', 'Failed to enroll in free course');
+        }
       } else {
-        showErrorAlert('Error', 'Failed to create payment session');
+        // For paid courses, proceed with payment gateway
+        const response = await sslCommerzAPI.createPaymentSession({
+          courseId: paymentDetails.courseId,
+          intakeId: paymentDetails.intakeId,
+          amount: paymentDetails.amount // Server will validate this amount
+        });
+
+        if ((response.data as any).success) {
+          const { gatewayPageURL } = (response.data as any).data;
+          showSuccessAlert('Success', 'Redirecting to payment gateway...');
+          
+          // Small delay to show the success message
+          setTimeout(() => {
+            window.location.href = gatewayPageURL;
+          }, 1000);
+        } else {
+          showErrorAlert('Error', 'Failed to create payment session');
+        }
       }
     } catch (error: any) {
       console.error('Payment error:', error);
@@ -295,21 +316,38 @@ const PaymentCheckoutPage = () => {
                   </div>
                 </div>
 
-                {/* SSLCommerz Information */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <span className="text-yellow-600 mr-2">🔒</span>
-                    <span className="font-semibold text-yellow-800">Secure Payment</span>
+                {/* Course Information */}
+                {paymentDetails.amount === 0 ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <span className="text-green-600 mr-2">🎉</span>
+                      <span className="font-semibold text-green-800">Free Course</span>
+                    </div>
+                    <p className="text-sm text-green-700 mb-3">
+                      This course is completely free! No payment required.
+                    </p>
+                    <div className="text-xs text-green-600 space-y-1">
+                      <div>• Instant enrollment</div>
+                      <div>• Full course access</div>
+                      <div>• No payment processing</div>
+                    </div>
                   </div>
-                  <p className="text-sm text-yellow-700 mb-3">
-                    Your payment will be processed securely through SSLCommerz payment gateway.
-                  </p>
-                  <div className="text-xs text-yellow-600 space-y-1">
-                    <div>• Multiple payment methods available</div>
-                    <div>• Secure SSL encryption</div>
-                    <div>• Instant payment confirmation</div>
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <span className="text-yellow-600 mr-2">🔒</span>
+                      <span className="font-semibold text-yellow-800">Secure Payment</span>
+                    </div>
+                    <p className="text-sm text-yellow-700 mb-3">
+                      Your payment will be processed securely through SSLCommerz payment gateway.
+                    </p>
+                    <div className="text-xs text-yellow-600 space-y-1">
+                      <div>• Multiple payment methods available</div>
+                      <div>• Secure SSL encryption</div>
+                      <div>• Instant payment confirmation</div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Payment Summary */}
@@ -318,26 +356,38 @@ const PaymentCheckoutPage = () => {
                 
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <div className="space-y-3">
-                    {paymentDetails.originalPrice && paymentDetails.originalPrice > paymentDetails.amount && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Original Price:</span>
-                        <span className="line-through text-gray-500">{formatCurrency(paymentDetails.originalPrice)}</span>
+                    {paymentDetails.amount === 0 ? (
+                      // Free course summary
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🎉</div>
+                        <div className="text-2xl font-bold text-green-600 mb-2">Free Course!</div>
+                        <p className="text-gray-600">No payment required for this course</p>
                       </div>
+                    ) : (
+                      // Paid course summary
+                      <>
+                        {paymentDetails.originalPrice && paymentDetails.originalPrice > paymentDetails.amount && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Original Price:</span>
+                            <span className="line-through text-gray-500">{formatCurrency(paymentDetails.originalPrice)}</span>
+                          </div>
+                        )}
+                        
+                        {paymentDetails.discount && paymentDetails.discount > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Discount:</span>
+                            <span className="text-green-600 font-medium">-{formatCurrency(paymentDetails.discount)}</span>
+                          </div>
+                        )}
+                        
+                        <div className="border-t pt-3">
+                          <div className="flex justify-between">
+                            <span className="text-lg font-semibold text-gray-900">Total Amount:</span>
+                            <span className="text-2xl font-bold text-blue-600">{formatCurrency(paymentDetails.amount)}</span>
+                          </div>
+                        </div>
+                      </>
                     )}
-                    
-                    {paymentDetails.discount && paymentDetails.discount > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Discount:</span>
-                        <span className="text-green-600 font-medium">-{formatCurrency(paymentDetails.discount)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between">
-                        <span className="text-lg font-semibold text-gray-900">Total Amount:</span>
-                        <span className="text-2xl font-bold text-blue-600">{formatCurrency(paymentDetails.amount)}</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -345,13 +395,19 @@ const PaymentCheckoutPage = () => {
                 <button
                   onClick={handlePayment}
                   disabled={processing}
-                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                  className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4 ${
+                    paymentDetails.amount === 0 
+                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
                 >
                   {processing ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                       Processing...
                     </div>
+                  ) : paymentDetails.amount === 0 ? (
+                    'Enroll for Free'
                   ) : (
                     `Pay ${formatCurrency(paymentDetails.amount)}`
                   )}
