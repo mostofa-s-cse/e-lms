@@ -4,6 +4,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI, quizzesAPI, quizAttemptsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError, showInfoAlert } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequiredModal from '../../../components/PaymentRequiredModal';
 
 interface Quiz {
   id: string;
@@ -76,6 +78,8 @@ const QuizzesPage = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -173,8 +177,22 @@ const QuizzesPage = () => {
     navigate(`/student/quizzes/${quiz.id}/take`);
   };
 
-  const handleViewQuiz = (quiz: Quiz) => {
-    navigate(`/student/quizzes/${quiz.id}`);
+  const handleViewQuiz = async (quiz: Quiz) => {
+    if (!user?.id) return;
+    
+    try {
+      const paymentResult = await checkPaymentAccess(user.id);
+      if (paymentResult.hasAccess) {
+        navigate(`/student/quizzes/${quiz.id}`);
+      } else {
+        setPaymentMessage(paymentResult.message);
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      setPaymentMessage('Unable to verify payment status. Please contact our support team.');
+      setShowPaymentModal(true);
+    }
   };
 
   const columns = [
@@ -283,14 +301,6 @@ const QuizzesPage = () => {
           >
             View Details
           </button>
-          {quiz.isActive && (
-            <button
-              onClick={() => handleTakeQuiz(quiz)}
-              className="text-green-600 hover:text-green-800 text-sm font-medium"
-            >
-              Take Quiz
-            </button>
-          )}
         </div>
       )
     }
@@ -309,6 +319,12 @@ const QuizzesPage = () => {
         title="Course Quizzes"
         subtitle="Take quizzes for your enrolled courses"
         loading={loading}
+      />
+      
+      <PaymentRequiredModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        message={paymentMessage}
       />
     </div>
   );

@@ -3,7 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { quizzesAPI, quizAttemptsAPI, enrollmentsAPI } from '../../../services/api';
 import { handleApiError, showSuccessAlert, showInfoAlert } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequired from '../../../components/PaymentRequired';
 import { ArrowLeft, Clock, User, BookOpen, Play, Award, Calendar, CheckCircle, XCircle } from 'lucide-react';
+
 
 interface Quiz {
   id: string;
@@ -74,16 +77,27 @@ const QuizDetailsPage = () => {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paymentVerified, setPaymentVerified] = useState(false);
 
   useEffect(() => {
     if (id && user?.id) {
-      fetchQuizDetails();
+      verifyPaymentAndFetchQuizDetails();
     }
   }, [id, user?.id]);
 
-  const fetchQuizDetails = async () => {
+  const verifyPaymentAndFetchQuizDetails = async () => {
     try {
       setLoading(true);
+      
+      // First verify payment access
+      const paymentResult = await checkPaymentAccess(user!.id);
+      if (!paymentResult.hasAccess) {
+        setPaymentVerified(false);
+        setLoading(false);
+        return;
+      }
+      
+      setPaymentVerified(true);
       
       // Fetch quiz details
       const quizResponse = await quizzesAPI.getById(id!);
@@ -218,6 +232,16 @@ const QuizDetailsPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  // Show payment required if payment is not verified
+  if (!paymentVerified) {
+    return (
+      <PaymentRequired 
+        message="You need to complete your payment to access course content. Please contact our support team for assistance."
+        showContactInfo={true}
+      />
     );
   }
 

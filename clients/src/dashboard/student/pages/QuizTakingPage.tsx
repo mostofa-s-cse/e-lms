@@ -3,7 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { quizzesAPI, quizAttemptsAPI } from '../../../services/api';
 import { handleApiError, showSuccessAlert, showConfirmDialog } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequired from '../../../components/PaymentRequired';
 import { ArrowLeft, Clock, CheckCircle, AlertCircle, Timer } from 'lucide-react';
+
 
 interface Quiz {
   id: string;
@@ -45,11 +48,12 @@ const QuizTakingPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentVerified, setPaymentVerified] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
 
   useEffect(() => {
     if (id && user?.id) {
-      fetchQuiz();
+      verifyPaymentAndFetchQuiz();
     }
   }, [id, user?.id]);
 
@@ -69,10 +73,21 @@ const QuizTakingPage = () => {
     }
   }, [timeLeft]);
 
-  const fetchQuiz = async () => {
+  const verifyPaymentAndFetchQuiz = async () => {
     try {
       setLoading(true);
       
+      // First verify payment access
+      const paymentResult = await checkPaymentAccess(user!.id);
+      if (!paymentResult.hasAccess) {
+        setPaymentVerified(false);
+        setLoading(false);
+        return;
+      }
+      
+      setPaymentVerified(true);
+      
+      // Fetch quiz details
       const quizResponse = await quizzesAPI.getById(id!);
       const quizData = (quizResponse.data as any).data || quizResponse.data;
       setQuiz(quizData as Quiz);
@@ -195,6 +210,16 @@ const QuizTakingPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  // Show payment required if payment is not verified
+  if (!paymentVerified) {
+    return (
+      <PaymentRequired 
+        message="You need to complete your payment to access course content. Please contact our support team for assistance."
+        showContactInfo={true}
+      />
     );
   }
 

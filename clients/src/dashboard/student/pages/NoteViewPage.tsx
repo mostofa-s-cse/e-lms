@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import { notesAPI } from '../../../services/api';
 import { handleApiError } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequired from '../../../components/PaymentRequired';
+
 
 interface Note {
   id: string;
@@ -36,22 +40,36 @@ interface ApiResponse {
 const NoteViewPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentVerified, setPaymentVerified] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      fetchNote();
+    if (id && user?.id) {
+      verifyPaymentAndFetchNote();
     }
-  }, [id]);
+  }, [id, user?.id]);
 
-  const fetchNote = async () => {
+  const verifyPaymentAndFetchNote = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // First verify payment access
+      const paymentResult = await checkPaymentAccess(user!.id);
+      if (!paymentResult.hasAccess) {
+        setPaymentVerified(false);
+        setLoading(false);
+        return;
+      }
+      
+      setPaymentVerified(true);
+      
+      // Fetch note details
       const response = await notesAPI.getById(id!);
       const apiResponse = response.data as ApiResponse;
       setNote(apiResponse.data);
@@ -234,6 +252,17 @@ const NoteViewPage = () => {
       </div>
     );
   }
+
+  // Show payment required if payment is not verified
+  if (!paymentVerified) {
+    return (
+      <PaymentRequired 
+        message="You need to complete your payment to access course content. Please contact our support team for assistance."
+        showContactInfo={true}
+      />
+    );
+  }
+
   if (error || !note) {
     return (
       <div className="text-center py-12">

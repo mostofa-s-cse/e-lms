@@ -4,6 +4,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI, notesAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequiredModal from '../../../components/PaymentRequiredModal';
 
 interface Note {
   id: string;
@@ -54,6 +56,8 @@ const NotesPage = () => {
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -112,8 +116,22 @@ const NotesPage = () => {
     }
   };
 
-  const handleViewDetails = (note: Note) => {
-    navigate(`/student/notes/${note.id}`);
+  const handleViewDetails = async (note: Note) => {
+    if (!user?.id) return;
+    
+    try {
+      const paymentResult = await checkPaymentAccess(user.id);
+      if (paymentResult.hasAccess) {
+        navigate(`/student/notes/${note.id}`);
+      } else {
+        setPaymentMessage(paymentResult.message);
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      setPaymentMessage('Unable to verify payment status. Please contact our support team.');
+      setShowPaymentModal(true);
+    }
   };
 
   const columns = [
@@ -172,14 +190,6 @@ const NotesPage = () => {
           >
             View Details
           </button>
-          {note.attachment && (
-            <button
-              onClick={() => handleDownload(note)}
-              className="text-green-600 hover:text-green-800 text-sm font-medium"
-            >
-              Download
-            </button>
-          )}
         </div>
       )
     }
@@ -198,6 +208,12 @@ const NotesPage = () => {
         title="Course Notes"
         subtitle="Access all notes and materials for your enrolled courses"
         loading={loading}
+      />
+      
+      <PaymentRequiredModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        message={paymentMessage}
       />
     </div>
   );

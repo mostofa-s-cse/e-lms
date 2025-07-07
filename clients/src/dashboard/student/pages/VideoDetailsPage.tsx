@@ -3,8 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { videosAPI, enrollmentsAPI } from '../../../services/api';
 import { handleApiError } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequired from '../../../components/PaymentRequired';
 import { ArrowLeft, Clock, User, BookOpen, Play, Download } from 'lucide-react';
 import VideoPlayer from '../../../components/VideoPlayer';
+
 
 interface Video {
   id: string;
@@ -50,16 +53,27 @@ const VideoDetailsPage = () => {
   const [courseVideos, setCourseVideos] = useState<Video[]>([]);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paymentVerified, setPaymentVerified] = useState(false);
 
   useEffect(() => {
     if (id && user?.id) {
-      fetchVideoDetails();
+      verifyPaymentAndFetchVideoDetails();
     }
   }, [id, user?.id]);
 
-  const fetchVideoDetails = async () => {
+  const verifyPaymentAndFetchVideoDetails = async () => {
     try {
       setLoading(true);
+      
+      // First verify payment access
+      const paymentResult = await checkPaymentAccess(user!.id);
+      if (!paymentResult.hasAccess) {
+        setPaymentVerified(false);
+        setLoading(false);
+        return;
+      }
+      
+      setPaymentVerified(true);
       
       // Fetch video details
       const videoResponse = await videosAPI.getById(id!);
@@ -132,6 +146,16 @@ const VideoDetailsPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  // Show payment required if payment is not verified
+  if (!paymentVerified) {
+    return (
+      <PaymentRequired 
+        message="You need to complete your payment to access course content. Please contact our support team for assistance."
+        showContactInfo={true}
+      />
     );
   }
 

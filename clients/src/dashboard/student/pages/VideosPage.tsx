@@ -4,6 +4,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI, videosAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError, showSuccessAlert } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequiredModal from '../../../components/PaymentRequiredModal';
 
 interface Video {
   id: string;
@@ -52,6 +54,8 @@ const VideosPage = () => {
   const { user } = useAuth();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -109,8 +113,22 @@ const VideosPage = () => {
     }
   };
 
-  const handleViewDetails = (video: Video) => {
-    navigate(`/student/videos/${video.id}`);
+  const handleViewDetails = async (video: Video) => {
+    if (!user?.id) return;
+    
+    try {
+      const paymentResult = await checkPaymentAccess(user.id);
+      if (paymentResult.hasAccess) {
+        navigate(`/student/videos/${video.id}`);
+      } else {
+        setPaymentMessage(paymentResult.message);
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      setPaymentMessage('Unable to verify payment status. Please contact our support team.');
+      setShowPaymentModal(true);
+    }
   };
 
   const formatDuration = (seconds: number) => {
@@ -178,14 +196,6 @@ const VideosPage = () => {
           >
             View Details
           </button>
-          {video.videoUrl && (
-            <button
-              onClick={() => handleWatch(video)}
-              className="text-green-600 hover:text-green-800 text-sm font-medium"
-            >
-              Watch
-            </button>
-          )}
         </div>
       )
     }
@@ -204,6 +214,12 @@ const VideosPage = () => {
         title="Course Videos"
         subtitle="Watch educational videos for your enrolled courses"
         loading={loading}
+      />
+      
+      <PaymentRequiredModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        message={paymentMessage}
       />
     </div>
   );

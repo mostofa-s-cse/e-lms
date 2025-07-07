@@ -4,6 +4,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { studentAPI, enrollmentsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequiredModal from '../../../components/PaymentRequiredModal';
 
 interface Course {
   id: string;
@@ -44,6 +46,8 @@ const CoursesPage = () => {
   const { user } = useAuth();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -66,8 +70,22 @@ const CoursesPage = () => {
     }
   };
 
-  const handleViewDetails = (enrollment: Enrollment) => {
-    navigate(`/student/courses/${enrollment.course.id}`);
+  const handleViewDetails = async (enrollment: Enrollment) => {
+    if (!user?.id) return;
+    
+    try {
+      const paymentResult = await checkPaymentAccess(user.id);
+      if (paymentResult.hasAccess) {
+        navigate(`/student/courses/${enrollment.course.id}`);
+      } else {
+        setPaymentMessage(paymentResult.message);
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      setPaymentMessage('Unable to verify payment status. Please contact our support team.');
+      setShowPaymentModal(true);
+    }
   };
 
   const columns = [
@@ -180,6 +198,12 @@ const CoursesPage = () => {
         subtitle="View all your enrolled courses and their details"
         data={enrollments}
         loading={loading}
+      />
+      
+      <PaymentRequiredModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        message={paymentMessage}
       />
     </div>
   );

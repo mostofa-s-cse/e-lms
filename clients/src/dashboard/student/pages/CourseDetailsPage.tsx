@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { coursesAPI, videosAPI, notesAPI, quizzesAPI, enrollmentsAPI } from '../../../services/api';
 import { handleApiError } from '../../../utils/sweetAlert';
+import { checkPaymentAccess } from '../../../utils/paymentVerification';
+import PaymentRequired from '../../../components/PaymentRequired';
 import { ArrowLeft, Play, Download, FileText, Clock, Award, User, Calendar } from 'lucide-react';
 
 interface Course {
@@ -78,17 +80,28 @@ const CourseDetailsPage = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paymentVerified, setPaymentVerified] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'videos' | 'notes' | 'quizzes'>('overview');
 
   useEffect(() => {
     if (id && user?.id) {
-      fetchCourseDetails();
+      verifyPaymentAndFetchData();
     }
   }, [id, user?.id]);
 
-  const fetchCourseDetails = async () => {
+  const verifyPaymentAndFetchData = async () => {
     try {
       setLoading(true);
+      
+      // First verify payment access
+      const paymentResult = await checkPaymentAccess(user!.id);
+      if (!paymentResult.hasAccess) {
+        setPaymentVerified(false);
+        setLoading(false);
+        return;
+      }
+      
+      setPaymentVerified(true);
       
       // Fetch course details and enrollment info
       const [courseResponse, videosResponse, notesResponse, quizzesResponse, enrollmentResponse] = await Promise.all([
@@ -159,6 +172,16 @@ const CourseDetailsPage = () => {
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  // Show payment required if payment is not verified
+  if (!paymentVerified) {
+    return (
+      <PaymentRequired 
+        message="You need to complete your payment to access course content. Please contact our support team for assistance."
+        showContactInfo={true}
+      />
     );
   }
 
