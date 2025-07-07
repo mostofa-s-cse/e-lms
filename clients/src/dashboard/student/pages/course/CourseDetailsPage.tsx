@@ -139,7 +139,7 @@ const CourseDetailsPage = () => {
 
   const handleNoteDownload = (note: Note) => {
     if (note.attachment) {
-      const url = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${note.attachment}`;
+      const url = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${note.attachment}`;
       window.open(url, '_blank');
     }
   };

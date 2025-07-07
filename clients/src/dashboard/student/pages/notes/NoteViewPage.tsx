@@ -112,7 +112,7 @@ const NoteViewPage = () => {
 
   const renderFilePreview = () => {
     if (!note?.attachment) return null;
-    const fileUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${note.attachment}`;
+    const fileUrl = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${note.attachment}`;
     const fileName = note.attachment.split('/').pop() || '';
     const fileType = note.attachmentType || '';
     const isImage = note.isImage || false;
@@ -227,7 +227,7 @@ const NoteViewPage = () => {
 
   const handleDownload = async () => {
     if (!note?.attachment) return;
-    const fileUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${note.attachment}`;
+    const fileUrl = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${note.attachment}`;
     const fileName = note.attachment.split('/').pop() || 'download';
     try {
       const response = await fetch(fileUrl, { method: 'GET', mode: 'cors' });

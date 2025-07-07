@@ -106,7 +106,7 @@ const NotesPage = () => {
   const handleDownload = async (note: Note) => {
     if (note.attachment) {
       try {
-        const fileUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${note.attachment}`;
+        const fileUrl = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${note.attachment}`;
         window.open(fileUrl, '_blank');
         const fileName = note.attachment.split('/').pop() || 'file';
         await showSuccessAlert('Download Started', `Downloading ${fileName}...`);
