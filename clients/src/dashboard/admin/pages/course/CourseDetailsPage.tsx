@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { coursesAPI, videosAPI, notesAPI, quizzesAPI, usersAPI } from '../../../services/api';
-import { handleApiError, showDeleteConfirmDialog, showSuccessAlert } from '../../../utils/sweetAlert';
-import Modal from '../../../components/Modal';
-import { Form, FormField, FormActions } from '../../../components/Form';
-import SearchableDropdown from '../../../components/SearchableDropdown';
+import { coursesAPI, videosAPI, notesAPI, quizzesAPI, usersAPI } from '../../../../services/api';
+import { handleApiError, showDeleteConfirmDialog, showSuccessAlert } from '../../../../utils/sweetAlert';
+import Modal from '../../../../components/Modal';
+import { Form, FormField, FormActions } from '../../../../components/Form';
+import SearchableDropdown from '../../../../components/SearchableDropdown';
 import { 
   OverviewTab,
   VideosTab,
@@ -16,7 +16,7 @@ import {
   Enrollment,
   Note,
   Quiz
-} from '../../../components/admin';
+} from '../../../../components/admin';
 import { ArrowLeft } from 'lucide-react';
 
 interface Teacher {

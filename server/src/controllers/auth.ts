@@ -16,7 +16,10 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email, password: hashedPassword, firstName, lastName, role }
+      data: { email, password: hashedPassword, firstName, lastName, role },
+      include: {
+        profile: true
+      }
     });
     
     res.status(201).json({ 
@@ -29,7 +32,14 @@ export const register = async (req: Request, res: Response, next: NextFunction):
         lastName: user.lastName, 
         role: user.role,
         isActive: user.isActive,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        profile: user.profile ? {
+          phone: user.profile.phone,
+          address: user.profile.address,
+          city: user.profile.city,
+          state: user.profile.state,
+          profilePicture: user.profile.profilePicture
+        } : null
       } 
     } as ApiResponse);
   } catch (error) {
@@ -41,7 +51,12 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
   try {
     const { email, password } = req.body;
     
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      include: {
+        profile: true
+      }
+    });
     if (!user) {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
       return;
@@ -76,8 +91,15 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
           lastName: user.lastName, 
           role: user.role,
           isActive: user.isActive,
-          createdAt: user.createdAt
-        } 
+          createdAt: user.createdAt,
+          profile: user.profile ? {
+            phone: user.profile.phone,
+            address: user.profile.address,
+            city: user.profile.city,
+            state: user.profile.state,
+            profilePicture: user.profile.profilePicture
+          } : null
+        }
       } 
     } as ApiResponse);
   } catch (error) {

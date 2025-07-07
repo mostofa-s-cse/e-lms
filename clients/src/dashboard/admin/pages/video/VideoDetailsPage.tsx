@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { videosAPI } from '../../../services/api';
-import { handleApiError } from '../../../utils/sweetAlert';
+import { videosAPI } from '../../../../services/api';
+import { handleApiError } from '../../../../utils/sweetAlert';
 import { ArrowLeft, Clock, User, BookOpen } from 'lucide-react';
-import VideoPlayer from '../../../components/VideoPlayer';
+import VideoPlayer from '../../../../components/VideoPlayer';
 
 interface Video {
   id: string;

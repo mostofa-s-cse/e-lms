@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { videosAPI, coursesAPI } from '../../../services/api';
-import Modal from '../../../components/Modal';
-import { Form, FormField, FormActions } from '../../../components/Form';
-import SearchableDropdown from '../../../components/SearchableDropdown';
+import { videosAPI, coursesAPI } from '../../../../services/api';
+import Modal from '../../../../components/Modal';
+import { Form, FormField, FormActions } from '../../../../components/Form';
+import SearchableDropdown from '../../../../components/SearchableDropdown';
 import { 
   showSuccessAlert, 
   showDeleteConfirmDialog, 
   handleApiError 
-} from '../../../utils/sweetAlert';
-import { DataTable } from '../../../components';
+} from '../../../../utils/sweetAlert';
+import { DataTable } from '../../../../components';
 
 interface Video {
   id: string;

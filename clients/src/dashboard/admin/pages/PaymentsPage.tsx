@@ -10,7 +10,7 @@ interface Payment {
   amount: number;
   currency: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
-  method: 'CREDIT_CARD' | 'DEBIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' | 'CASH' | 'OTHER';
+  method: 'CREDIT_CARD' | 'DEBIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' | 'CASH' | 'SSLCOMMERZ' | 'OTHER';
   referenceId?: string;
   paidAt?: string;
   createdAt: string;
@@ -178,6 +178,7 @@ const PaymentsPage = () => {
       DEBIT_CARD: 'bg-indigo-100 text-indigo-800',
       PAYPAL: 'bg-blue-100 text-blue-800',
       BANK_TRANSFER: 'bg-green-100 text-green-800',
+      SSLCOMMERZ: 'bg-yellow-100 text-yellow-800',
       CASH: 'bg-gray-100 text-gray-800',
       OTHER: 'bg-orange-100 text-orange-800',
     };
@@ -281,7 +282,7 @@ const PaymentsPage = () => {
 
 
   return (
-    <div className="p-6">
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Payments Management</h1>
         <button
@@ -356,6 +357,7 @@ const PaymentsPage = () => {
               { value: 'DEBIT_CARD', label: 'Debit Card' },
               { value: 'PAYPAL', label: 'PayPal' },
               { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+              { value: 'SSLCOMMERZ', label: 'SSLCOMMERZ' },
               { value: 'CASH', label: 'Cash' },
               { value: 'OTHER', label: 'Other' },
             ]}
@@ -434,6 +436,7 @@ const PaymentsPage = () => {
                 { value: 'DEBIT_CARD', label: 'Debit Card' },
                 { value: 'PAYPAL', label: 'PayPal' },
                 { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+                { value: 'SSLCOMMERZ', label: 'SSLCOMMERZ' },
                 { value: 'CASH', label: 'Cash' },
                 { value: 'OTHER', label: 'Other' },
               ]}

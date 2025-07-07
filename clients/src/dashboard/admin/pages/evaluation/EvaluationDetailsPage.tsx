@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { evaluationsAPI } from '../../../services/api';
-import { handleApiError } from '../../../utils/sweetAlert';
+import { evaluationsAPI } from '../../../../services/api';
+import { handleApiError } from '../../../../utils/sweetAlert';
 import { ArrowLeft, User, BookOpen, Target, Award, MessageSquare } from 'lucide-react';
 
 interface Evaluation {

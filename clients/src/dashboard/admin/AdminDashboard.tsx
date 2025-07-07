@@ -9,22 +9,24 @@ import {
   HelpCircle,
   BarChart3, 
   ShieldUser,
-  CreditCard
+  CreditCard,
+  User
 } from 'lucide-react';
-import UsersPage from './pages/UsersPage';
-import UserDetailsPage from './pages/UserDetailsPage';
-import CoursesPage from './pages/CoursesPage';
-import CourseDetailsPage from './pages/CourseDetailsPage';
+import UsersPage from './pages/users/UsersPage';
+import UserDetailsPage from './pages/users/UserDetailsPage';
+import CoursesPage from './pages/course/CoursesPage';
+import CourseDetailsPage from './pages/course/CourseDetailsPage';
 import IntakesPage from './pages/IntakesPage';
-import NotesPage from './pages/NotesPage';
-import NoteViewPage from './pages/NoteViewPage';
-import VideosPage from './pages/VideosPage';
-import VideoDetailsPage from './pages/VideoDetailsPage';
-import QuizzesPage from './pages/QuizzesPage';
-import QuizDetailsPage from './pages/QuizDetailsPage';
-import EvaluationsPage from './pages/EvaluationsPage';
-import EvaluationDetailsPage from './pages/EvaluationDetailsPage';
+import NotesPage from './pages/notes/NotesPage';
+import NoteViewPage from './pages/notes/NoteViewPage';
+import VideosPage from './pages/video/VideosPage';
+import VideoDetailsPage from './pages/video/VideoDetailsPage';
+import QuizzesPage from './pages/quiz/QuizzesPage';
+import QuizDetailsPage from './pages/quiz/QuizDetailsPage';
+import EvaluationsPage from './pages/evaluation/EvaluationsPage';
+import EvaluationDetailsPage from './pages/evaluation/EvaluationDetailsPage';
 import PaymentsPage from './pages/PaymentsPage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 const AdminDashboard = () => {
   const navigationItems = [
@@ -35,7 +37,8 @@ const AdminDashboard = () => {
     { path: '/admin/videos', label: 'Videos', icon: <Video className="w-5 h-5" /> },
     { path: '/admin/quizzes', label: 'Quizzes', icon: <HelpCircle className="w-5 h-5" /> },
     { path: '/admin/evaluations', label: 'Evaluations', icon: <BarChart3 className="w-5 h-5" /> },
-    { path: '/admin/payments', label: 'Payments', icon: <CreditCard className="w-5 h-5" /> }
+    { path: '/admin/payments', label: 'Payments', icon: <CreditCard className="w-5 h-5" /> },
+    { path: '/admin/profile', label: 'Profile', icon: <User className="w-5 h-5" /> }
   ];
 
   const routes = (
@@ -54,6 +57,7 @@ const AdminDashboard = () => {
       <Route path="evaluations" element={<EvaluationsPage />} />
       <Route path="evaluations/:id" element={<EvaluationDetailsPage />} />
       <Route path="payments" element={<PaymentsPage />} />
+      <Route path="profile" element={<ProfilePage />} />
     </>
   );
 

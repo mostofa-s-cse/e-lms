@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { questionsAPI, quizzesAPI } from '../../../services/api';
-import Modal from '../../../components/Modal';
-import { Form, FormField, FormActions } from '../../../components/Form';
-import SearchableDropdown from '../../../components/SearchableDropdown';
+import { questionsAPI, quizzesAPI } from '../../../../services/api';
+import Modal from '../../../../components/Modal';
+import { Form, FormField, FormActions } from '../../../../components/Form';
+import SearchableDropdown from '../../../../components/SearchableDropdown';
 import { 
   showSuccessAlert, 
   showDeleteConfirmDialog, 
   showFormErrorAlert,
   handleApiError 
-} from '../../../utils/sweetAlert';
-import { DataTable } from '../../../components';
+} from '../../../../utils/sweetAlert';
+import { DataTable } from '../../../../components';
 
 interface Question {
   id: string;

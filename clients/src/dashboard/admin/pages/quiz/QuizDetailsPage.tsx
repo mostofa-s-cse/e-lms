@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { quizzesAPI, questionsAPI, quizAttemptsAPI } from '../../../services/api';
-import { handleApiError } from '../../../utils/sweetAlert';
+import { quizzesAPI, questionsAPI, quizAttemptsAPI } from '../../../../services/api';
+import { handleApiError } from '../../../../utils/sweetAlert';
 import { ArrowLeft, Clock, BookOpen, Target, Calendar, Users, Award } from 'lucide-react';
-import Modal from '../../../components/Modal';
-import { DataTable } from '../../../components';
+import Modal from '../../../../components/Modal';
+import { DataTable } from '../../../../components';
 
 interface Quiz {
   id: string;

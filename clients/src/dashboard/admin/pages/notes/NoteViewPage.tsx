@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { notesAPI } from '../../../services/api';
-import { handleApiError } from '../../../utils/sweetAlert';
+import { notesAPI } from '../../../../services/api';
+import { handleApiError } from '../../../../utils/sweetAlert';
 
 interface Note {
   id: string;
