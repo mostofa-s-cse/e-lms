@@ -23,6 +23,7 @@ import VideosPage from './pages/video/VideosPage';
 import VideoDetailsPage from './pages/video/VideoDetailsPage';
 import QuizzesPage from './pages/quiz/QuizzesPage';
 import QuizDetailsPage from './pages/quiz/QuizDetailsPage';
+import QuizEditPage from './pages/quiz/QuizEditPage';
 import EvaluationsPage from './pages/evaluation/EvaluationsPage';
 import EvaluationDetailsPage from './pages/evaluation/EvaluationDetailsPage';
 import PaymentsPage from './pages/PaymentsPage';
@@ -54,6 +55,7 @@ const AdminDashboard = () => {
       <Route path="videos/:id" element={<VideoDetailsPage />} />
       <Route path="quizzes" element={<QuizzesPage />} />
       <Route path="quizzes/:id" element={<QuizDetailsPage />} />
+      <Route path="quizzes/:id/edit" element={<QuizEditPage />} />
       <Route path="evaluations" element={<EvaluationsPage />} />
       <Route path="evaluations/:id" element={<EvaluationDetailsPage />} />
       <Route path="payments" element={<PaymentsPage />} />
