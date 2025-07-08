@@ -322,7 +322,7 @@ const CoursesPage = () => {
       sortable: true,
       render: (price: number, course: Course) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-          {course.isFree ? 'Free' : `$${price.toFixed(2)}`}
+          {course.isFree ? 'Free' : `BDT ${price.toFixed(2)}`}
         </span>
       )
     },

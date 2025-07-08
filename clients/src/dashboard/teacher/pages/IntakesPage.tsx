@@ -226,7 +226,7 @@ const IntakesPage = () => {
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
           amount === 0 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
         }`}>
-          {amount === 0 ? 'Free' : `$${amount.toFixed(2)}`}
+          {amount === 0 ? 'Free' : `BDT ${amount.toFixed(2)}`}
         </span>
       )
     },

@@ -24,7 +24,7 @@ interface Video {
     title: string;
     code: string;
   };
-  teacher?: {
+  author?: {
     id: string;
     firstName: string;
     lastName: string;
@@ -335,11 +335,11 @@ const VideosPage = () => {
       )
     },
     {
-      key: 'teacher',
+      key: 'author',
       label: 'Teacher',
       render: (_: any, video: Video) => (
         <div className="text-sm text-gray-900">
-          {video.teacher ? `${video.teacher.firstName} ${video.teacher.lastName}` : 'N/A'}
+          {video.author ? `${video.author.firstName} ${video.author.lastName}` : 'N/A'}
         </div>
       )
     },

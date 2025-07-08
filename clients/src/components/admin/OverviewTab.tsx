@@ -86,7 +86,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               <DollarSign className="w-5 h-5 text-gray-500" />
               <div>
                 <p className="text-sm text-gray-600">Price</p>
-                <p className="font-medium">${course.price.toFixed(2)}</p>
+                <p className="font-medium">BDT {course.price.toFixed(2)}</p>
               </div>
             </div>
 

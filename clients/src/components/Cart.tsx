@@ -268,7 +268,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                       
                       <div className="mt-2 flex items-center justify-between">
                         <span className="text-sm font-semibold text-green-600">
-                          ${item.intakeAmount || item.price}
+                          BDT {item.intakeAmount || item.price}
                         </span>
                         <div className="flex items-center space-x-2">
                           <button
@@ -298,7 +298,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
           <div className="border-t p-4 flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               <span className="text-lg font-semibold text-gray-900">Total:</span>
-              <span className="text-lg font-bold text-green-600">${state.total}</span>
+              <span className="text-lg font-bold text-green-600">BDT {state.total}</span>
             </div>
             
             <div className="text-xs text-gray-500 mb-3 text-center">

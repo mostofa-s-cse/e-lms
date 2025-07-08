@@ -24,9 +24,9 @@ export const seedPayments = async () => {
       return;
     }
 
-    const paymentMethods = ['CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'BANK_TRANSFER', 'CASH', 'SSLCOMMERZ'];
+    const paymentMethods = ['CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'BANK_TRANSFER', 'CASH', 'OTHER'];
     const paymentStatuses = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'];
-    const currencies = ['BDT', 'USD', 'EUR'];
+    const currencies = ['BDT'];
 
     const payments = [];
 

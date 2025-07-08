@@ -440,11 +440,11 @@ const CourseDetailsPage = () => {
                   <div className="text-3xl font-bold text-blue-600 mb-4">
                     {course.intakes?.length > 0 ? (
                       <div className="flex flex-col items-center">
-                        <span className="text-green-600">From ${Math.min(...course.intakes.map(i => i.amount))}</span>
-                        <span className="text-sm text-gray-500 line-through">${course.price}</span>
+                                              <span className="text-green-600">From BDT {Math.min(...course.intakes.map(i => i.amount))}</span>
+                      <span className="text-sm text-gray-500 line-through">BDT {course.price}</span>
                       </div>
                     ) : (
-                      course.isFree ? 'Free' : `$${course.price}`
+                      course.isFree ? 'Free' : `BDT ${course.price}`
                     )}
                       </div>
                       </div>
@@ -501,7 +501,7 @@ const CourseDetailsPage = () => {
                           <div className="text-sm text-gray-600">
                             {new Date(intake.startDate).toLocaleDateString()} - {new Date(intake.endDate).toLocaleDateString()}
                           </div>
-                          <div className="text-sm font-semibold text-blue-600">${intake.amount}</div>
+                          <div className="text-sm font-semibold text-blue-600">BDT {intake.amount}</div>
                       </div>
                       ))}
                     </div>
@@ -534,7 +534,7 @@ const CourseDetailsPage = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-green-600">${intake.amount}</div>
+                            <div className="font-bold text-green-600">BDT {intake.amount}</div>
                             <div className="text-xs text-gray-500">Special Offer</div>
                           </div>
                         </div>
@@ -553,7 +553,7 @@ const CourseDetailsPage = () => {
                     <option value="">Choose an intake...</option>
                         {course.intakes.map((intake) => (
                       <option key={intake.id} value={intake.id}>
-                            {intake.name} - ${intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
+                            {intake.name} - BDT {intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
                       </option>
                     ))}
                   </select>
@@ -578,7 +578,7 @@ const CourseDetailsPage = () => {
               ) : (
                 <div className="space-y-3">
                   <div className="text-blue-700 font-semibold p-3 bg-blue-50 rounded-md border border-blue-200">
-                    💳 Course Price: ${course.price}
+                    💳 Course Price: BDT {course.price}
                   </div>
                   
                   {/* SSLCommerz Payment Info */}

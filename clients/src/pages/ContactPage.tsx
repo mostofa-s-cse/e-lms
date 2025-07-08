@@ -59,7 +59,7 @@ const ContactPage = () => {
     },
     {
       question: "How much do courses cost?",
-      answer: "Course prices vary depending on the content and duration. We offer courses ranging from $79 to $169, with some free introductory courses available. We also offer institutional pricing for schools and organizations."
+      answer: "Course prices vary depending on the content and duration. We offer courses ranging from BDT 79 to BDT 169, with some free introductory courses available. We also offer institutional pricing for schools and organizations."
     },
     {
       question: "Can I get a refund if I'm not satisfied?",
