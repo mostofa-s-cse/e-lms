@@ -58,8 +58,8 @@ const BatchPage = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    console.log('IntakesPage: User info:', user);
-    console.log('IntakesPage: User role:', user?.role);
+    console.log('BatchPage: User info:', user);
+    console.log('BatchPage: User role:', user?.role);
     fetchIntakes();
     fetchCourses();
   }, [user]);
@@ -67,13 +67,13 @@ const BatchPage = () => {
   const fetchIntakes = async () => {
     try {
       setLoading(true);
-      console.log('IntakesPage: Fetching batches for teacher...');
+      console.log('BatchPage: Fetching batches for teacher...');
       const response = await intakesAPI.getByTeacher();
-      console.log('IntakesPage: Batches response:', response);
+      console.log('BatchPage: Batches response:', response);
       setIntakes((response.data as IntakesResponse).data);
     } catch (error: any) {
-      console.error('IntakesPage: Error fetching batches:', error);
-      console.error('IntakesPage: Error response:', error.response?.data);
+      console.error('BatchPage: Error fetching batches:', error);
+      console.error('BatchPage: Error response:', error.response?.data);
       handleApiError(error, 'Failed to fetch batches');
     } finally {
       setLoading(false);

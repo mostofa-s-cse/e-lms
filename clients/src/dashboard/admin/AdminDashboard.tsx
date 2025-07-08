@@ -17,7 +17,7 @@ import UserDetailsPage from './pages/users/UserDetailsPage';
 import UserApprovalsPage from './pages/users/UserApprovalsPage';
 import CoursesPage from './pages/course/CoursesPage';
 import CourseDetailsPage from './pages/course/CourseDetailsPage';
-import IntakesPage from './pages/BatchPage';
+import BatchPage from './pages/BatchPage';
 import NotesPage from './pages/notes/NotesPage';
 import NoteViewPage from './pages/notes/NoteViewPage';
 import VideosPage from './pages/video/VideosPage';
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
       <Route path="approvals" element={<UserApprovalsPage />} />
       <Route path="courses" element={<CoursesPage />} />
       <Route path="courses/:id" element={<CourseDetailsPage />} />
-      <Route path="batches" element={<IntakesPage />} />
+      <Route path="batches" element={<BatchPage />} />
       <Route path="notes" element={<NotesPage />} />
       <Route path="notes/:id" element={<NoteViewPage />} />
       <Route path="videos" element={<VideosPage />} />

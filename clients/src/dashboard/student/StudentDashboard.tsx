@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import CoursesPage from './pages/course/CoursesPage';
 import CourseDetailsPage from './pages/course/CourseDetailsPage';
-import IntakesPage from './pages/BatchPage';
 import NotesPage from './pages/notes/NotesPage';
 import NoteViewPage from './pages/notes/NoteViewPage';
 import VideosPage from './pages/video/VideosPage';
@@ -25,6 +24,7 @@ import QuizResultPage from './pages/quiz/QuizResultPage';
 import EvaluationsPage from './pages/EvaluationsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import ProfilePage from './pages/ProfilePage';
+import BatchPage from './pages/BatchPage';
 
 const StudentDashboard = () => {
   const navigationItems = [
@@ -42,7 +42,7 @@ const StudentDashboard = () => {
     <>
       <Route path="courses" element={<CoursesPage />} />
       <Route path="courses/:id" element={<CourseDetailsPage />} />
-      <Route path="batches" element={<IntakesPage />} />
+      <Route path="batches" element={<BatchPage />} />
       <Route path="notes" element={<NotesPage />} />
       <Route path="notes/:id" element={<NoteViewPage />} />
       <Route path="videos" element={<VideosPage />} />
