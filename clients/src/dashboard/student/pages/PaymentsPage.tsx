@@ -19,7 +19,7 @@ interface Payment {
       title: string;
       code: string;
     };
-    intake?: {
+    batch?: {
       id: string;
       name: string;
       amount: number;
@@ -284,9 +284,9 @@ const PaymentsPage = () => {
                         <div className="text-sm text-gray-500">
                           {payment.enrollment.course.code}
                         </div>
-                        {payment.enrollment.intake && (
+                        {payment.enrollment.batch && (
                           <div className="text-xs text-gray-400">
-                            {payment.enrollment.intake.name}
+                            {payment.enrollment.batch.name}
                           </div>
                         )}
                       </div>

@@ -33,6 +33,7 @@ export const getAllEvaluations = async (req: Request, res: Response, next: NextF
           },
         },
       },
+      orderBy: { createdAt: 'desc' }
     });
 
     res.json({

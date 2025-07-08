@@ -6,7 +6,7 @@ export const seedPayments = async () => {
   try {
     console.log('🌱 Seeding payments...');
 
-    // Get some existing users, courses, intakes, and enrollments
+    // Get some existing users, courses, batches, and enrollments
     const users = await prisma.user.findMany({
       where: { role: 'STUDENT' },
       take: 5,
@@ -14,7 +14,7 @@ export const seedPayments = async () => {
 
     const enrollments = await prisma.enrollment.findMany({
       include: {
-        intake: true,
+        batch: true,
       },
       take: 10,
     });
@@ -37,8 +37,8 @@ export const seedPayments = async () => {
       const randomStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
       const randomCurrency = currencies[Math.floor(Math.random() * currencies.length)];
 
-      // Generate random amount based on intake amount
-      const baseAmount = randomEnrollment.intake?.amount || 1000;
+      // Generate random amount based on batch amount
+      const baseAmount = randomEnrollment.batch?.amount || 1000;
       const amount = baseAmount + Math.random() * 500;
 
       const payment = {

@@ -14,7 +14,7 @@ export interface Course {
     lastName: string;
     email: string;
   };
-  intakes?: Array<{
+  batches?: Array<{
     id: string;
     name: string;
     startDate: string;
@@ -59,7 +59,7 @@ export interface Enrollment {
     lastName: string;
     email: string;
   };
-  intake?: {
+  batch?: {
     id: string;
     name: string;
     startDate: string;

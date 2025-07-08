@@ -174,7 +174,8 @@ export const createQuizAttempt = async (req: AuthRequest, res: Response, next: N
     // Calculate score based on answers
     let totalScore = 0;
     const questions = await prisma.question.findMany({
-      where: { quizId, isActive: true }
+      where: { quizId, isActive: true },
+      orderBy: { createdAt: 'asc' }
     });
     
     // Create quiz answers and calculate score

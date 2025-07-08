@@ -38,7 +38,7 @@ interface Enrollment {
   id: string;
   status: string;
   enrolledAt: string;
-  intake?: {
+  batch?: {
     id: string;
     name: string;
     amount: number;
@@ -330,11 +330,11 @@ const VideoDetailsPage = () => {
                     {enrollment.status}
                   </span>
                 </div>
-                {enrollment.intake && (
+                {enrollment.batch && (
                   <div>
-                    <p className="text-sm text-gray-600">Intake</p>
-                    <p className="font-medium">{enrollment.intake.name}</p>
-                    <p className="text-xs text-gray-500">BDT {enrollment.intake.amount}</p>
+                    <p className="text-sm text-gray-600">Batch</p>
+                    <p className="font-medium">{enrollment.batch.name}</p>
+                    <p className="text-xs text-gray-500">BDT {enrollment.batch.amount}</p>
                   </div>
                 )}
                 <div>

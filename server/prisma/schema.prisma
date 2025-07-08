@@ -80,7 +80,7 @@ model Course {
   // Relations
   teacherId   String
   teacher     User       @relation("TeacherCourses", fields: [teacherId], references: [id])
-  intakes     Intake[]
+  batches     Batch[]
   notes       Note[]
   videos      Video[]
   quizzes     Quiz[]
@@ -91,7 +91,7 @@ model Course {
   @@map("courses")
 }
 
-model Intake {
+model Batch {
   id        String   @id @default(cuid())
   name      String
   startDate DateTime
@@ -106,7 +106,7 @@ model Intake {
   course     Course       @relation(fields: [courseId], references: [id])
   enrollments Enrollment[]
 
-  @@map("intakes")
+  @@map("batches")
 }
 
 model Enrollment {
@@ -121,11 +121,11 @@ model Enrollment {
   student     User               @relation(fields: [studentId], references: [id])
   courseId    String
   course      Course             @relation(fields: [courseId], references: [id])
-  intakeId    String?           
-  intake      Intake?            @relation(fields: [intakeId], references: [id])
+  batchId    String?           
+  batch      Batch?            @relation(fields: [batchId], references: [id])
   payments    Payment[]
 
-  @@unique([studentId, courseId, intakeId])
+  @@unique([studentId, courseId, batchId])
   @@map("enrollments")
 }
 
@@ -183,7 +183,7 @@ model CartItem {
   thumbnail   String?
   teacherName String   // Store teacher name for cart items
   courseCode  String?
-  intakeId    String?
+  batchId    String?
   intakeName  String?
   intakeAmount Float?
   createdAt   DateTime @default(now())

@@ -27,7 +27,7 @@ export const getAllEnrollments = async (req: Request, res: Response, next: NextF
             isFree: true,
           },
         },
-        intake: {
+        batch: {
           select: {
             id: true,
             name: true,
@@ -37,6 +37,7 @@ export const getAllEnrollments = async (req: Request, res: Response, next: NextF
           },
         },
       },
+      orderBy: { createdAt: 'desc' }
     });
 
     res.json({
@@ -75,7 +76,7 @@ export const getEnrollmentById = async (req: Request, res: Response, next: NextF
             isFree: true,
           },
         },
-        intake: {
+        batch: {
           select: {
             id: true,
             name: true,
@@ -131,7 +132,7 @@ export const getEnrollmentsByStudent = async (req: Request, res: Response, next:
             },
           },
         },
-        intake: {
+        batch: {
           select: {
             id: true,
             name: true,
@@ -141,6 +142,7 @@ export const getEnrollmentsByStudent = async (req: Request, res: Response, next:
           },
         },
       },
+      orderBy: { createdAt: 'desc' }
     });
 
     res.json({
@@ -168,7 +170,7 @@ export const getEnrollmentsByCourse = async (req: Request, res: Response, next: 
             email: true,
           },
         },
-        intake: {
+        batch: {
           select: {
             id: true,
             name: true,
@@ -178,6 +180,7 @@ export const getEnrollmentsByCourse = async (req: Request, res: Response, next: 
           },
         },
       },
+      orderBy: { createdAt: 'desc' }
     });
 
     res.json({
@@ -219,7 +222,7 @@ export const getEnrollmentByStudentAndCourse = async (req: Request, res: Respons
             },
           },
         },
-        intake: {
+        batch: {
           select: {
             id: true,
             name: true,
@@ -251,7 +254,7 @@ export const getEnrollmentByStudentAndCourse = async (req: Request, res: Respons
 // Create new enrollment
 export const createEnrollment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { courseId, intakeId } = req.body;
+    const { courseId, batchId } = req.body;
     const studentId = (req as any).user.id;
 
     // Validate required fields
@@ -289,12 +292,12 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
       return;
     }
 
-    // Handle intake selection
-    let finalIntakeId = intakeId;
+    // Handle batch selection
+    let finalIntakeId = batchId;
     
-    if (!intakeId) {
-      // If no intake provided, try to find an existing intake for this course
-      const existingIntake = await prisma.intake.findFirst({
+    if (!batchId) {
+      // If no batch provided, try to find an existing batch for this course
+      const existingIntake = await prisma.batch.findFirst({
         where: { 
           courseId,
           isActive: true 
@@ -305,31 +308,31 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
       if (existingIntake) {
         finalIntakeId = existingIntake.id;
       } else if (course.isFree) {
-        // For free courses without intakes, allow enrollment without intake
+        // For free courses without batches, allow enrollment without batch
         finalIntakeId = null;
       } else {
-        // For paid courses without intakes, allow enrollment without intake
-        // This handles cases where courses don't have intakes defined
+        // For paid courses without batches, allow enrollment without batch
+        // This handles cases where courses don't have batches defined
         finalIntakeId = null;
       }
     } else {
-      // Validate provided intake
-      const intake = await prisma.intake.findUnique({
-        where: { id: intakeId },
+      // Validate provided batch
+      const batch = await prisma.batch.findUnique({
+        where: { id: batchId },
       });
 
-      if (!intake) {
+      if (!batch) {
         res.status(404).json({
           success: false,
-          message: 'Intake not found',
+          message: 'Batch not found',
         });
         return;
       }
       
-      if (intake.courseId !== courseId) {
+      if (batch.courseId !== courseId) {
         res.status(400).json({
           success: false,
-          message: 'Intake does not belong to this course',
+          message: 'Batch does not belong to this course',
         });
         return;
       }
@@ -339,23 +342,23 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
     let existingEnrollment;
     
     if (finalIntakeId) {
-      // Check enrollment with specific intake
+      // Check enrollment with specific batch
       existingEnrollment = await prisma.enrollment.findUnique({
         where: {
-          studentId_courseId_intakeId: {
+          studentId_courseId_batchId: {
             studentId,
             courseId,
-            intakeId: finalIntakeId,
+            batchId: finalIntakeId,
           },
         },
       });
     } else {
-      // Check enrollment without intake (for courses without intakes)
+      // Check enrollment without batch (for courses without batches)
       existingEnrollment = await prisma.enrollment.findFirst({
         where: {
           studentId,
           courseId,
-          intakeId: null,
+          batchId: null,
         },
       });
     }
@@ -368,15 +371,15 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
       return;
     }
 
-    // Check if this is a free course (either course is free or intake amount is 0)
-    let intake = null;
+    // Check if this is a free course (either course is free or batch amount is 0)
+    let batch = null;
     if (finalIntakeId) {
-      intake = await prisma.intake.findUnique({
+      batch = await prisma.batch.findUnique({
         where: { id: finalIntakeId }
       });
     }
     
-    const isFreeCourse = course.isFree || (intake && intake.amount === 0);
+    const isFreeCourse = course.isFree || (batch && batch.amount === 0);
 
     const enrollmentData: any = {
       studentId,
@@ -384,9 +387,9 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
       status: EnrollmentStatus.ACTIVE,
     };
 
-    // Only add intakeId if it exists
+    // Only add batchId if it exists
     if (finalIntakeId) {
-      enrollmentData.intakeId = finalIntakeId;
+      enrollmentData.batchId = finalIntakeId;
     }
 
     const enrollment = await prisma.enrollment.create({
@@ -411,7 +414,7 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
             isFree: true,
           },
         },
-        intake: {
+        batch: {
           select: {
             id: true,
             name: true,
@@ -491,7 +494,7 @@ export const updateEnrollmentStatus = async (req: Request, res: Response, next: 
             isFree: true,
           },
         },
-        intake: {
+        batch: {
           select: {
             id: true,
             name: true,

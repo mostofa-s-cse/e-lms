@@ -17,7 +17,7 @@ import UserDetailsPage from './pages/users/UserDetailsPage';
 import UserApprovalsPage from './pages/users/UserApprovalsPage';
 import CoursesPage from './pages/course/CoursesPage';
 import CourseDetailsPage from './pages/course/CourseDetailsPage';
-import IntakesPage from './pages/IntakesPage';
+import IntakesPage from './pages/BatchPage';
 import NotesPage from './pages/notes/NotesPage';
 import NoteViewPage from './pages/notes/NoteViewPage';
 import VideosPage from './pages/video/VideosPage';
@@ -35,7 +35,7 @@ const AdminDashboard = () => {
     { path: '/admin/users', label: 'Users', icon: <Users className="w-5 h-5" /> },
     { path: '/admin/approvals', label: 'Approvals', icon: <ShieldUser className="w-5 h-5" /> },
     { path: '/admin/courses', label: 'Courses', icon: <BookOpen className="w-5 h-5" /> },
-    { path: '/admin/intakes', label: 'Intakes', icon: <GraduationCap className="w-5 h-5" /> },
+    { path: '/admin/batches', label: 'Batches', icon: <GraduationCap className="w-5 h-5" /> },
     { path: '/admin/notes', label: 'Notes', icon: <FileText className="w-5 h-5" /> },
     { path: '/admin/videos', label: 'Videos', icon: <Video className="w-5 h-5" /> },
     { path: '/admin/quizzes', label: 'Quizzes', icon: <HelpCircle className="w-5 h-5" /> },
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
       <Route path="approvals" element={<UserApprovalsPage />} />
       <Route path="courses" element={<CoursesPage />} />
       <Route path="courses/:id" element={<CourseDetailsPage />} />
-      <Route path="intakes" element={<IntakesPage />} />
+      <Route path="batches" element={<IntakesPage />} />
       <Route path="notes" element={<NotesPage />} />
       <Route path="notes/:id" element={<NoteViewPage />} />
       <Route path="videos" element={<VideosPage />} />

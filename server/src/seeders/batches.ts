@@ -4,7 +4,7 @@ export async function seedIntakes(prisma: PrismaClient, courses: any[]) {
   const currentDate = new Date();
   
   const intakesData = [
-    // Fall 2024 Intakes
+    // Fall 2024 Batches
     {
       name: 'Fall 2024 - Computer Science',
       startDate: new Date('2024-09-01'),
@@ -46,7 +46,7 @@ export async function seedIntakes(prisma: PrismaClient, courses: any[]) {
       courseId: courses.find(c => c.code === 'PHY101')?.id
     },
 
-    // Spring 2024 Intakes
+    // Spring 2024 Batches
     {
       name: 'Spring 2024 - Data Structures',
       startDate: new Date('2024-01-15'),
@@ -72,7 +72,7 @@ export async function seedIntakes(prisma: PrismaClient, courses: any[]) {
       courseId: courses.find(c => c.code === 'CHEM101')?.id
     },
 
-    // Summer 2024 Intakes
+    // Summer 2024 Batches
     {
       name: 'Summer 2024 - Web Development',
       startDate: new Date('2024-06-01'),
@@ -98,7 +98,7 @@ export async function seedIntakes(prisma: PrismaClient, courses: any[]) {
       courseId: courses.find(c => c.code === 'ENG301')?.id
     },
 
-    // Spring 2025 Intakes (Future)
+    // Spring 2025 Batches (Future)
     {
       name: 'Spring 2025 - Database Systems',
       startDate: new Date('2025-01-15'),
@@ -133,14 +133,14 @@ export async function seedIntakes(prisma: PrismaClient, courses: any[]) {
     }
   ];
 
-  const intakes = await Promise.all(
+  const batches = await Promise.all(
     intakesData.map(intakeData => 
-      prisma.intake.create({
+      prisma.batch.create({
         data: intakeData
       })
     )
   );
 
-  console.log(`✅ Created ${intakes.length} intakes`);
-  return intakes;
+  console.log(`✅ Created ${batches.length} batches`);
+  return batches;
 } 

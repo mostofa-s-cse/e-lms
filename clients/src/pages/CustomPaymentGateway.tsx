@@ -12,7 +12,7 @@ interface PaymentDetails {
   courseTitle: string;
   courseCode: string;
   amount: number;
-  intakeId?: string;
+  batchId?: string;
   intakeName?: string;
   userId: string;
   userEmail: string;
@@ -25,7 +25,7 @@ interface CartPaymentDetails {
     courseTitle: string;
     courseCode: string;
     amount: number;
-    intakeId?: string;
+    batchId?: string;
     intakeName?: string;
   }>;
   total: number;
@@ -101,7 +101,7 @@ const CustomPaymentGateway = () => {
         // Single course payment
         const courseTitle = searchParams.get('courseTitle') || '';
         const courseCode = searchParams.get('courseCode') || '';
-        const intakeId = searchParams.get('intakeId') || undefined;
+        const batchId = searchParams.get('batchId') || undefined;
         const intakeName = searchParams.get('intakeName') || undefined;
 
         // SECURITY: Verify that the logged-in user matches the user in URL params
@@ -124,7 +124,7 @@ const CustomPaymentGateway = () => {
           courseTitle,
           courseCode,
           amount: parseFloat(amount),
-          intakeId,
+          batchId,
           intakeName,
           userId: user?.id || '',
           userEmail: user?.email || '',
@@ -179,10 +179,10 @@ const CustomPaymentGateway = () => {
           setTimeout(() => {
             // Remove paid items from cart by finding them in the current cart state
             cartDetails.items.forEach((paidItem: any) => {
-              // Find the cart item by courseId and intakeId (if available)
+              // Find the cart item by courseId and batchId (if available)
               const cartItem = cartState.items.find(item => 
                 item.courseId === paidItem.courseId && 
-                (!paidItem.intakeId || item.intakeId === paidItem.intakeId)
+                (!paidItem.batchId || item.batchId === paidItem.batchId)
               );
               if (cartItem) {
                 removeFromCart(cartItem.id);
@@ -202,7 +202,7 @@ const CustomPaymentGateway = () => {
         if (courseDetails.amount === 0) {
           const response = await paymentsAPI.createFreeEnrollment({
             courseId: courseDetails.courseId,
-            intakeId: courseDetails.intakeId || ''
+            batchId: courseDetails.batchId || ''
           });
 
           if ((response.data as any).success) {
@@ -211,7 +211,7 @@ const CustomPaymentGateway = () => {
               // Remove this course from cart if it exists
               const cartItem = cartState.items.find(item => 
                 item.courseId === courseDetails.courseId && 
-                (!courseDetails.intakeId || item.intakeId === courseDetails.intakeId)
+                (!courseDetails.batchId || item.batchId === courseDetails.batchId)
               );
               if (cartItem) {
                 removeFromCart(cartItem.id);
@@ -225,7 +225,7 @@ const CustomPaymentGateway = () => {
           // Handle paid course
           const response = await paymentsAPI.createPayment({
             courseId: courseDetails.courseId,
-            intakeId: courseDetails.intakeId,
+            batchId: courseDetails.batchId,
             amount: courseDetails.amount,
             paymentMethod: selectedPaymentMethod,
             paymentDetails: getPaymentDetails()
@@ -237,7 +237,7 @@ const CustomPaymentGateway = () => {
               // Remove this course from cart if it exists
               const cartItem = cartState.items.find(item => 
                 item.courseId === courseDetails.courseId && 
-                (!courseDetails.intakeId || item.intakeId === courseDetails.intakeId)
+                (!courseDetails.batchId || item.batchId === courseDetails.batchId)
               );
               if (cartItem) {
                 removeFromCart(cartItem.id);
@@ -287,10 +287,10 @@ const CustomPaymentGateway = () => {
             setTimeout(() => {
               // Remove paid items from cart by finding them in the current cart state
               cartDetails.items.forEach((paidItem: any) => {
-                // Find the cart item by courseId and intakeId (if available)
+                // Find the cart item by courseId and batchId (if available)
                 const cartItem = cartState.items.find(item => 
                   item.courseId === paidItem.courseId && 
-                  (!paidItem.intakeId || item.intakeId === paidItem.intakeId)
+                  (!paidItem.batchId || item.batchId === paidItem.batchId)
                 );
                 if (cartItem) {
                   removeFromCart(cartItem.id);
@@ -320,7 +320,7 @@ const CustomPaymentGateway = () => {
           // Free course - always succeeds
           const response = await paymentsAPI.createFreeEnrollment({
             courseId: courseDetails.courseId,
-            intakeId: courseDetails.intakeId
+            batchId: courseDetails.batchId
           });
 
           if ((response.data as any).success) {
@@ -329,7 +329,7 @@ const CustomPaymentGateway = () => {
               // Remove this course from cart if it exists
               const cartItem = cartState.items.find(item => 
                 item.courseId === courseDetails.courseId && 
-                (!courseDetails.intakeId || item.intakeId === courseDetails.intakeId)
+                (!courseDetails.batchId || item.batchId === courseDetails.batchId)
               );
               if (cartItem) {
                 removeFromCart(cartItem.id);
@@ -343,7 +343,7 @@ const CustomPaymentGateway = () => {
           // Handle paid course with test status
           const response = await paymentsAPI.createPayment({
             courseId: courseDetails.courseId,
-            intakeId: courseDetails.intakeId,
+            batchId: courseDetails.batchId,
             amount: courseDetails.amount,
             paymentMethod: selectedPaymentMethod,
             paymentDetails: getPaymentDetails(),
@@ -357,7 +357,7 @@ const CustomPaymentGateway = () => {
                 // Remove this course from cart if it exists
                 const cartItem = cartState.items.find(item => 
                   item.courseId === courseDetails.courseId && 
-                  (!courseDetails.intakeId || item.intakeId === courseDetails.intakeId)
+                  (!courseDetails.batchId || item.batchId === courseDetails.batchId)
                 );
                 if (cartItem) {
                   removeFromCart(cartItem.id);
@@ -703,7 +703,7 @@ const CustomPaymentGateway = () => {
                         </div>
                         {(paymentDetails as PaymentDetails).intakeName && (
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Intake:</span>
+                            <span className="text-gray-600">Batch:</span>
                             <span className="font-medium">{(paymentDetails as PaymentDetails).intakeName}</span>
                           </div>
                         )}

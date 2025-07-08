@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { intakesAPI, coursesAPI } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
 import Modal from '../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../components/Form';
 import SearchableDropdown from '../../../components/SearchableDropdown';
@@ -17,7 +18,7 @@ interface Course {
   code: string;
 }
 
-interface Intake {
+interface Batch {
   id: string;
   name: string;
   startDate: string;
@@ -32,19 +33,20 @@ interface Intake {
 }
 
 interface IntakesResponse {
-  data: Intake[];
+  data: Batch[];
 }
 
 interface CoursesResponse {
   data: Course[];
 }
 
-const IntakesPage = () => {
-  const [intakes, setIntakes] = useState<Intake[]>([]);
+const BatchPage = () => {
+  const { user } = useAuth();
+  const [batches, setIntakes] = useState<Batch[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingIntake, setEditingIntake] = useState<Intake | null>(null);
+  const [editingIntake, setEditingIntake] = useState<Batch | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     startDate: '',
@@ -56,17 +58,23 @@ const IntakesPage = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    console.log('IntakesPage: User info:', user);
+    console.log('IntakesPage: User role:', user?.role);
     fetchIntakes();
     fetchCourses();
-  }, []);
+  }, [user]);
 
   const fetchIntakes = async () => {
     try {
       setLoading(true);
-      const response = await intakesAPI.getAll();
+      console.log('IntakesPage: Fetching batches for teacher...');
+      const response = await intakesAPI.getByTeacher();
+      console.log('IntakesPage: Batches response:', response);
       setIntakes((response.data as IntakesResponse).data);
-    } catch (error) {
-      handleApiError(error, 'Failed to fetch intakes');
+    } catch (error: any) {
+      console.error('IntakesPage: Error fetching batches:', error);
+      console.error('IntakesPage: Error response:', error.response?.data);
+      handleApiError(error, 'Failed to fetch batches');
     } finally {
       setLoading(false);
     }
@@ -74,7 +82,7 @@ const IntakesPage = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await coursesAPI.getAll();
+      const response = await coursesAPI.getByTeacher();
       setCourses((response.data as CoursesResponse).data);
     } catch (error) {
       handleApiError(error, 'Failed to fetch courses');
@@ -95,33 +103,33 @@ const IntakesPage = () => {
     setShowModal(true);
   };
 
-  const handleEdit = (intake: Intake) => {
-    setEditingIntake(intake);
+  const handleEdit = (batch: Batch) => {
+    setEditingIntake(batch);
     setFormData({
-      name: intake.name,
-      startDate: intake.startDate.split('T')[0],
-      endDate: intake.endDate.split('T')[0],
-      courseId: intake.course.id,
-      amount: intake.amount,
-      isActive: intake.isActive
+      name: batch.name,
+      startDate: batch.startDate.split('T')[0],
+      endDate: batch.endDate.split('T')[0],
+      courseId: batch.course.id,
+      amount: batch.amount,
+      isActive: batch.isActive
     });
     setFormErrors({});
     setShowModal(true);
   };
 
-  const handleDelete = async (intake: Intake) => {
-    const result = await showDeleteConfirmDialog(`"${intake.name}"`);
+  const handleDelete = async (batch: Batch) => {
+    const result = await showDeleteConfirmDialog(`"${batch.name}"`);
     
     if (result.isConfirmed) {
       try {
-        await intakesAPI.delete(intake.id);
+        await intakesAPI.delete(batch.id);
         showSuccessAlert(
-          'Intake Deleted', 
-          `"${intake.name}" has been successfully deleted.`
+          'Batch Deleted', 
+          `"${batch.name}" has been successfully deleted.`
         );
         fetchIntakes();
       } catch (error) {
-        handleApiError(error, 'Failed to delete intake');
+        handleApiError(error, 'Failed to delete batch');
       }
     }
   };
@@ -152,13 +160,13 @@ const IntakesPage = () => {
       if (editingIntake) {
         await intakesAPI.update(editingIntake.id, formData);
         showSuccessAlert(
-          'Intake Updated', 
+          'Batch Updated', 
           `"${formData.name}" has been successfully updated.`
         );
       } else {
         await intakesAPI.create(formData);
         showSuccessAlert(
-          'Intake Created', 
+          'Batch Created', 
           `"${formData.name}" has been successfully created.`
         );
       }
@@ -176,7 +184,7 @@ const IntakesPage = () => {
         showFormErrorAlert(serverErrors);
         setFormErrors(serverErrors);
       } else {
-        handleApiError(error, 'Failed to save intake');
+        handleApiError(error, 'Failed to save batch');
       }
     }
   };
@@ -185,10 +193,10 @@ const IntakesPage = () => {
     {
       key: 'name',
       label: 'Name',
-      render: (name: string, intake: Intake) => (
+      render: (name: string, batch: Batch) => (
         <div>
           <div className="text-sm font-medium text-gray-900">{name}</div>
-          <div className="text-sm text-gray-500">{intake.course.title} ({intake.course.code})</div>
+          <div className="text-sm text-gray-500">{batch.course.title} ({batch.course.code})</div>
         </div>
       )
     },
@@ -225,9 +233,9 @@ const IntakesPage = () => {
     {
       key: 'enrollments',
       label: 'Enrollments',
-      render: (_: any, intake: Intake) => (
+      render: (_: any, batch: Batch) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-          {intake._count?.enrollments || 0} students
+          {batch._count?.enrollments || 0} students
         </span>
       )
     },
@@ -252,20 +260,20 @@ const IntakesPage = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Intakes Management</h1>
+        <h1 className="text-3xl font-bold">Batches Management</h1>
         <button
           onClick={handleCreate}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Add Intake
+          Add Batch
         </button>
       </div>
 
       <DataTable
         columns={columns}
-        title="Intakes"
-        subtitle="Manage academic intakes and their details"
-        data={intakes}
+        title="Batches"
+        subtitle="Manage academic batches and their details"
+        data={batches}
         onEdit={handleEdit}
         onDelete={handleDelete}
         loading={loading}
@@ -274,7 +282,7 @@ const IntakesPage = () => {
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        title={editingIntake ? 'Edit Intake' : 'Create Intake'}
+        title={editingIntake ? 'Edit Batch' : 'Create Batch'}
         size="lg"
       >
         <Form onSubmit={handleSubmit}>
@@ -355,4 +363,4 @@ const IntakesPage = () => {
   );
 };
 
-export default IntakesPage; 
+export default BatchPage; 

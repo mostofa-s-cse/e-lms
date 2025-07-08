@@ -63,7 +63,7 @@ interface Enrollment {
   id: string;
   status: string;
   enrolledAt: string;
-  intake?: {
+  batch?: {
     id: string;
     name: string;
     amount: number;
@@ -264,7 +264,7 @@ const CourseDetailsPage = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Enrollment Status</h3>
                 <p className="text-gray-600">
-                  {enrollment.intake ? `Intake: ${enrollment.intake.name} (BDT ${enrollment.intake.amount})` : 'No intake assigned'}
+                  {enrollment.batch ? `Batch: ${enrollment.batch.name} (BDT ${enrollment.batch.amount})` : 'No batch assigned'}
                 </p>
               </div>
               <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${

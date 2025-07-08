@@ -29,7 +29,7 @@ interface Enrollment {
   status: string;
   enrolledAt: string;
   course: Course;
-  intake?: {
+  batch?: {
     id: string;
     name: string;
     amount: number;
@@ -118,17 +118,17 @@ const CoursesPage = () => {
       )
     },
     {
-      key: 'intake',
-      label: 'Intake',
+      key: 'batch',
+      label: 'Batch',
       render: (_: any, enrollment: Enrollment) => (
         <div className="text-sm text-gray-900">
-          {enrollment.intake ? (
+          {enrollment.batch ? (
             <div>
-              <div className="font-medium">{enrollment.intake.name}</div>
-              <div className="text-xs text-gray-500">BDT {enrollment.intake.amount}</div>
+              <div className="font-medium">{enrollment.batch.name}</div>
+              <div className="text-xs text-gray-500">BDT {enrollment.batch.amount}</div>
             </div>
           ) : (
-            <span className="text-gray-500">No intake</span>
+            <span className="text-gray-500">No batch</span>
           )}
         </div>
       )

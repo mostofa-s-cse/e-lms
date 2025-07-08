@@ -53,7 +53,7 @@ CREATE TABLE `courses` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `intakes` (
+CREATE TABLE `batches` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `startDate` DATETIME(3) NOT NULL,
@@ -76,9 +76,9 @@ CREATE TABLE `enrollments` (
     `updatedAt` DATETIME(3) NOT NULL,
     `studentId` VARCHAR(191) NOT NULL,
     `courseId` VARCHAR(191) NOT NULL,
-    `intakeId` VARCHAR(191) NULL,
+    `batchId` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `enrollments_studentId_courseId_intakeId_key`(`studentId`, `courseId`, `intakeId`),
+    UNIQUE INDEX `enrollments_studentId_courseId_intakeId_key`(`studentId`, `courseId`, `batchId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -131,7 +131,7 @@ CREATE TABLE `cart_items` (
     `thumbnail` VARCHAR(191) NULL,
     `teacherName` VARCHAR(191) NOT NULL,
     `courseCode` VARCHAR(191) NULL,
-    `intakeId` VARCHAR(191) NULL,
+    `batchId` VARCHAR(191) NULL,
     `intakeName` VARCHAR(191) NULL,
     `intakeAmount` DOUBLE NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -273,7 +273,7 @@ ALTER TABLE `user_profiles` ADD CONSTRAINT `user_profiles_userId_fkey` FOREIGN K
 ALTER TABLE `courses` ADD CONSTRAINT `courses_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `intakes` ADD CONSTRAINT `intakes_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `courses`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `batches` ADD CONSTRAINT `intakes_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `courses`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `enrollments` ADD CONSTRAINT `enrollments_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -282,7 +282,7 @@ ALTER TABLE `enrollments` ADD CONSTRAINT `enrollments_studentId_fkey` FOREIGN KE
 ALTER TABLE `enrollments` ADD CONSTRAINT `enrollments_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `courses`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `enrollments` ADD CONSTRAINT `enrollments_intakeId_fkey` FOREIGN KEY (`intakeId`) REFERENCES `intakes`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `enrollments` ADD CONSTRAINT `enrollments_intakeId_fkey` FOREIGN KEY (`batchId`) REFERENCES `batches`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `payments` ADD CONSTRAINT `payments_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

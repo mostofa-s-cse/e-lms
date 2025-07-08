@@ -46,7 +46,7 @@ export interface UpdateCourseDto {
   isActive?: boolean;
 }
 
-// Intake types
+// Batch types
 export interface CreateIntakeDto {
   name: string;
   startDate: Date;
@@ -65,7 +65,7 @@ export interface UpdateIntakeDto {
 export interface CreateEnrollmentDto {
   studentId: string;
   courseId: string;
-  intakeId: string;
+  batchId: string;
 }
 
 export interface UpdateEnrollmentDto {

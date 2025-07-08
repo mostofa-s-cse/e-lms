@@ -93,7 +93,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
         courseTitle: item.title,
         courseCode: item.courseCode || item.courseId, // Use courseCode if available
         amount: item.intakeAmount || item.price,
-        intakeId: item.intakeId,
+        batchId: item.batchId,
         intakeName: item.intakeName
       })),
       total: notEnrolledItems.reduce((sum, item) => sum + (item.intakeAmount || item.price), 0),
@@ -123,9 +123,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleIntakeChange = (itemId: string, intakeId: string, intakeName: string, intakeAmount: number) => {
+  const handleIntakeChange = (itemId: string, batchId: string, intakeName: string, intakeAmount: number) => {
     setUpdatingItem(itemId);
-    updateCartItem(itemId, intakeId, intakeName, intakeAmount);
+    updateCartItem(itemId, batchId, intakeName, intakeAmount);
     setTimeout(() => setUpdatingItem(null), 500);
   };
 
@@ -160,7 +160,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       courseTitle: item.title,
       courseCode: item.courseCode || item.courseId,
       amount: item.intakeAmount || item.price,
-      intakeId: item.intakeId,
+      batchId: item.batchId,
       intakeName: item.intakeName,
       userId: user.id,
       userEmail: user.email,
@@ -173,7 +173,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       courseTitle: checkoutData.courseTitle,
       courseCode: checkoutData.courseCode,
       amount: checkoutData.amount.toString(),
-      intakeId: checkoutData.intakeId || '',
+      batchId: checkoutData.batchId || '',
       intakeName: checkoutData.intakeName || '',
       userId: checkoutData.userId,
       userEmail: checkoutData.userEmail
@@ -245,23 +245,23 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                         By {item.teacher.firstName} {item.teacher.lastName}
                       </p>
                       
-                      {/* Intake Selection */}
-                      {item.intakeId && (
+                      {/* Batch Selection */}
+                      {item.batchId && (
                         <div className="mt-2">
                           <select
-                            value={item.intakeId}
+                            value={item.batchId}
                             onChange={(e) => {
                               const selectedIntake = e.target.value;
                               if (selectedIntake) {
-                                // You might need to get intake details from course data
+                                // You might need to get batch details from course data
                                 // For now, we'll use placeholder values
-                                handleIntakeChange(item.id, selectedIntake, 'Selected Intake', item.intakeAmount || item.price);
+                                handleIntakeChange(item.id, selectedIntake, 'Selected Batch', item.intakeAmount || item.price);
                               }
                             }}
                             className="w-full text-xs border border-gray-300 rounded px-2 py-1"
                             disabled={updatingItem === item.id}
                           >
-                            <option value={item.intakeId}>{item.intakeName || 'Selected Intake'}</option>
+                            <option value={item.batchId}>{item.intakeName || 'Selected Batch'}</option>
                           </select>
                         </div>
                       )}

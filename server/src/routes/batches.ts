@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as intakeController from '../controllers/intakes';
+import * as intakeController from '../controllers/batches';
 import { authenticateToken, requireTeacher } from '../middleware/auth';
 
 const router = Router();

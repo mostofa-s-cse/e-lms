@@ -10,7 +10,7 @@ import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import courseRoutes from './routes/courses';
-import intakeRoutes from './routes/intakes';
+import intakeRoutes from './routes/batches';
 import noteRoutes from './routes/notes';
 import videoRoutes from './routes/videos';
 import quizRoutes from './routes/quizzes';
@@ -117,7 +117,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/courses', courseRoutes);
-app.use('/api/v1/intakes', intakeRoutes);
+app.use('/api/v1/batches', intakeRoutes);
 app.use('/api/v1/notes', noteRoutes);
 app.use('/api/v1/videos', videoRoutes);
 app.use('/api/v1/quizzes', quizRoutes);

@@ -145,15 +145,15 @@ export const coursesAPI = {
   delete: (id: string) => api.delete(`/courses/${id}`),
 };
 
-// Intakes API
+// Batches API
 export const intakesAPI = {
-  getAll: () => api.get('/intakes'),
-  getById: (id: string) => api.get(`/intakes/${id}`),
-  getEnrollments: (id: string) => api.get(`/intakes/${id}/enrollments`),
-  getByTeacher: () => api.get('/intakes/teacher'),
-  create: (data: any) => api.post('/intakes', data),
-  update: (id: string, data: any) => api.put(`/intakes/${id}`, data),
-  delete: (id: string) => api.delete(`/intakes/${id}`),
+  getAll: () => api.get('/batches'),
+  getById: (id: string) => api.get(`/batches/${id}`),
+  getEnrollments: (id: string) => api.get(`/batches/${id}/enrollments`),
+  getByTeacher: () => api.get('/batches/teacher'),
+  create: (data: any) => api.post('/batches', data),
+  update: (id: string, data: any) => api.put(`/batches/${id}`, data),
+  delete: (id: string) => api.delete(`/batches/${id}`),
 };
 
 // Notes API
@@ -249,7 +249,7 @@ export const enrollmentsAPI = {
   getByStudent: (studentId: string) => api.get(`/enrollments/student/${studentId}`),
   getByCourse: (courseId: string) => api.get(`/enrollments/course/${courseId}`),
   getByStudentAndCourse: (studentId: string, courseId: string) => api.get(`/enrollments/student/${studentId}/course/${courseId}`),
-  create: (enrollmentData: { courseId: string; intakeId?: string }) => api.post('/enrollments', enrollmentData),
+  create: (enrollmentData: { courseId: string; batchId?: string }) => api.post('/enrollments', enrollmentData),
   updateStatus: (id: string, status: string) => api.patch(`/enrollments/${id}/status`, { status }),
   delete: (id: string) => api.delete(`/enrollments/${id}`),
 };
@@ -259,8 +259,8 @@ export const studentAPI = {
   // Get student's enrolled courses
   getEnrolledCourses: (studentId: string) => api.get(`/students/${studentId}/courses`),
   
-  // Get student's enrolled intakes
-  getEnrolledIntakes: (studentId: string) => api.get(`/students/${studentId}/intakes`),
+  // Get student's enrolled batches
+  getEnrolledIntakes: (studentId: string) => api.get(`/students/${studentId}/batches`),
   
   // Get student's course notes
   getCourseNotes: (studentId: string) => api.get(`/students/${studentId}/notes`),

@@ -96,7 +96,7 @@ export const getCart = async (req: Request, res: Response): Promise<void> => {
             lastName: item.teacherName.split(' ').slice(1).join(' ') || ''
           },
           courseCode: item.courseCode,
-          intakeId: item.intakeId,
+          batchId: item.batchId,
           intakeName: item.intakeName,
           intakeAmount: item.intakeAmount
         })),
@@ -174,7 +174,7 @@ export const createOrUpdateCart = async (req: Request, res: Response): Promise<v
             thumbnail: item.thumbnail,
             teacherName: `${item.teacher.firstName} ${item.teacher.lastName}`,
             courseCode: item.courseCode,
-            intakeId: item.intakeId,
+            batchId: item.batchId,
             intakeName: item.intakeName,
             intakeAmount: item.intakeAmount
           }
@@ -203,7 +203,7 @@ export const createOrUpdateCart = async (req: Request, res: Response): Promise<v
             lastName: item.teacherName.split(' ').slice(1).join(' ') || ''
           },
           courseCode: item.courseCode,
-          intakeId: item.intakeId,
+          batchId: item.batchId,
           intakeName: item.intakeName,
           intakeAmount: item.intakeAmount
         })),
@@ -288,7 +288,7 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
         thumbnail: item.thumbnail,
         teacherName: `${item.teacher.firstName} ${item.teacher.lastName}`,
         courseCode: item.courseCode,
-        intakeId: item.intakeId,
+        batchId: item.batchId,
         intakeName: item.intakeName,
         intakeAmount: item.intakeAmount
       }
@@ -308,7 +308,7 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
           lastName: cartItem.teacherName.split(' ').slice(1).join(' ') || ''
         },
         courseCode: cartItem.courseCode,
-        intakeId: cartItem.intakeId,
+        batchId: cartItem.batchId,
         intakeName: cartItem.intakeName,
         intakeAmount: cartItem.intakeAmount
       }
@@ -501,7 +501,7 @@ export const mergeGuestCart = async (req: Request, res: Response): Promise<void>
               thumbnail: item.thumbnail,
               teacherName: item.teacherName,
               courseCode: item.courseCode,
-              intakeId: item.intakeId,
+              batchId: item.batchId,
               intakeName: item.intakeName,
               intakeAmount: item.intakeAmount
             }

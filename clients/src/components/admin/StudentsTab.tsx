@@ -30,11 +30,11 @@ const StudentsTab: React.FC<StudentsTabProps> = ({ enrollments }) => {
             )
           },
           {
-            key: 'intake',
-            label: 'Intake',
+            key: 'batch',
+            label: 'Batch',
             render: (_: any, enrollment: Enrollment) => (
               <div className="text-sm text-gray-900">
-                {enrollment.intake ? enrollment.intake.name : 'N/A'}
+                {enrollment.batch ? enrollment.batch.name : 'N/A'}
               </div>
             )
           },

@@ -22,10 +22,10 @@ interface Course {
     lastName: string;
     email: string;
   };
-  intakes: Intake[];
+  batches: Batch[];
 }
 
-interface Intake {
+interface Batch {
   id: string;
   name: string;
   startDate: string;
@@ -37,7 +37,7 @@ interface Intake {
 interface PaymentDetails {
   courseId: string;
   courseCode: string;
-  intakeId?: string;
+  batchId?: string;
   amount: number;
   courseTitle: string;
   intakeName?: string;
@@ -50,7 +50,7 @@ interface CartItem {
   courseTitle: string;
   courseCode: string;
   amount: number;
-  intakeId?: string;
+  batchId?: string;
   intakeName?: string;
 }
 
@@ -75,7 +75,7 @@ const PaymentCheckoutPage = () => {
 
   useEffect(() => {
     const courseId = searchParams.get('courseId');
-    const intakeId = searchParams.get('intakeId');
+    const batchId = searchParams.get('batchId');
     const amount = searchParams.get('amount');
     const userId = searchParams.get('userId');
     const userEmail = searchParams.get('userEmail');
@@ -142,7 +142,7 @@ const PaymentCheckoutPage = () => {
           return;
         }
 
-        fetchCourseDetails(courseId, intakeId, parseFloat(amount));
+        fetchCourseDetails(courseId, batchId, parseFloat(amount));
       } else {
         showErrorAlert('Error', 'Missing payment information');
         navigate('/courses');
@@ -155,7 +155,7 @@ const PaymentCheckoutPage = () => {
     }
   }, [searchParams, isAuthenticated, navigate, user]);
 
-  const fetchCourseDetails = async (courseId: string, intakeId: string | null, amount: number) => {
+  const fetchCourseDetails = async (courseId: string, batchId: string | null, amount: number) => {
     try {
       setLoading(true);
       const response = await coursesAPI.getById(courseId);
@@ -164,19 +164,19 @@ const PaymentCheckoutPage = () => {
         const courseData = (response.data as any).data;
         setCourse(courseData);
 
-        // Find selected intake if provided
-        let selectedIntake: Intake | undefined;
-        if (intakeId) {
-          selectedIntake = courseData.intakes?.find((i: Intake) => i.id === intakeId);
+        // Find selected batch if provided
+        let selectedIntake: Batch | undefined;
+        if (batchId) {
+          selectedIntake = courseData.batches?.find((i: Batch) => i.id === batchId);
         }
 
         // SECURITY: Validate amount on client side as well
         let expectedAmount = 0;
-        if (courseData.intakes && courseData.intakes.length > 0) {
-          if (intakeId && selectedIntake) {
+        if (courseData.batches && courseData.batches.length > 0) {
+          if (batchId && selectedIntake) {
             expectedAmount = selectedIntake.amount;
           } else {
-            expectedAmount = Math.min(...courseData.intakes.map((i: Intake) => i.amount));
+            expectedAmount = Math.min(...courseData.batches.map((i: Batch) => i.amount));
           }
         } else if (!courseData.isFree) {
           expectedAmount = courseData.price;
@@ -193,7 +193,7 @@ const PaymentCheckoutPage = () => {
         const details: PaymentDetails = {
           courseId,
           courseCode: courseData.code,
-          intakeId: intakeId || undefined,
+          batchId: batchId || undefined,
           amount: expectedAmount, // Use validated amount
           courseTitle: courseData.title,
           intakeName: selectedIntake?.name,
@@ -270,7 +270,7 @@ const PaymentCheckoutPage = () => {
           // For free courses, create enrollment directly
           const response = await paymentsAPI.createFreeEnrollment({
             courseId: paymentDetails.courseId,
-            intakeId: paymentDetails.intakeId
+            batchId: paymentDetails.batchId
           });
 
           if ((response.data as any).success) {
@@ -289,7 +289,7 @@ const PaymentCheckoutPage = () => {
             courseTitle: paymentDetails.courseTitle,
             courseCode: paymentDetails.courseCode,
             amount: paymentDetails.amount,
-            intakeId: paymentDetails.intakeId,
+            batchId: paymentDetails.batchId,
             intakeName: paymentDetails.intakeName,
             userId: user.id,
             userEmail: user.email,
@@ -433,7 +433,7 @@ const PaymentCheckoutPage = () => {
                       </div>
                       {paymentDetails?.intakeName && (
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Intake:</span>
+                          <span className="text-gray-600">Batch:</span>
                           <span className="font-medium">{paymentDetails.intakeName}</span>
                         </div>
                       )}

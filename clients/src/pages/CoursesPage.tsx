@@ -23,7 +23,7 @@ interface Course {
     lastName: string;
     email: string;
   };
-  intakes: Intake[];
+  batches: Batch[];
   _count: {
     enrollments: number;
     notes: number;
@@ -32,7 +32,7 @@ interface Course {
   };
 }
 
-interface Intake {
+interface Batch {
   id: string;
   name: string;
   startDate: string;
@@ -46,7 +46,7 @@ interface Enrollment {
   status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'DROPPED' | 'SUSPENDED';
   enrolledAt: string;
   course: Course;
-  intake: Intake;
+  batch: Batch;
 }
 
 const CoursesPage = () => {
@@ -203,26 +203,26 @@ const CoursesPage = () => {
     try {
       console.log('CoursesPage: handleAddToCart called for course:', selectedCourse.title);
       
-      // Determine the amount and intake details
+      // Determine the amount and batch details
       let amount = selectedCourse.price;
-      let intakeId: string | undefined;
+      let batchId: string | undefined;
       let intakeName: string | undefined;
 
-      if (selectedCourse.intakes?.length > 0) {
+      if (selectedCourse.batches?.length > 0) {
         if (cartIntake) {
-          const intake = selectedCourse.intakes.find(i => i.id === cartIntake);
-          if (intake) {
-            amount = intake.amount;
-            intakeId = intake.id;
-            intakeName = intake.name;
+          const batch = selectedCourse.batches.find(i => i.id === cartIntake);
+          if (batch) {
+            amount = batch.amount;
+            batchId = batch.id;
+            intakeName = batch.name;
           }
         } else {
-          // Use the minimum intake amount if no specific intake selected
-          const minIntake = selectedCourse.intakes.reduce((min, current) => 
+          // Use the minimum batch amount if no specific batch selected
+          const minIntake = selectedCourse.batches.reduce((min, current) => 
             current.amount < min.amount ? current : min
           );
           amount = minIntake.amount;
-          intakeId = minIntake.id;
+          batchId = minIntake.id;
           intakeName = minIntake.name;
         }
       }
@@ -238,7 +238,7 @@ const CoursesPage = () => {
           lastName: selectedCourse.teacher.lastName
         },
         courseCode: selectedCourse.code,
-        intakeId,
+        batchId,
         intakeName,
         intakeAmount: amount
       };
@@ -273,13 +273,13 @@ const CoursesPage = () => {
 
       // Determine the amount to charge
       let amount = 0;
-      if (selectedCourse.intakes?.length > 0) {
+      if (selectedCourse.batches?.length > 0) {
         if (selectedIntake) {
-          const intake = selectedCourse.intakes.find(i => i.id === selectedIntake);
-          amount = intake?.amount || 0;
+          const batch = selectedCourse.batches.find(i => i.id === selectedIntake);
+          amount = batch?.amount || 0;
         } else {
-          // Use the minimum intake amount if no specific intake selected
-          amount = Math.min(...selectedCourse.intakes.map(i => i.amount));
+          // Use the minimum batch amount if no specific batch selected
+          amount = Math.min(...selectedCourse.batches.map(i => i.amount));
         }
       } else if (!selectedCourse.isFree) {
         amount = selectedCourse.price || 0;
@@ -292,8 +292,8 @@ const CoursesPage = () => {
           courseTitle: selectedCourse.title,
           courseCode: selectedCourse.code,
           amount: amount,
-          intakeId: selectedIntake && selectedIntake !== 'No Intake' && selectedIntake !== 'undefined' ? selectedIntake : null,
-          intakeName: selectedIntake ? selectedCourse.intakes.find(i => i.id === selectedIntake)?.name : null,
+          batchId: selectedIntake && selectedIntake !== 'No Batch' && selectedIntake !== 'undefined' ? selectedIntake : null,
+          intakeName: selectedIntake ? selectedCourse.batches.find(i => i.id === selectedIntake)?.name : null,
           userId: user.id,
           userEmail: user.email,
           userName: `${user.firstName} ${user.lastName}`
@@ -580,10 +580,10 @@ const CoursesPage = () => {
 
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex flex-col">
-                          {course.intakes?.length > 0 ? (
+                          {course.batches?.length > 0 ? (
                             <>
                               <span className="text-lg font-bold text-green-600">
-                                From BDT {Math.min(...course.intakes.map(i => i.amount))}
+                                From BDT {Math.min(...course.batches.map(i => i.amount))}
                               </span>
                               <span className="text-sm text-gray-500 line-through">
                                 BDT {course.price}
@@ -670,21 +670,21 @@ const CoursesPage = () => {
             <h3 className="text-lg font-semibold mb-4">Enroll in {selectedCourse.title}</h3>
             
             <div className="mb-4">
-              {selectedCourse.intakes?.length ? (
+              {selectedCourse.batches?.length ? (
                 <div className="space-y-4">
                   <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                     <h4 className="font-semibold text-blue-900 mb-2">Available Offers</h4>
                     <div className="space-y-2">
-                      {selectedCourse.intakes.map((intake) => (
-                        <div key={intake.id} className="flex justify-between items-center p-2 bg-white rounded border">
+                      {selectedCourse.batches.map((batch) => (
+                        <div key={batch.id} className="flex justify-between items-center p-2 bg-white rounded border">
                           <div>
-                            <div className="font-medium text-gray-900">{intake.name}</div>
+                            <div className="font-medium text-gray-900">{batch.name}</div>
                             <div className="text-sm text-gray-600">
-                              {new Date(intake.startDate).toLocaleDateString()} - {new Date(intake.endDate).toLocaleDateString()}
+                              {new Date(batch.startDate).toLocaleDateString()} - {new Date(batch.endDate).toLocaleDateString()}
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-green-600">BDT {intake.amount}</div>
+                            <div className="font-bold text-green-600">BDT {batch.amount}</div>
                             <div className="text-xs text-gray-500">Special Offer</div>
                           </div>
                         </div>
@@ -692,17 +692,17 @@ const CoursesPage = () => {
                     </div>
                     <div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
                       <div className="text-sm text-green-800 mb-3">
-                        💡 Select your preferred intake (optional):
+                        💡 Select your preferred batch (optional):
                       </div>
                       <select
                         value={selectedIntake}
                         onChange={(e) => setSelectedIntake(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       >
-                        <option value="">Choose an intake (optional)...</option>
-                        {selectedCourse.intakes.map((intake) => (
-                          <option key={intake.id} value={intake.id}>
-                            {intake.name} - BDT {intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
+                        <option value="">Choose an batch (optional)...</option>
+                        {selectedCourse.batches.map((batch) => (
+                          <option key={batch.id} value={batch.id}>
+                            {batch.name} - BDT {batch.amount} ({new Date(batch.startDate).toLocaleDateString()})
                           </option>
                         ))}
                       </select>
@@ -772,21 +772,21 @@ const CoursesPage = () => {
             <h3 className="text-lg font-semibold mb-4">Add to Cart: {selectedCourse.title}</h3>
             
             <div className="mb-4">
-              {selectedCourse.intakes?.length ? (
+              {selectedCourse.batches?.length ? (
                 <div className="space-y-4">
                   <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                     <h4 className="font-semibold text-blue-900 mb-2">Available Offers</h4>
                     <div className="space-y-2">
-                      {selectedCourse.intakes.map((intake) => (
-                        <div key={intake.id} className="flex justify-between items-center p-2 bg-white rounded border">
+                      {selectedCourse.batches.map((batch) => (
+                        <div key={batch.id} className="flex justify-between items-center p-2 bg-white rounded border">
                           <div>
-                            <div className="font-medium text-gray-900">{intake.name}</div>
+                            <div className="font-medium text-gray-900">{batch.name}</div>
                             <div className="text-sm text-gray-600">
-                              {new Date(intake.startDate).toLocaleDateString()} - {new Date(intake.endDate).toLocaleDateString()}
+                              {new Date(batch.startDate).toLocaleDateString()} - {new Date(batch.endDate).toLocaleDateString()}
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-green-600">BDT {intake.amount}</div>
+                            <div className="font-bold text-green-600">BDT {batch.amount}</div>
                             <div className="text-xs text-gray-500">Special Offer</div>
                           </div>
                         </div>
@@ -794,17 +794,17 @@ const CoursesPage = () => {
                     </div>
                     <div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
                       <div className="text-sm text-green-800 mb-3">
-                        💡 Select your preferred intake (optional):
+                        💡 Select your preferred batch (optional):
                       </div>
                       <select
                         value={cartIntake}
                         onChange={(e) => setCartIntake(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       >
-                        <option value="">Choose an intake (optional)...</option>
-                        {selectedCourse.intakes.map((intake) => (
-                          <option key={intake.id} value={intake.id}>
-                            {intake.name} - BDT {intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
+                        <option value="">Choose an batch (optional)...</option>
+                        {selectedCourse.batches.map((batch) => (
+                          <option key={batch.id} value={batch.id}>
+                            {batch.name} - BDT {batch.amount} ({new Date(batch.startDate).toLocaleDateString()})
                           </option>
                         ))}
                       </select>

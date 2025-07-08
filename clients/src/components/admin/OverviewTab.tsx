@@ -111,17 +111,17 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             </div>
 
-            {course.intakes && course.intakes.length > 0 && (
+            {course.batches && course.batches.length > 0 && (
               <div className="flex items-start space-x-3">
                 <GraduationCap className="w-5 h-5 text-gray-500 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-600">Associated Intakes</p>
+                  <p className="text-sm text-gray-600">Associated Batches</p>
                   <div className="space-y-1 mt-1">
-                    {course.intakes.map((intake) => (
-                      <div key={intake.id} className="text-sm">
-                        <span className="font-medium">{intake.name}</span>
+                    {course.batches.map((batch) => (
+                      <div key={batch.id} className="text-sm">
+                        <span className="font-medium">{batch.name}</span>
                         <span className="text-gray-500 ml-2">
-                          ({new Date(intake.startDate).toLocaleDateString()} - {new Date(intake.endDate).toLocaleDateString()})
+                          ({new Date(batch.startDate).toLocaleDateString()} - {new Date(batch.endDate).toLocaleDateString()})
                         </span>
                       </div>
                     ))}

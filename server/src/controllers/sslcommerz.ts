@@ -5,7 +5,7 @@ import { sslCommerzService, PaymentRequest } from '../utils/sslcommerz';
 // Create payment session for course enrollment
 export const createPaymentSession = async (req: Request, res: Response) => {
   try {
-    const { courseId, intakeId, amount } = req.body;
+    const { courseId, batchId, amount } = req.body;
     const userId = (req as any).user?.id;
 
     if (!userId) {
@@ -37,11 +37,11 @@ export const createPaymentSession = async (req: Request, res: Response) => {
       });
     }
 
-    // Get course details with intakes
+    // Get course details with batches
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
-        intakes: {
+        batches: {
           where: { isActive: true }
         }
       }
@@ -58,23 +58,23 @@ export const createPaymentSession = async (req: Request, res: Response) => {
     let expectedAmount = 0;
     let selectedIntake = null;
 
-    if (course.intakes && course.intakes.length > 0) {
-      // Course has intakes - validate intake amount
-      if (intakeId) {
-        selectedIntake = course.intakes.find(intake => intake.id === intakeId);
+    if (course.batches && course.batches.length > 0) {
+      // Course has batches - validate batch amount
+      if (batchId) {
+        selectedIntake = course.batches.find(batch => batch.id === batchId);
         if (!selectedIntake) {
           return res.status(400).json({
             success: false,
-            message: 'Invalid intake selected'
+            message: 'Invalid batch selected'
           });
         }
         expectedAmount = selectedIntake.amount || 0;
       } else {
-        // No specific intake selected, use minimum intake amount
-        expectedAmount = Math.min(...course.intakes.map(intake => intake.amount || 0));
+        // No specific batch selected, use minimum batch amount
+        expectedAmount = Math.min(...course.batches.map(batch => batch.amount || 0));
       }
     } else if (!course.isFree) {
-      // Course has no intakes but is paid - use course price
+      // Course has no batches but is paid - use course price
       expectedAmount = course.price || 0;
     } else {
       // Free course
@@ -90,11 +90,11 @@ export const createPaymentSession = async (req: Request, res: Response) => {
       });
     }
 
-    // Get intake details if provided
-    let intake = null;
-    if (intakeId) {
-      intake = await prisma.intake.findUnique({
-        where: { id: intakeId }
+    // Get batch details if provided
+    let batch = null;
+    if (batchId) {
+      batch = await prisma.batch.findUnique({
+        where: { id: batchId }
       });
     }
 
@@ -123,7 +123,7 @@ export const createPaymentSession = async (req: Request, res: Response) => {
         data: {
           studentId: userId,
           courseId: courseId,
-          intakeId: intakeId || null,
+          batchId: batchId || null,
           status: 'ACTIVE' // Directly activate for free courses
         }
       });
@@ -160,7 +160,7 @@ export const createPaymentSession = async (req: Request, res: Response) => {
         data: {
           studentId: userId,
           courseId: courseId,
-          intakeId: intakeId || null,
+          batchId: batchId || null,
           status: 'PENDING'
         }
       });
@@ -202,7 +202,7 @@ export const createPaymentSession = async (req: Request, res: Response) => {
         value_a: courseId,
         value_b: enrollment.id,
         value_c: userId,
-        value_d: intakeId || ''
+        value_d: batchId || ''
       };
 
       // Create payment session

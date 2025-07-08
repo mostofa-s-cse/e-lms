@@ -8,7 +8,7 @@ The seeder system creates realistic sample data for all entities in the Learning
 
 - **Users**: 2 Admins, 5 Teachers, 15 Students
 - **Courses**: 15 courses across different academic disciplines
-- **Intakes**: Multiple intakes for different academic terms
+- **Batches**: Multiple batches for different academic terms
 - **Enrollments**: Student enrollments in various courses
 - **Notes**: Course materials and study resources
 - **Videos**: Lecture videos and educational content
@@ -44,7 +44,7 @@ seeders/
 ├── index.ts              # Main seeder orchestrator
 ├── users.ts              # User data (admins, teachers, students)
 ├── courses.ts            # Course data across disciplines
-├── intakes.ts            # Academic term intakes
+├── batches.ts            # Academic term batches
 ├── enrollments.ts        # Student course enrollments
 ├── notes.ts              # Course materials and documents
 ├── videos.ts             # Educational videos and lectures
@@ -127,8 +127,8 @@ import { seedCourses } from './courses';
 The seeders maintain proper relationships between entities:
 
 1. **Users → Courses**: Teachers are assigned to courses
-2. **Courses → Intakes**: Each course has multiple intakes
-3. **Students → Enrollments**: Students are enrolled in courses through intakes
+2. **Courses → Batches**: Each course has multiple batches
+3. **Students → Enrollments**: Students are enrolled in courses through batches
 4. **Teachers → Content**: Teachers create notes, videos, quizzes
 5. **Students → Performance**: Students take quizzes and receive evaluations
 
@@ -174,7 +174,7 @@ await prisma.quizAttempt.deleteMany();
 ### Common Issues
 
 1. **Database Tables Don't Exist**: Run `npm run setup` to initialize the database
-2. **Foreign Key Errors**: Ensure seeders run in the correct order (users → courses → intakes → enrollments → content)
+2. **Foreign Key Errors**: Ensure seeders run in the correct order (users → courses → batches → enrollments → content)
 3. **Duplicate Data**: The seeder clears existing data by default
 4. **Database Connection**: Ensure your database is running and accessible
 

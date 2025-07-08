@@ -14,7 +14,7 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
         _count: {
           select: { enrollments: true, notes: true, videos: true, quizzes: true }
         },
-        intakes: {
+        batches: {
           where: { isActive: true },
           orderBy: { startDate: 'desc' }
         }
@@ -49,7 +49,7 @@ export const getCoursesByTeacher = async (req: AuthRequest, res: Response, next:
         _count: {
           select: { enrollments: true, notes: true, videos: true, quizzes: true }
         },
-        intakes: {
+        batches: {
           where: { isActive: true },
           orderBy: { startDate: 'desc' }
         }
@@ -73,7 +73,7 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
         teacher: {
           select: { id: true, firstName: true, lastName: true, email: true }
         },
-        intakes: {
+        batches: {
           where: { isActive: true },
           orderBy: { startDate: 'desc' }
         },
@@ -254,7 +254,7 @@ export const getCourseEnrollments = async (req: Request, res: Response, next: Ne
         student: {
           select: { id: true, firstName: true, lastName: true, email: true }
         },
-        intake: {
+        batch: {
           select: { id: true, name: true, startDate: true, endDate: true }
         }
       },

@@ -16,7 +16,7 @@ export interface Payment {
       title: string;
       code: string;
     };
-    intake?: {
+    batch?: {
       id: string;
       name: string;
       amount: number;

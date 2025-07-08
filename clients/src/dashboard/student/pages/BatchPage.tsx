@@ -4,7 +4,7 @@ import { studentAPI, enrollmentsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
 
-interface Intake {
+interface Batch {
   id: string;
   name: string;
   description: string;
@@ -19,7 +19,7 @@ interface Enrollment {
   id: string;
   status: string;
   enrolledAt: string;
-  intake: Intake;
+  batch: Batch;
   course: {
     id: string;
     title: string;
@@ -32,7 +32,7 @@ interface EnrollmentsResponse {
   data: Enrollment[];
 }
 
-const IntakesPage = () => {
+const BatchPage = () => {
   const { user } = useAuth();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,12 +49,12 @@ const IntakesPage = () => {
       const response = await enrollmentsAPI.getByStudent(user!.id);
       const data = response.data as EnrollmentsResponse;
       if (data.success) {
-        // Filter enrollments that have intakes
-        const enrollmentsWithIntakes = data.data.filter(enrollment => enrollment.intake);
+        // Filter enrollments that have batches
+        const enrollmentsWithIntakes = data.data.filter(enrollment => enrollment.batch);
         setEnrollments(enrollmentsWithIntakes);
       }
     } catch (error) {
-      handleApiError(error, 'Failed to fetch enrolled intakes');
+      handleApiError(error, 'Failed to fetch enrolled batches');
     } finally {
       setLoading(false);
     }
@@ -62,12 +62,12 @@ const IntakesPage = () => {
 
   const columns = [
     {
-      key: 'intake',
-      label: 'Intake',
+      key: 'batch',
+      label: 'Batch',
       render: (_: any, enrollment: Enrollment) => (
         <div>
-          <div className="text-sm font-medium text-gray-900">{enrollment.intake.name}</div>
-          <div className="text-sm text-gray-500">{enrollment.intake.description}</div>
+          <div className="text-sm font-medium text-gray-900">{enrollment.batch.name}</div>
+          <div className="text-sm text-gray-500">{enrollment.batch.description}</div>
         </div>
       )
     },
@@ -86,7 +86,7 @@ const IntakesPage = () => {
       label: 'Start Date',
       render: (_: any, enrollment: Enrollment) => (
         <span className="text-sm text-gray-900">
-          {new Date(enrollment.intake.startDate).toLocaleDateString()}
+          {new Date(enrollment.batch.startDate).toLocaleDateString()}
         </span>
       )
     },
@@ -95,7 +95,7 @@ const IntakesPage = () => {
       label: 'End Date',
       render: (_: any, enrollment: Enrollment) => (
         <span className="text-sm text-gray-900">
-          {new Date(enrollment.intake.endDate).toLocaleDateString()}
+          {new Date(enrollment.batch.endDate).toLocaleDateString()}
         </span>
       )
     },
@@ -104,7 +104,7 @@ const IntakesPage = () => {
       label: 'Max Students',
       render: (_: any, enrollment: Enrollment) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-          {enrollment.intake.maxStudents} students
+          {enrollment.batch.maxStudents} students
         </span>
       )
     },
@@ -135,14 +135,14 @@ const IntakesPage = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">My Intakes</h1>
-        <p className="text-gray-600 mt-2">View all your enrolled intakes and their details</p>
+        <h1 className="text-3xl font-bold">My Batches</h1>
+        <p className="text-gray-600 mt-2">View all your enrolled batches and their details</p>
       </div>
 
       <DataTable
         columns={columns}
-        title="Enrolled Intakes"
-        subtitle="View all your enrolled intakes and their details"
+        title="Enrolled Batches"
+        subtitle="View all your enrolled batches and their details"
         data={enrollments}
         loading={loading}
       />
@@ -150,4 +150,4 @@ const IntakesPage = () => {
   );
 };
 
-export default IntakesPage; 
+export default BatchPage; 

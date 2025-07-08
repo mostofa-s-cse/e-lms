@@ -14,7 +14,7 @@ interface CartItem {
     lastName: string;
   };
   courseCode?: string;
-  intakeId?: string;
+  batchId?: string;
   intakeName?: string;
   intakeAmount?: number;
 }
@@ -28,7 +28,7 @@ interface CartState {
 type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'REMOVE_ITEM'; payload: string }
-  | { type: 'UPDATE_ITEM'; payload: { id: string; intakeId?: string; intakeName?: string; intakeAmount?: number } }
+  | { type: 'UPDATE_ITEM'; payload: { id: string; batchId?: string; intakeName?: string; intakeAmount?: number } }
   | { type: 'CLEAR_CART' }
   | { type: 'LOAD_CART'; payload: CartState }
   | { type: 'SYNC_WITH_SERVER'; payload: CartState };
@@ -37,7 +37,7 @@ interface CartContextType {
   state: CartState;
   addToCart: (item: Omit<CartItem, 'id'>) => Promise<void>;
   removeFromCart: (id: string) => Promise<void>;
-  updateCartItem: (id: string, intakeId?: string, intakeName?: string, intakeAmount?: number) => void;
+  updateCartItem: (id: string, batchId?: string, intakeName?: string, intakeAmount?: number) => void;
   clearCart: () => Promise<void>;
   isInCart: (courseId: string) => boolean;
   getCartItem: (courseId: string) => CartItem | undefined;
@@ -95,7 +95,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         item.id === action.payload.id 
           ? { 
               ...item, 
-              intakeId: action.payload.intakeId,
+              batchId: action.payload.batchId,
               intakeName: action.payload.intakeName,
               intakeAmount: action.payload.intakeAmount
             }
@@ -389,7 +389,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           thumbnail: item.thumbnail,
           teacher: item.teacher,
           courseCode: item.courseCode,
-          intakeId: item.intakeId,
+          batchId: item.batchId,
           intakeName: item.intakeName,
           intakeAmount: item.intakeAmount
         }
@@ -479,10 +479,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateCartItem = (id: string, intakeId?: string, intakeName?: string, intakeAmount?: number) => {
+  const updateCartItem = (id: string, batchId?: string, intakeName?: string, intakeAmount?: number) => {
     dispatch({ 
       type: 'UPDATE_ITEM', 
-      payload: { id, intakeId, intakeName, intakeAmount } 
+      payload: { id, batchId, intakeName, intakeAmount } 
     });
   };
 

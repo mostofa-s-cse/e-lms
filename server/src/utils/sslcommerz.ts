@@ -29,7 +29,7 @@ interface PaymentRequest {
   value_a: string; // courseId
   value_b: string; // enrollmentId
   value_c: string; // userId
-  value_d: string; // intakeId (optional)
+  value_d: string; // batchId (optional)
 }
 
 interface PaymentResponse {

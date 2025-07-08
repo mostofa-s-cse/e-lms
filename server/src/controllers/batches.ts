@@ -4,7 +4,7 @@ import { ApiResponse, AuthRequest } from '../types';
 
 export const getAllIntakes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const intakes = await prisma.intake.findMany({
+    const batches = await prisma.batch.findMany({
       where: { isActive: true },
       include: {
         course: {
@@ -16,7 +16,7 @@ export const getAllIntakes = async (req: Request, res: Response, next: NextFunct
       },
       orderBy: { startDate: 'desc' }
     });
-    res.json({ success: true, message: 'Intakes fetched successfully', data: intakes } as ApiResponse);
+    res.json({ success: true, message: 'Batches fetched successfully', data: batches } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -26,8 +26,8 @@ export const getIntakesByTeacher = async (req: AuthRequest, res: Response, next:
   try {
     const teacherId = req.user!.id;
     
-    // Get intakes for courses that the teacher teaches
-    const intakes = await prisma.intake.findMany({
+    // Get batches for courses that the teacher teaches
+    const batches = await prisma.batch.findMany({
       where: { 
         isActive: true,
         course: {
@@ -45,7 +45,7 @@ export const getIntakesByTeacher = async (req: AuthRequest, res: Response, next:
       orderBy: { startDate: 'desc' }
     });
     
-    res.json({ success: true, message: 'Teacher intakes fetched successfully', data: intakes } as ApiResponse);
+    res.json({ success: true, message: 'Teacher batches fetched successfully', data: batches } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -53,7 +53,7 @@ export const getIntakesByTeacher = async (req: AuthRequest, res: Response, next:
 
 export const getIntakeById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const intake = await prisma.intake.findUnique({
+    const batch = await prisma.batch.findUnique({
       where: { id: req.params.id },
       include: {
         course: {
@@ -72,12 +72,12 @@ export const getIntakeById = async (req: Request, res: Response, next: NextFunct
       }
     });
     
-    if (!intake) {
-      res.status(404).json({ success: false, message: 'Intake not found' });
+    if (!batch) {
+      res.status(404).json({ success: false, message: 'Batch not found' });
       return;
     }
     
-    res.json({ success: true, message: 'Intake fetched successfully', data: intake } as ApiResponse);
+    res.json({ success: true, message: 'Batch fetched successfully', data: batch } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -99,11 +99,11 @@ export const createIntake = async (req: AuthRequest, res: Response, next: NextFu
     }
     
     if (course.teacherId !== teacherId && req.user!.role !== 'ADMIN') {
-      res.status(403).json({ success: false, message: 'You can only create intakes for your own courses' });
+      res.status(403).json({ success: false, message: 'You can only create batches for your own courses' });
       return;
     }
     
-    const intake = await prisma.intake.create({
+    const batch = await prisma.batch.create({
       data: {
         name,
         startDate: new Date(startDate),
@@ -118,7 +118,7 @@ export const createIntake = async (req: AuthRequest, res: Response, next: NextFu
       }
     });
     
-    res.status(201).json({ success: true, message: 'Intake created successfully', data: intake } as ApiResponse);
+    res.status(201).json({ success: true, message: 'Batch created successfully', data: batch } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -127,29 +127,29 @@ export const createIntake = async (req: AuthRequest, res: Response, next: NextFu
 export const updateIntake = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name, startDate, endDate, isActive, amount } = req.body;
-    const intakeId = req.params.id;
+    const batchId = req.params.id;
     const teacherId = req.user!.id;
     
     // Check if user is the teacher of this course or admin
-    const existingIntake = await prisma.intake.findUnique({
-      where: { id: intakeId },
+    const existingIntake = await prisma.batch.findUnique({
+      where: { id: batchId },
       include: {
         course: true
       }
     });
     
     if (!existingIntake) {
-      res.status(404).json({ success: false, message: 'Intake not found' });
+      res.status(404).json({ success: false, message: 'Batch not found' });
       return;
     }
     
     if (existingIntake.course.teacherId !== teacherId && req.user!.role !== 'ADMIN') {
-      res.status(403).json({ success: false, message: 'You can only update intakes for your own courses' });
+      res.status(403).json({ success: false, message: 'You can only update batches for your own courses' });
       return;
     }
     
-    const intake = await prisma.intake.update({
-      where: { id: intakeId },
+    const batch = await prisma.batch.update({
+      where: { id: batchId },
       data: {
         name,
         startDate: startDate ? new Date(startDate) : undefined,
@@ -164,7 +164,7 @@ export const updateIntake = async (req: AuthRequest, res: Response, next: NextFu
       }
     });
     
-    res.json({ success: true, message: 'Intake updated successfully', data: intake } as ApiResponse);
+    res.json({ success: true, message: 'Batch updated successfully', data: batch } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -172,34 +172,34 @@ export const updateIntake = async (req: AuthRequest, res: Response, next: NextFu
 
 export const deleteIntake = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const intakeId = req.params.id;
+    const batchId = req.params.id;
     const teacherId = req.user!.id;
     
     // Check if user is the teacher of this course or admin
-    const existingIntake = await prisma.intake.findUnique({
-      where: { id: intakeId },
+    const existingIntake = await prisma.batch.findUnique({
+      where: { id: batchId },
       include: {
         course: true
       }
     });
     
     if (!existingIntake) {
-      res.status(404).json({ success: false, message: 'Intake not found' });
+      res.status(404).json({ success: false, message: 'Batch not found' });
       return;
     }
     
     if (existingIntake.course.teacherId !== teacherId && req.user!.role !== 'ADMIN') {
-      res.status(403).json({ success: false, message: 'You can only delete intakes for your own courses' });
+      res.status(403).json({ success: false, message: 'You can only delete batches for your own courses' });
       return;
     }
     
     // Soft delete by setting isActive to false
-    await prisma.intake.update({
-      where: { id: intakeId },
+    await prisma.batch.update({
+      where: { id: batchId },
       data: { isActive: false }
     });
     
-    res.json({ success: true, message: 'Intake deleted successfully' } as ApiResponse);
+    res.json({ success: true, message: 'Batch deleted successfully' } as ApiResponse);
   } catch (error) {
     next(error);
   }
@@ -207,10 +207,10 @@ export const deleteIntake = async (req: AuthRequest, res: Response, next: NextFu
 
 export const getIntakeEnrollments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const intakeId = req.params.id;
+    const batchId = req.params.id;
     
     const enrollments = await prisma.enrollment.findMany({
-      where: { intakeId },
+      where: { batchId },
       include: {
         student: {
           select: { id: true, firstName: true, lastName: true, email: true }
@@ -222,7 +222,7 @@ export const getIntakeEnrollments = async (req: Request, res: Response, next: Ne
       orderBy: { enrolledAt: 'desc' }
     });
     
-    res.json({ success: true, message: 'Intake enrollments fetched successfully', data: enrollments } as ApiResponse);
+    res.json({ success: true, message: 'Batch enrollments fetched successfully', data: enrollments } as ApiResponse);
   } catch (error) {
     next(error);
   }

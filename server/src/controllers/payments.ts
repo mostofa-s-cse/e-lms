@@ -24,7 +24,7 @@ export const getAllPayments = async (req: Request, res: Response) => {
                 code: true,
               },
             },
-            intake: {
+            batch: {
               select: {
                 id: true,
                 name: true,
@@ -77,7 +77,7 @@ export const getPaymentById = async (req: Request, res: Response) => {
                 code: true,
               },
             },
-            intake: {
+            batch: {
               select: {
                 id: true,
                 name: true,
@@ -126,7 +126,7 @@ export const getPaymentsByUser = async (req: Request, res: Response) => {
                 code: true,
               },
             },
-            intake: {
+            batch: {
               select: {
                 id: true,
                 name: true,
@@ -220,10 +220,10 @@ export const createPayment = async (req: Request, res: Response) => {
       include: {
         course: {
           include: {
-            intakes: true
+            batches: true
           }
         },
-        intake: true
+        batch: true
       }
     });
 
@@ -234,10 +234,10 @@ export const createPayment = async (req: Request, res: Response) => {
       });
     }
 
-    // SECURITY: Validate payment amount against course/intake pricing
+    // SECURITY: Validate payment amount against course/batch pricing
     let expectedAmount = 0;
-    if (enrollment.intake) {
-      expectedAmount = enrollment.intake.amount || 0;
+    if (enrollment.batch) {
+      expectedAmount = enrollment.batch.amount || 0;
     } else if (!enrollment.course.isFree) {
       expectedAmount = enrollment.course.price || 0;
     }
@@ -292,7 +292,7 @@ export const createPayment = async (req: Request, res: Response) => {
                 code: true,
               },
             },
-            intake: {
+            batch: {
               select: {
                 id: true,
                 name: true,
@@ -365,7 +365,7 @@ export const updatePayment = async (req: Request, res: Response) => {
                 code: true,
               },
             },
-            intake: {
+            batch: {
               select: {
                 id: true,
                 name: true,
@@ -470,7 +470,7 @@ export const markPaymentCompleted = async (req: Request, res: Response) => {
                 code: true,
               },
             },
-            intake: {
+            batch: {
               select: {
                 id: true,
                 name: true,
@@ -501,7 +501,7 @@ export const createCustomPayment = async (req: Request, res: Response) => {
   try {
     const {
       courseId,
-      intakeId: rawIntakeId,
+      batchId: rawIntakeId,
       amount,
       paymentMethod,
       paymentDetails,
@@ -510,12 +510,12 @@ export const createCustomPayment = async (req: Request, res: Response) => {
 
     const userId = (req as any).user?.id;
 
-    // Normalize intakeId strictly to either valid string or null
-    const intakeId =
+    // Normalize batchId strictly to either valid string or null
+    const batchId =
       rawIntakeId &&
       rawIntakeId !== 'null' &&
       rawIntakeId !== 'undefined' &&
-      rawIntakeId !== 'No Intake' &&
+      rawIntakeId !== 'No Batch' &&
       typeof rawIntakeId === 'string' &&
       rawIntakeId.trim() !== ''
         ? rawIntakeId.trim()
@@ -535,31 +535,31 @@ export const createCustomPayment = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Fetch course with active intakes
+    // Fetch course with active batches
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      include: { intakes: { where: { isActive: true } } },
+      include: { batches: { where: { isActive: true } } },
     });
     if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
 
-    // Validate intakeId if provided
-    if (intakeId) {
-      const intakeExists = course.intakes.some((i) => i.id === intakeId);
+    // Validate batchId if provided
+    if (batchId) {
+      const intakeExists = course.batches.some((i) => i.id === batchId);
       if (!intakeExists) {
-        return res.status(400).json({ success: false, message: 'Invalid intake selected' });
+        return res.status(400).json({ success: false, message: 'Invalid batch selected' });
       }
     }
 
     // OPTIONAL: Validate amount if needed (your existing validation here)
 
-    // Check existing enrollment for user + course + intake (or null)
+    // Check existing enrollment for user + course + batch (or null)
     const existingEnrollment = await prisma.enrollment.findFirst({
       where: {
         studentId: userId,
         courseId,
-        ...(intakeId ? { intakeId } : { intakeId: null }),
+        ...(batchId ? { batchId } : { batchId: null }),
         status: { in: ['ACTIVE', 'PENDING', 'COMPLETED'] },
       },
     });
@@ -574,8 +574,8 @@ export const createCustomPayment = async (req: Request, res: Response) => {
       courseId,
       status: 'ACTIVE',
     };
-    if (intakeId !== null) {
-      enrollmentData.intakeId = intakeId;
+    if (batchId !== null) {
+      enrollmentData.batchId = batchId;
     }
 
     // Create enrollment
@@ -716,27 +716,27 @@ export const createCartPayment = async (req: Request, res: Response) => {
     const payments = [];
 
     for (const item of items) {
-      // Normalize intakeId: null if missing or invalid string
-      const intakeId =
-        item.intakeId && typeof item.intakeId === 'string' && item.intakeId.trim() !== ''
-          ? item.intakeId.trim()
+      // Normalize batchId: null if missing or invalid string
+      const batchId =
+        item.batchId && typeof item.batchId === 'string' && item.batchId.trim() !== ''
+          ? item.batchId.trim()
           : null;
 
-      // OPTIONAL: Validate intakeId exists for this course
+      // OPTIONAL: Validate batchId exists for this course
       // const course = await prisma.course.findUnique({
       //   where: { id: item.courseId },
-      //   include: { intakes: { where: { isActive: true } } },
+      //   include: { batches: { where: { isActive: true } } },
       // });
-      // if (intakeId && (!course || !course.intakes.some(i => i.id === intakeId))) {
+      // if (batchId && (!course || !course.batches.some(i => i.id === batchId))) {
       //   continue; // skip this item or handle error as needed
       // }
 
-      // Check if already enrolled for this user, course, and intake
+      // Check if already enrolled for this user, course, and batch
       const existingEnrollment = await prisma.enrollment.findFirst({
         where: {
           studentId: userId,
           courseId: item.courseId,
-          intakeId,
+          batchId,
           status: {
             in: ['ACTIVE', 'PENDING', 'COMPLETED'],
           },
@@ -753,7 +753,7 @@ export const createCartPayment = async (req: Request, res: Response) => {
         data: {
           studentId: userId,
           courseId: item.courseId,
-          ...(intakeId ? { intakeId } : {}),
+          ...(batchId ? { batchId } : {}),
           status: 'ACTIVE',
         },
       });
@@ -819,13 +819,13 @@ export const createCartPayment = async (req: Request, res: Response) => {
 export const createFreeEnrollment = async (req: Request, res: Response) => {
   try {
     const { courseId } = req.body;
-    let intakeId: string | null = req.body.intakeId;
+    let batchId: string | null = req.body.batchId;
 
     const userId = (req as any).user?.id;
 
-    // ✅ Normalize intakeId string values like "null", "undefined"
-    if (!intakeId || intakeId === 'null' || intakeId === 'undefined' || intakeId === 'No Intake' || intakeId.trim() === '') {
-      intakeId = null;
+    // ✅ Normalize batchId string values like "null", "undefined"
+    if (!batchId || batchId === 'null' || batchId === 'undefined' || batchId === 'No Batch' || batchId.trim() === '') {
+      batchId = null;
     }
 
     // ✅ Check authentication
@@ -844,12 +844,12 @@ export const createFreeEnrollment = async (req: Request, res: Response) => {
       });
     }
 
-    // ✅ Check if already enrolled in this course (with or without intake)
+    // ✅ Check if already enrolled in this course (with or without batch)
     const existingEnrollment = await prisma.enrollment.findFirst({
       where: {
         studentId: userId,
         courseId,
-        intakeId,
+        batchId,
         status: {
           in: ['ACTIVE', 'PENDING', 'COMPLETED']
         }
@@ -869,7 +869,7 @@ export const createFreeEnrollment = async (req: Request, res: Response) => {
         studentId: userId,
         courseId,
         status: 'ACTIVE',
-        ...(intakeId ? { intakeId } : {}) // only include intakeId if it's valid
+        ...(batchId ? { batchId } : {}) // only include batchId if it's valid
       }
     });
 

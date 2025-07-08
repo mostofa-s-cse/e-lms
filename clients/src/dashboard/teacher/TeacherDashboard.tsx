@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import CoursesPage from './pages/course/CoursesPage';
 import CourseDetailsPage from './pages/course/CourseDetailsPage';
-import IntakesPage from './pages/IntakesPage';
+import IntakesPage from './pages/BatchPage';
 import NotesPage from './pages/notes/NotesPage';
 import NoteViewPage from './pages/notes/NoteViewPage';
 import VideosPage from './pages/video/VideosPage';
@@ -27,7 +27,7 @@ import ProfilePage from './pages/profile/ProfilePage';
 const TeacherDashboard = () => {
   const navigationItems = [
     { path: '/teacher/courses', label: 'Courses', icon: <BookOpen className="w-5 h-5" /> },
-    { path: '/teacher/intakes', label: 'Intakes', icon: <GraduationCap className="w-5 h-5" /> },
+    { path: '/teacher/batches', label: 'Batches', icon: <GraduationCap className="w-5 h-5" /> },
     { path: '/teacher/notes', label: 'Notes', icon: <FileText className="w-5 h-5" /> },
     { path: '/teacher/videos', label: 'Videos', icon: <Video className="w-5 h-5" /> },
     { path: '/teacher/quizzes', label: 'Quizzes', icon: <HelpCircle className="w-5 h-5" /> },
@@ -39,7 +39,7 @@ const TeacherDashboard = () => {
     <>
       <Route path="courses" element={<CoursesPage />} />
       <Route path="courses/:id" element={<CourseDetailsPage />} />
-      <Route path="intakes" element={<IntakesPage />} />
+      <Route path="batches" element={<IntakesPage />} />
       <Route path="notes" element={<NotesPage />} />
       <Route path="notes/:id" element={<NoteViewPage />} />
       <Route path="videos" element={<VideosPage />} />

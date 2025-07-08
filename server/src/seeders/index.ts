@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { seedUsers } from './users';
 import { seedUserProfiles } from './userProfiles';
 import { seedCourses } from './courses';
-import { seedIntakes } from './intakes';
+import { seedIntakes } from './batches';
 import { seedEnrollments } from './enrollments';
 import { seedNotes } from './notes';
 import { seedVideos } from './videos';
@@ -37,7 +37,7 @@ async function main() {
       await prisma.video.deleteMany();
       await prisma.note.deleteMany();
       await prisma.enrollment.deleteMany();
-      await prisma.intake.deleteMany();
+      await prisma.batch.deleteMany();
       await prisma.course.deleteMany();
       await prisma.userProfile.deleteMany();
       await prisma.user.deleteMany();
@@ -70,11 +70,11 @@ async function main() {
     console.log('📚 Seeding courses...');
     const courses = await seedCourses(prisma, users);
 
-    console.log('📅 Seeding intakes...');
-    const intakes = await seedIntakes(prisma, courses);
+    console.log('📅 Seeding batches...');
+    const batches = await seedIntakes(prisma, courses);
 
     console.log('🎓 Seeding enrollments...');
-    const enrollments = await seedEnrollments(prisma, users, courses, intakes);
+    const enrollments = await seedEnrollments(prisma, users, courses, batches);
 
     console.log('📝 Seeding notes...');
     await seedNotes(prisma, users, courses);
@@ -98,7 +98,7 @@ async function main() {
     await seedPayments();
 
     console.log('✅ Database seeding completed successfully!');
-    console.log(`📊 Seeded ${users.length} users, ${profiles.length} profiles, ${courses.length} courses, ${intakes.length} intakes`);
+    console.log(`📊 Seeded ${users.length} users, ${profiles.length} profiles, ${courses.length} courses, ${batches.length} batches`);
 
   } catch (error) {
     console.error('❌ Error during seeding:', error);

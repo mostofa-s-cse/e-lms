@@ -83,7 +83,7 @@ And update the SSLCommerz dashboard URLs accordingly.
 
 - **Free Courses**: Direct enrollment without payment
 - **Paid Courses**: SSLCommerz payment gateway integration
-- **Intake Selection**: Optional intake selection with special pricing
+- **Batch Selection**: Optional batch selection with special pricing
 - **Payment Validation**: Server-side validation of all payments
 
 ### 3. Payment Status Flow
@@ -105,7 +105,7 @@ POST /api/payments/sslcommerz/create-session
 ```json
 {
   "courseId": "course_id",
-  "intakeId": "intake_id", // optional
+  "batchId": "intake_id", // optional
   "amount": 1000
 }
 ```
@@ -145,7 +145,7 @@ The application includes dedicated pages for payment results:
 Both `CourseDetailsPage` and `CoursesPage` now support:
 - Free course enrollment (direct)
 - Paid course enrollment (via SSLCommerz)
-- Intake selection with special pricing
+- Batch selection with special pricing
 - Payment gateway redirection
 
 ## Testing

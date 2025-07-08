@@ -1,6 +1,6 @@
 import { PrismaClient, UserRole, EnrollmentStatus } from '@prisma/client';
 
-export async function seedEnrollments(prisma: PrismaClient, users: any[], courses: any[], intakes: any[]) {
+export async function seedEnrollments(prisma: PrismaClient, users: any[], courses: any[], batches: any[]) {
   const students = users.filter(user => user.role === UserRole.STUDENT);
   
   const enrollmentsData = [
@@ -8,19 +8,19 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[0].id,
       courseId: courses.find(c => c.code === 'CS101')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Computer Science'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Computer Science'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[1].id,
       courseId: courses.find(c => c.code === 'CS101')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Computer Science'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Computer Science'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[2].id,
       courseId: courses.find(c => c.code === 'CS101')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Computer Science'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Computer Science'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
 
@@ -28,19 +28,19 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[3].id,
       courseId: courses.find(c => c.code === 'MATH201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[4].id,
       courseId: courses.find(c => c.code === 'MATH201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[5].id,
       courseId: courses.find(c => c.code === 'MATH201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
 
@@ -48,19 +48,19 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[6].id,
       courseId: courses.find(c => c.code === 'BUS301')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Business'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Business'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[7].id,
       courseId: courses.find(c => c.code === 'BUS301')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Business'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Business'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[8].id,
       courseId: courses.find(c => c.code === 'BUS301')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Business'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Business'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
 
@@ -68,19 +68,19 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[9].id,
       courseId: courses.find(c => c.code === 'ENG201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - English'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - English'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[10].id,
       courseId: courses.find(c => c.code === 'ENG201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - English'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - English'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[11].id,
       courseId: courses.find(c => c.code === 'ENG201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - English'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - English'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
 
@@ -88,19 +88,19 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[12].id,
       courseId: courses.find(c => c.code === 'PHY101')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Physics'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Physics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[13].id,
       courseId: courses.find(c => c.code === 'PHY101')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Physics'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Physics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[14].id,
       courseId: courses.find(c => c.code === 'PHY101')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Physics'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Physics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
 
@@ -108,19 +108,19 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[0].id,
       courseId: courses.find(c => c.code === 'MATH201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Mathematics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[1].id,
       courseId: courses.find(c => c.code === 'BUS301')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - Business'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - Business'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[2].id,
       courseId: courses.find(c => c.code === 'ENG201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Fall 2024 - English'))?.id,
+      batchId: batches.find(i => i.name.includes('Fall 2024 - English'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
 
@@ -128,25 +128,25 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[3].id,
       courseId: courses.find(c => c.code === 'CS401')?.id,
-      intakeId: intakes.find(i => i.name.includes('Spring 2025 - Database Systems'))?.id,
+      batchId: batches.find(i => i.name.includes('Spring 2025 - Database Systems'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[4].id,
       courseId: courses.find(c => c.code === 'MATH301')?.id,
-      intakeId: intakes.find(i => i.name.includes('Spring 2025 - Statistics'))?.id,
+      batchId: batches.find(i => i.name.includes('Spring 2025 - Statistics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[5].id,
       courseId: courses.find(c => c.code === 'HRM201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Spring 2025 - HR Management'))?.id,
+      batchId: batches.find(i => i.name.includes('Spring 2025 - HR Management'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
     {
       studentId: students[6].id,
       courseId: courses.find(c => c.code === 'EE201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Spring 2025 - Digital Electronics'))?.id,
+      batchId: batches.find(i => i.name.includes('Spring 2025 - Digital Electronics'))?.id,
       status: EnrollmentStatus.ACTIVE
     },
 
@@ -154,13 +154,13 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[7].id,
       courseId: courses.find(c => c.code === 'CS201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Spring 2024 - Data Structures'))?.id,
+      batchId: batches.find(i => i.name.includes('Spring 2024 - Data Structures'))?.id,
       status: EnrollmentStatus.COMPLETED
     },
     {
       studentId: students[8].id,
       courseId: courses.find(c => c.code === 'MKT201')?.id,
-      intakeId: intakes.find(i => i.name.includes('Spring 2024 - Marketing'))?.id,
+      batchId: batches.find(i => i.name.includes('Spring 2024 - Marketing'))?.id,
       status: EnrollmentStatus.COMPLETED
     },
 
@@ -168,7 +168,7 @@ export async function seedEnrollments(prisma: PrismaClient, users: any[], course
     {
       studentId: students[9].id,
       courseId: courses.find(c => c.code === 'CHEM101')?.id,
-      intakeId: intakes.find(i => i.name.includes('Spring 2024 - Chemistry'))?.id,
+      batchId: batches.find(i => i.name.includes('Spring 2024 - Chemistry'))?.id,
       status: EnrollmentStatus.DROPPED
     }
   ];
