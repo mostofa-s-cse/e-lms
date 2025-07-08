@@ -16,7 +16,14 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email, password: hashedPassword, firstName, lastName, role },
+      data: { 
+        email, 
+        password: hashedPassword, 
+        firstName, 
+        lastName, 
+        role,
+        approvalStatus: 'PENDING' // Default to pending approval
+      },
       include: {
         profile: true
       }
@@ -24,7 +31,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     
     res.status(201).json({ 
       success: true, 
-      message: 'User registered', 
+      message: 'Registration successful! Your account is pending admin approval. You will be able to log in once an admin approves your account. If you need assistance, please contact support at contact@edulms.com.', 
       data: { 
         id: user.id, 
         email: user.email, 
@@ -32,6 +39,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
         lastName: user.lastName, 
         role: user.role,
         isActive: user.isActive,
+        approvalStatus: user.approvalStatus,
         createdAt: user.createdAt,
         profile: user.profile ? {
           phone: user.profile.phone,
@@ -65,6 +73,23 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return;
+    }
+
+    // Check approval status
+    if (user.approvalStatus === 'PENDING') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Your registration request is pending admin approval. Please wait for approval or contact support at contact@edulms.com for assistance.' 
+      });
+      return;
+    }
+
+    if (user.approvalStatus === 'REJECTED') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Your account has been rejected by admin. Please contact support at contact@edulms.com for more information.' 
+      });
       return;
     }
     

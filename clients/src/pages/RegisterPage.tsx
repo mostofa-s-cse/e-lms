@@ -75,10 +75,17 @@ const RegisterPage = () => {
     // Password validation
     if (!formData.password) {
       errors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+    } else {
+      const passwordErrors = validatePassword(formData.password);
+      
+      if (passwordErrors.length > 0) {
+        errors.password = 'Password requirements not met';
+        // Show detailed error alert for password requirements
+        showErrorAlert(
+          'Password Requirements Not Met',
+          `Your password must meet the following requirements:\n\n${passwordErrors.map(error => `• ${error}`).join('\n')}`
+        );
+      }
     }
 
     // Confirm Password validation
@@ -86,11 +93,6 @@ const RegisterPage = () => {
       errors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
-    }
-
-    // Role validation
-    if (!formData.role) {
-      errors.role = 'Please select a role';
     }
 
     setFormErrors(errors);
@@ -118,7 +120,7 @@ const RegisterPage = () => {
       // Registration successful - show success message and redirect
       showSuccessAlert(
         'Registration Successful!', 
-        'Your account has been created successfully. Please log in with your new account. Your cart items will be automatically transferred to your new account.'
+        'Your account has been created successfully and is pending admin approval. You will be notified once your account is approved and can then log in. Your cart items will be automatically transferred to your new account once you log in.'
       );
       
       // Redirect to login after a short delay
@@ -161,11 +163,39 @@ const RegisterPage = () => {
     }
   };
 
+  const validatePassword = (password: string) => {
+    const errors = [];
+    
+    if (password.length < 6) {
+      errors.push('At least 6 characters long');
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      errors.push('Contains at least one lowercase letter');
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      errors.push('Contains at least one uppercase letter');
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      errors.push('Contains at least one number');
+    }
+    
+    return errors;
+  };
+
   const handleInputChange = (field: keyof RegisterFormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear field error when user starts typing
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+    
+    // Show password requirements alert when user starts typing password
+    if (field === 'password' && value && typeof value === 'string' && value.length > 0) {
+      const passwordErrors = validatePassword(value);
+      if (passwordErrors.length > 0) {
+        // Don't show alert immediately, let user finish typing
+        // We'll show it on form submission instead
+      }
     }
   };
 
@@ -222,16 +252,89 @@ const RegisterPage = () => {
               placeholder="Enter your email address"
             />
 
-            <FormField
-              label="Password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={(value) => handleInputChange('password', value as string)}
-              error={formErrors.password}
-              required
-              placeholder="Create a strong password"
-            />
+            <div className="relative">
+              <FormField
+                label="Password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={(value) => handleInputChange('password', value as string)}
+                error={formErrors.password}
+                required
+                placeholder="Create a strong password"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  showErrorAlert(
+                    'Password Requirements',
+                    'Your password must meet the following requirements:\n\n• At least 6 characters long\n• Contains at least one lowercase letter\n• Contains at least one uppercase letter\n• Contains at least one number'
+                  );
+                }}
+                className="absolute right-2 top-8 text-blue-600 hover:text-blue-800 text-sm"
+                title="Show password requirements"
+              >
+                ℹ️
+              </button>
+            </div>
+            
+            {/* Password Strength Indicator */}
+            {formData.password && (
+              <div className="mt-2">
+                <div className="text-sm text-gray-600 mb-2 flex items-center justify-between">
+                  <span>Password Strength:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const passwordErrors = validatePassword(formData.password);
+                      const allRequirements = [
+                        'At least 6 characters long',
+                        'Contains at least one lowercase letter',
+                        'Contains at least one uppercase letter',
+                        'Contains at least one number'
+                      ];
+                      
+                      if (passwordErrors.length === 0) {
+                        showSuccessAlert(
+                          'Password Requirements Met!',
+                          'Your password meets all requirements:\n\n• At least 6 characters long\n• Contains at least one lowercase letter\n• Contains at least one uppercase letter\n• Contains at least one number'
+                        );
+                      } else {
+                        showErrorAlert(
+                          'Password Requirements',
+                          `Your password must meet the following requirements:\n\n${passwordErrors.map(error => `• ${error}`).join('\n')}`
+                        );
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-800 underline text-xs"
+                  >
+                    📋 Show requirements
+                  </button>
+                </div>
+                <div className="flex space-x-1">
+                  {['length', 'lowercase', 'uppercase', 'number'].map((requirement) => {
+                    const isValid = 
+                      (requirement === 'length' && formData.password.length >= 6) ||
+                      (requirement === 'lowercase' && /(?=.*[a-z])/.test(formData.password)) ||
+                      (requirement === 'uppercase' && /(?=.*[A-Z])/.test(formData.password)) ||
+                      (requirement === 'number' && /(?=.*\d)/.test(formData.password));
+                    
+                    return (
+                      <div
+                        key={requirement}
+                        className={`flex-1 h-2 rounded ${
+                          isValid ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                        title={`${requirement.charAt(0).toUpperCase() + requirement.slice(1)} requirement ${isValid ? 'met' : 'not met'}`}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {validatePassword(formData.password).length === 0 ? '✅ Strong password' : '⚠️ Please meet all requirements'}
+                </div>
+              </div>
+            )}
 
             <FormField
               label="Confirm Password"
@@ -242,20 +345,6 @@ const RegisterPage = () => {
               error={formErrors.confirmPassword}
               required
               placeholder="Confirm your password"
-            />
-
-            <FormField
-              label="Role"
-              name="role"
-              type="select"
-              value={formData.role}
-              onChange={(value) => handleInputChange('role', value as string)}
-              error={formErrors.role}
-              required
-              options={[
-                { value: 'STUDENT', label: 'Student' },
-                { value: 'TEACHER', label: 'Teacher' }
-              ]}
             />
 
             <FormActions
@@ -276,22 +365,7 @@ const RegisterPage = () => {
             </p>
           </div>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Password Requirements</span>
-              </div>
-            </div>
-            <div className="mt-4 text-xs text-gray-500 space-y-1">
-              <p>• At least 6 characters long</p>
-              <p>• Contains at least one uppercase letter</p>
-              <p>• Contains at least one lowercase letter</p>
-              <p>• Contains at least one number</p>
-            </div>
-          </div>
+
         </div>
       </div>
 

@@ -46,7 +46,27 @@ const LoginPage = () => {
       console.error('LoginPage: Login error:', error);
       console.error('LoginPage: Error message:', error.message);
       console.error('LoginPage: Error response:', error.response);
-      showErrorAlert('Login Failed', error.message || 'Invalid email or password');
+      
+      // Handle specific approval status errors
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.message;
+        
+        if (errorMessage.includes('pending admin approval')) {
+          showErrorAlert(
+            'Registration Pending', 
+            'Your registration request is pending admin approval. Please wait for approval or contact support at contact@edulms.com for assistance.'
+          );
+        } else if (errorMessage.includes('rejected by admin')) {
+          showErrorAlert(
+            'Account Rejected', 
+            'Your account has been rejected by admin. Please contact support at contact@edulms.com for more information.'
+          );
+        } else {
+          showErrorAlert('Access Denied', errorMessage);
+        }
+      } else {
+        showErrorAlert('Login Failed', error.message || 'Invalid email or password');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,6 +87,14 @@ const LoginPage = () => {
             <p className="mt-2 text-center text-sm text-gray-600">
               Welcome to the E-Learning Management System
             </p>
+            {/* <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex items-center">
+                <div className="text-blue-600 mr-2">ℹ️</div>
+                <div className="text-sm text-blue-800">
+                  <strong>New users:</strong> After registration, your account requires admin approval before you can log in. You'll receive a notification once approved.
+                </div>
+              </div>
+            </div> */}
           </div>
 
           <Form onSubmit={handleSubmit}>

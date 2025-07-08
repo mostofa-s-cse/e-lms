@@ -305,6 +305,31 @@ const UsersPage = () => {
       label: 'Created',
       sortable: true,
       render: (date: string) => new Date(date).toLocaleDateString()
+    },
+    {
+      key: 'approvalStatus',
+      label: 'Approval Status',
+      sortable: true,
+      render: (status: string) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+          status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-red-100 text-red-800'
+        }`}>
+          {status}
+        </span>
+      )
+    },
+    {
+      key: 'approvedAt',
+      label: 'Approved At',
+      sortable: true,
+      render: (date: string, user: User) => {
+        if (user.approvalStatus === 'APPROVED' && user.approvedAt) {
+          return new Date(user.approvedAt).toLocaleDateString();
+        }
+        return <span className="text-gray-400">-</span>;
+      }
     }
   ];
 

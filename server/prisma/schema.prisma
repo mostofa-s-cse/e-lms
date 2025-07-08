@@ -21,6 +21,9 @@ model User {
   lastName  String
   role      UserRole @default(STUDENT)
   isActive  Boolean  @default(true)
+  approvalStatus ApprovalStatus @default(PENDING)
+  approvedAt DateTime?
+  approvedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -37,6 +40,8 @@ model User {
   evaluationsGiven Evaluation[] @relation("Evaluations")
   payments   Payment[]
   carts      Cart[]
+  approvedByUser User? @relation("UserApprovals", fields: [approvedBy], references: [id])
+  approvedUsers User[] @relation("UserApprovals")
 
   @@map("users")
 }
@@ -345,6 +350,12 @@ enum UserRole {
   STUDENT
   TEACHER
   ADMIN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum EnrollmentStatus {

@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient, UserRole, ApprovalStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 export async function seedUsers(prisma: PrismaClient) {
@@ -12,7 +12,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'John',
       lastName: 'Admin',
       role: UserRole.ADMIN,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null // Self-approved or system-approved
     },
     {
       email: 'admin2@university.edu',
@@ -20,7 +23,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Sarah',
       lastName: 'Director',
       role: UserRole.ADMIN,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null // Self-approved or system-approved
     },
 
     // Teacher users
@@ -30,7 +36,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Dr. Michael',
       lastName: 'Smith',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'prof.johnson@university.edu',
@@ -38,7 +47,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Dr. Emily',
       lastName: 'Johnson',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'prof.williams@university.edu',
@@ -46,7 +58,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Prof. David',
       lastName: 'Williams',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'prof.brown@university.edu',
@@ -54,7 +69,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Dr. Lisa',
       lastName: 'Brown',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'prof.davis@university.edu',
@@ -62,7 +80,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Prof. Robert',
       lastName: 'Davis',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
 
     // Student users
@@ -72,7 +93,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Alice',
       lastName: 'Johnson',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student2@university.edu',
@@ -80,7 +104,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Bob',
       lastName: 'Smith',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student3@university.edu',
@@ -88,7 +115,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Carol',
       lastName: 'Williams',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student4@university.edu',
@@ -96,7 +126,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'David',
       lastName: 'Brown',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student5@university.edu',
@@ -104,7 +137,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Emma',
       lastName: 'Davis',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student6@university.edu',
@@ -112,7 +148,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Frank',
       lastName: 'Miller',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student7@university.edu',
@@ -120,7 +159,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Grace',
       lastName: 'Wilson',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student8@university.edu',
@@ -128,7 +170,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Henry',
       lastName: 'Taylor',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student9@university.edu',
@@ -136,7 +181,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Ivy',
       lastName: 'Anderson',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student10@university.edu',
@@ -144,7 +192,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Jack',
       lastName: 'Thomas',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student11@university.edu',
@@ -152,7 +203,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Kate',
       lastName: 'Jackson',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student12@university.edu',
@@ -160,7 +214,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Liam',
       lastName: 'White',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student13@university.edu',
@@ -168,7 +225,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Mia',
       lastName: 'Harris',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student14@university.edu',
@@ -176,7 +236,10 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Noah',
       lastName: 'Martin',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
       email: 'student15@university.edu',
@@ -184,7 +247,33 @@ export async function seedUsers(prisma: PrismaClient) {
       firstName: 'Olivia',
       lastName: 'Thompson',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
+    },
+    // Test pending user for admin approval testing
+    {
+      email: 'pending.student@university.edu',
+      password: hashedPassword,
+      firstName: 'Test',
+      lastName: 'PendingStudent',
+      role: UserRole.STUDENT,
+      isActive: true,
+      approvalStatus: ApprovalStatus.PENDING,
+      approvedAt: null,
+      approvedBy: null
+    },
+    {
+      email: 'pending.teacher@university.edu',
+      password: hashedPassword,
+      firstName: 'Dr. Test',
+      lastName: 'PendingTeacher',
+      role: UserRole.TEACHER,
+      isActive: true,
+      approvalStatus: ApprovalStatus.PENDING,
+      approvedAt: null,
+      approvedBy: null
     }
   ];
 

@@ -25,11 +25,14 @@ export interface User {
   lastName: string;
   role: 'STUDENT' | 'TEACHER' | 'ADMIN';
   isActive: boolean;
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  approvedAt?: string;
+  approvedBy?: string;
   createdAt: string;
   profile?: UserProfile;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 // Create axios instance
 const api = axios.create({
@@ -110,6 +113,9 @@ export const usersAPI = {
     return api.put<ApiResponse<User>>('/users/profile/me', data, { headers });
   },
   delete: (id: string) => api.delete<ApiResponse>(`/users/${id}`),
+  getPendingApprovals: () => api.get<ApiResponse<User[]>>('/users/pending-approvals'),
+  updateApproval: (id: string, approvalData: { approvalStatus: string; rejectionReason?: string }) => 
+    api.patch<ApiResponse<User>>(`/users/${id}/approval`, approvalData),
 };
 
 // Courses API

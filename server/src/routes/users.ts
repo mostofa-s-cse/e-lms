@@ -5,6 +5,10 @@ import { uploadProfilePicture, handleUploadError } from '../middleware/upload';
 
 const router = Router();
 
+// User approval endpoints (Admin only) - Must come before /:id routes
+router.get('/pending-approvals', authenticateToken, requireAdmin, userController.getPendingApprovals);
+router.patch('/:id/approval', authenticateToken, requireAdmin, userController.updateUserApproval);
+
 // User endpoints
 router.get('/', authenticateToken, requireAdmin, userController.getAllUsers);
 router.get('/teachers', authenticateToken, requireTeacher, userController.getTeachers);

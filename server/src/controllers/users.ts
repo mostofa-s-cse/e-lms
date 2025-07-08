@@ -3,6 +3,7 @@ import { prisma } from '../utils/database';
 import { ApiResponse, AuthRequest } from '../types';
 import bcrypt from 'bcryptjs';
 import path from 'path';
+import { ApprovalStatus } from '@prisma/client';
 
 export const getAllUsers = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -20,6 +21,9 @@ export const getAllUsers = async (req: AuthRequest, res: Response, next: NextFun
       lastName: true, 
       role: true, 
       isActive: true, 
+      approvalStatus: true,
+      approvedAt: true,
+      approvedBy: true,
       createdAt: true 
     };
 
@@ -60,6 +64,9 @@ export const getTeachers = async (req: AuthRequest, res: Response, next: NextFun
         lastName: true, 
         role: true, 
         isActive: true, 
+        approvalStatus: true,
+        approvedAt: true,
+        approvedBy: true,
         createdAt: true 
       },
       orderBy: { firstName: 'asc' }
@@ -84,6 +91,9 @@ export const getStudents = async (req: AuthRequest, res: Response, next: NextFun
         lastName: true, 
         role: true, 
         isActive: true, 
+        approvalStatus: true,
+        approvedAt: true,
+        approvedBy: true,
         createdAt: true 
       },
       orderBy: { firstName: 'asc' }
@@ -105,6 +115,9 @@ export const getUserById = async (req: AuthRequest, res: Response, next: NextFun
       lastName: true, 
       role: true, 
       isActive: true, 
+      approvalStatus: true,
+      approvedAt: true,
+      approvedBy: true,
       createdAt: true 
     };
 
@@ -306,6 +319,94 @@ export const getUserProfile = async (req: AuthRequest, res: Response, next: Next
     }
 
     res.json({ success: true, message: 'User profile fetched', data: profile } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// Get pending user approvals
+export const getPendingApprovals = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const pendingUsers = await prisma.user.findMany({
+      where: { approvalStatus: ApprovalStatus.PENDING },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+        profile: {
+          select: {
+            phone: true,
+            address: true,
+            city: true,
+            state: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Pending approvals fetched', 
+      data: pendingUsers 
+    } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Approve or reject user
+export const updateUserApproval = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { approvalStatus, rejectionReason } = req.body;
+    const adminId = req.user?.id;
+
+    if (!['APPROVED', 'REJECTED'].includes(approvalStatus)) {
+      res.status(400).json({ success: false, message: 'Invalid approval status' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    if (user.approvalStatus !== 'PENDING') {
+      res.status(400).json({ success: false, message: 'User is not pending approval' });
+      return;
+    }
+
+    const updateData: any = {
+      approvalStatus,
+      approvedAt: new Date(),
+      approvedBy: adminId
+    };
+
+    // If rejected, store rejection reason in a note or separate field
+    if (approvalStatus === 'REJECTED' && rejectionReason) {
+      // You might want to create a separate table for rejection reasons
+      // For now, we'll just update the status
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: {
+        profile: true
+      }
+    });
+
+    res.json({ 
+      success: true, 
+      message: `User ${approvalStatus.toLowerCase()} successfully`, 
+      data: updatedUser 
+    } as ApiResponse);
   } catch (error) {
     next(error);
   }

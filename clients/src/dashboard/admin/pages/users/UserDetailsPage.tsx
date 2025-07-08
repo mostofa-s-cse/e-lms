@@ -245,6 +245,13 @@ const UserDetailsPage = () => {
                 }`}>
                   {user.isActive ? 'Active' : 'Inactive'}
                 </span>
+                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                  user.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                  user.approvalStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {user.approvalStatus || 'PENDING'}
+                </span>
               </div>
             </div>
           </div>
@@ -283,6 +290,28 @@ const UserDetailsPage = () => {
                   <label className="text-sm font-medium text-gray-500">Member Since</label>
                   <p className="text-gray-900">{new Date(user.createdAt).toLocaleDateString()}</p>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Approval Status</label>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                    user.approvalStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {user.approvalStatus || 'PENDING'}
+                  </span>
+                </div>
+                {user.approvalStatus === 'APPROVED' && user.approvedAt && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Approved At</label>
+                    <p className="text-gray-900">{new Date(user.approvedAt).toLocaleDateString()}</p>
+                  </div>
+                )}
+                {user.approvalStatus === 'APPROVED' && user.approvedBy && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Approved By</label>
+                    <p className="text-gray-900">Admin ID: {user.approvedBy}</p>
+                  </div>
+                )}
               </div>
             </div>
 

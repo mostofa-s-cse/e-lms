@@ -428,7 +428,7 @@ const CourseDetailsPage = () => {
                   <div className="text-4xl mb-4">
                         {course.thumbnail ? (
                           <img 
-                            src={`http://localhost:5000${course.thumbnail}`} 
+                            src={`http://localhost:4000${course.thumbnail}`} 
                             alt={course.title}
                         className="w-20 h-20 mx-auto object-cover rounded"
                           />
