@@ -32,12 +32,12 @@ const VideosTab: React.FC<VideosTabProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
-        <button
+        {/* <button
           onClick={onCreate}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Add Video
-        </button>
+        </button> */}
       </div>
       <DataTable
         columns={[
@@ -73,9 +73,6 @@ const VideosTab: React.FC<VideosTabProps> = ({
         data={videos}
         loading={loading}
         title="All Videos"
-        onView={onView}
-        onEdit={onEdit}
-        onDelete={onDelete}
       />
     </div>
   );

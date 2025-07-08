@@ -23,12 +23,12 @@ const NotesTab: React.FC<NotesTabProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-end items-center">
-        <button
+        {/* <button
           onClick={onCreate}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Add Note
-        </button>
+        </button> */}
       </div>
       <DataTable
         columns={[
@@ -118,9 +118,6 @@ const NotesTab: React.FC<NotesTabProps> = ({
         data={notes}
         loading={loading}
         title="Course Notes"
-        onView={onView}
-        onEdit={onEdit}
-        onDelete={onDelete}
       />
     </div>
   );
