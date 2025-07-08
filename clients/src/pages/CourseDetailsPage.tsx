@@ -56,6 +56,8 @@ const CourseDetailsPage = () => {
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
   const [selectedIntake, setSelectedIntake] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [userEnrollment, setUserEnrollment] = useState<Enrollment | null>(null);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -87,6 +89,31 @@ const CourseDetailsPage = () => {
     fetchCourseDetails();
   }, [id]); // Only depend on course ID
 
+  // Check if user is enrolled in this course
+  useEffect(() => {
+    const checkUserEnrollment = async () => {
+      if (!user?.id || !id) return;
+      
+      try {
+        setCheckingEnrollment(true);
+        const response = await enrollmentsAPI.getByStudentAndCourse(user.id, id);
+        
+        if ((response.data as any).success) {
+          setUserEnrollment((response.data as any).data);
+        }
+      } catch (error: any) {
+        // If 404, user is not enrolled (this is expected)
+        if (error.response?.status !== 404) {
+          console.error('Error checking enrollment:', error);
+        }
+      } finally {
+        setCheckingEnrollment(false);
+      }
+    };
+
+    checkUserEnrollment();
+  }, [user?.id, id]);
+
   const handleEnrollClick = () => {
     if (!course) return;
     
@@ -94,6 +121,13 @@ const CourseDetailsPage = () => {
     if (!user) {
       // Redirect to register page for non-authenticated users
       navigate('/register');
+      return;
+    }
+    
+    // Check if already enrolled
+    if (enrolled) {
+      // Redirect to dashboard if already enrolled
+      navigate('/student/courses');
       return;
     }
     
@@ -137,7 +171,7 @@ const CourseDetailsPage = () => {
           showSuccessAlert('Success', 'Successfully enrolled in course!');
           setShowEnrollmentModal(false);
           // Redirect to dashboard after successful enrollment
-          navigate('/dashboard/student/courses');
+          navigate('/student/courses');
         } else {
           throw new Error((response.data as any).message || 'Enrollment failed');
         }
@@ -171,13 +205,11 @@ const CourseDetailsPage = () => {
   };
 
   const isEnrolled = (courseId: string) => {
-    // This function is no longer needed as userEnrollments state is removed
-    return false; 
+    return userEnrollment !== null;
   };
 
   const getEnrollmentStatus = (courseId: string) => {
-    // This function is no longer needed as userEnrollments state is removed
-    return undefined;
+    return userEnrollment?.status;
   };
 
   const renderStars = (rating: number) => {
@@ -418,20 +450,46 @@ const CourseDetailsPage = () => {
                       </div>
 
                 {user ? (
-                            <button
-                    onClick={handleEnrollClick}
-                    className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors mb-4"
-                            >
-                              Enroll Now
-                            </button>
-                        ) : (
-                          <Link 
-                            to="/register" 
-                    className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors mb-4 inline-block text-center"
-                          >
-                            Get Started
-                          </Link>
+                  checkingEnrollment ? (
+                    <div className="w-full bg-gray-100 text-gray-600 px-4 py-3 rounded-md mb-4 text-center">
+                      Checking enrollment...
+                    </div>
+                  ) : enrolled ? (
+                    <div className="space-y-3">
+                      <div className="bg-green-50 border border-green-200 rounded-md p-3 text-center">
+                        <div className="text-green-600 font-semibold mb-1">✅ Enrolled</div>
+                        <div className="text-sm text-green-700">
+                          Status: {enrollmentStatus || 'Active'}
+                        </div>
+                        {userEnrollment?.intake && (
+                          <div className="text-xs text-green-600 mt-1">
+                            Intake: {userEnrollment.intake.name}
+                          </div>
                         )}
+                      </div>
+                      <Link 
+                        to="/student/courses" 
+                        className="w-full bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 transition-colors inline-block text-center"
+                      >
+                        Go to Course
+                      </Link>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleEnrollClick}
+                      className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors mb-4"
+                    >
+                      Enroll Now
+                    </button>
+                  )
+                ) : (
+                  <Link 
+                    to="/register" 
+                    className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors mb-4 inline-block text-center"
+                  >
+                    Get Started
+                  </Link>
+                )}
 
                 {course.intakes?.length > 0 && (
                   <div className="mt-6 pt-6 border-t">
@@ -456,7 +514,7 @@ const CourseDetailsPage = () => {
       </section>
 
       {/* Enrollment Modal */}
-      {showEnrollmentModal && course && (
+      {showEnrollmentModal && course && !enrolled && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Enroll in {course.title}</h3>

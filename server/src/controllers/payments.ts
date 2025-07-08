@@ -610,7 +610,7 @@ export const createCustomPayment = async (req: Request, res: Response) => {
         currency: 'BDT',
         method: paymentMethod,
         status: paymentStatus,
-        referenceId: `RE_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+        referenceId: `FREE_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
         paidAt,
       },
     });
@@ -645,27 +645,37 @@ export const createCustomPayment = async (req: Request, res: Response) => {
 // Create custom payment for cart
 export const createCartPayment = async (req: Request, res: Response) => {
   try {
-    const { items, total, userId, userEmail, userName, paymentMethod, paymentDetails, testStatus } = req.body;
+    const {
+      items,
+      total,
+      userId,
+      userEmail,  // currently unused, but keep if you want
+      userName,   // currently unused, but keep if you want
+      paymentMethod,
+      paymentDetails, // currently unused, you can store if needed
+      testStatus,
+    } = req.body;
+
     const currentUserId = (req as any).user?.id;
 
     if (!currentUserId) {
       return res.status(401).json({
         success: false,
-        message: 'User not authenticated'
+        message: 'User not authenticated',
       });
     }
 
     if (currentUserId !== userId) {
       return res.status(403).json({
         success: false,
-        message: 'Unauthorized access'
+        message: 'Unauthorized access',
       });
     }
 
-    if (!items || items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'No items in cart'
+        message: 'No items in cart',
       });
     }
 
@@ -674,14 +684,14 @@ export const createCartPayment = async (req: Request, res: Response) => {
     if (Math.abs(calculatedTotal - total) > 0.01) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid total amount'
+        message: 'Invalid total amount',
       });
     }
 
-    // Determine payment status based on test status
+    // Determine payment status and paidAt date
     let paymentStatus: 'COMPLETED' | 'FAILED' | 'CANCELLED' = 'COMPLETED';
     let paidAt: Date | null = new Date();
-    
+
     if (testStatus) {
       switch (testStatus) {
         case 'SUCCESS':
@@ -705,21 +715,37 @@ export const createCartPayment = async (req: Request, res: Response) => {
     const enrollments = [];
     const payments = [];
 
-    // Process each item
     for (const item of items) {
-      // Check if already enrolled
+      // Normalize intakeId: null if missing or invalid string
+      const intakeId =
+        item.intakeId && typeof item.intakeId === 'string' && item.intakeId.trim() !== ''
+          ? item.intakeId.trim()
+          : null;
+
+      // OPTIONAL: Validate intakeId exists for this course
+      // const course = await prisma.course.findUnique({
+      //   where: { id: item.courseId },
+      //   include: { intakes: { where: { isActive: true } } },
+      // });
+      // if (intakeId && (!course || !course.intakes.some(i => i.id === intakeId))) {
+      //   continue; // skip this item or handle error as needed
+      // }
+
+      // Check if already enrolled for this user, course, and intake
       const existingEnrollment = await prisma.enrollment.findFirst({
         where: {
           studentId: userId,
           courseId: item.courseId,
+          intakeId,
           status: {
-            in: ['ACTIVE', 'PENDING', 'COMPLETED']
-          }
-        }
+            in: ['ACTIVE', 'PENDING', 'COMPLETED'],
+          },
+        },
       });
 
       if (existingEnrollment) {
-        continue; // Skip if already enrolled
+        // Already enrolled, skip this item
+        continue;
       }
 
       // Create enrollment
@@ -727,66 +753,67 @@ export const createCartPayment = async (req: Request, res: Response) => {
         data: {
           studentId: userId,
           courseId: item.courseId,
-          intakeId: item.intakeId || null,
-          status: 'ACTIVE'
-        }
+          ...(intakeId ? { intakeId } : {}),
+          status: 'ACTIVE',
+        },
       });
-
       enrollments.push(enrollment);
 
       // Create payment record
       const payment = await prisma.payment.create({
         data: {
-          userId: userId,
+          userId,
           enrollmentId: enrollment.id,
           amount: item.amount,
           currency: 'BDT',
           method: paymentMethod,
           status: paymentStatus,
-          referenceId: `CART_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          paidAt: paidAt
-        }
+          referenceId: `FREE_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+          paidAt,
+          // If you want to store paymentDetails, add a JSON field in your Prisma model first and then include here:
+          // ...(paymentDetails ? { metadata: paymentDetails } : {}),
+        },
       });
-
       payments.push(payment);
     }
 
-    // If payment failed or cancelled, delete enrollments and return failure
+    // If payment failed or cancelled, rollback created enrollments
     if (paymentStatus === 'FAILED' || paymentStatus === 'CANCELLED') {
-      // Delete all enrollments since payment failed
-      for (const enrollment of enrollments) {
-        await prisma.enrollment.delete({
-          where: { id: enrollment.id }
-        });
-      }
+      // Delete enrollments in parallel
+      await Promise.all(
+        enrollments.map((enrollment) =>
+          prisma.enrollment.delete({ where: { id: enrollment.id } })
+        )
+      );
 
       return res.json({
         success: false,
         data: {
-          payments: payments.map(p => p.id),
-          status: paymentStatus
+          payments: payments.map((p) => p.id),
+          status: paymentStatus,
         },
-        message: paymentStatus === 'FAILED' ? 'Payment processing failed' : 'Payment was cancelled'
+        message: paymentStatus === 'FAILED' ? 'Payment processing failed' : 'Payment was cancelled',
       });
     }
 
     return res.json({
       success: true,
       data: {
-        enrollments: enrollments.map(e => e.id),
-        payments: payments.map(p => p.id),
-        total: calculatedTotal
+        enrollments: enrollments.map((e) => e.id),
+        payments: payments.map((p) => p.id),
+        total: calculatedTotal,
       },
-      message: 'Cart payment processed successfully'
+      message: 'Cart payment processed successfully',
     });
   } catch (error) {
     console.error('Error creating cart payment:', error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
     });
   }
 };
+
 
 // Create free enrollment
 export const createFreeEnrollment = async (req: Request, res: Response) => {
