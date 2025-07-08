@@ -305,24 +305,12 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
       if (existingIntake) {
         finalIntakeId = existingIntake.id;
       } else if (course.isFree) {
-        // For free courses without intakes, create a default intake
-        const defaultIntake = await prisma.intake.create({
-          data: {
-            name: `Default Intake - ${course.title}`,
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-            amount: 0.0,
-            isActive: true,
-            courseId
-          }
-        });
-        finalIntakeId = defaultIntake.id;
+        // For free courses without intakes, allow enrollment without intake
+        finalIntakeId = null;
       } else {
-        res.status(400).json({
-          success: false,
-          message: 'Intake selection is required for paid courses',
-        });
-        return;
+        // For paid courses without intakes, allow enrollment without intake
+        // This handles cases where courses don't have intakes defined
+        finalIntakeId = null;
       }
     } else {
       // Validate provided intake
@@ -348,15 +336,29 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
     }
 
     // Check if already enrolled
-    const existingEnrollment = await prisma.enrollment.findUnique({
-      where: {
-        studentId_courseId_intakeId: {
+    let existingEnrollment;
+    
+    if (finalIntakeId) {
+      // Check enrollment with specific intake
+      existingEnrollment = await prisma.enrollment.findUnique({
+        where: {
+          studentId_courseId_intakeId: {
+            studentId,
+            courseId,
+            intakeId: finalIntakeId,
+          },
+        },
+      });
+    } else {
+      // Check enrollment without intake (for courses without intakes)
+      existingEnrollment = await prisma.enrollment.findFirst({
+        where: {
           studentId,
           courseId,
-          intakeId: finalIntakeId,
+          intakeId: null,
         },
-      },
-    });
+      });
+    }
 
     if (existingEnrollment) {
       res.status(400).json({
@@ -367,19 +369,28 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
     }
 
     // Check if this is a free course (either course is free or intake amount is 0)
-    const intake = await prisma.intake.findUnique({
-      where: { id: finalIntakeId }
-    });
+    let intake = null;
+    if (finalIntakeId) {
+      intake = await prisma.intake.findUnique({
+        where: { id: finalIntakeId }
+      });
+    }
     
     const isFreeCourse = course.isFree || (intake && intake.amount === 0);
 
+    const enrollmentData: any = {
+      studentId,
+      courseId,
+      status: EnrollmentStatus.ACTIVE,
+    };
+
+    // Only add intakeId if it exists
+    if (finalIntakeId) {
+      enrollmentData.intakeId = finalIntakeId;
+    }
+
     const enrollment = await prisma.enrollment.create({
-      data: {
-        studentId,
-        courseId,
-        intakeId: finalIntakeId,
-        status: EnrollmentStatus.ACTIVE,
-      },
+      data: enrollmentData,
       include: {
         student: {
           select: {

@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
 import { Footer } from '../components';
-import { coursesAPI, enrollmentsAPI, sslCommerzAPI } from '../services/api';
+import { coursesAPI, enrollmentsAPI } from '../services/api';
 import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 
 interface Course {
@@ -131,17 +131,19 @@ const CourseDetailsPage = () => {
       // If course is free, enroll directly
       if (amount === 0) {
         const enrollmentPayload = { courseId: course.id };
-      const response = await enrollmentsAPI.create(enrollmentPayload);
+        const response = await enrollmentsAPI.create(enrollmentPayload);
 
-      if ((response.data as any).success) {
-        showSuccessAlert('Success', 'Successfully enrolled in course!');
-        setShowEnrollmentModal(false);
+        if ((response.data as any).success) {
+          showSuccessAlert('Success', 'Successfully enrolled in course!');
+          setShowEnrollmentModal(false);
+          // Redirect to dashboard after successful enrollment
+          navigate('/dashboard/student/courses');
         } else {
           throw new Error((response.data as any).message || 'Enrollment failed');
         }
       } else {
-        // For paid courses, redirect to checkout with all necessary data
-        const checkoutData = {
+        // For paid courses, redirect to custom payment gateway
+        const paymentData = {
           courseId: course.id,
           courseTitle: course.title,
           courseCode: course.code,
@@ -154,10 +156,10 @@ const CourseDetailsPage = () => {
         };
 
         // Debug log
-        const checkoutUrl = `/payment/checkout?${new URLSearchParams(checkoutData as any).toString()}`;
-        console.log('Redirecting to checkout:', checkoutUrl);
-        console.log('Checkout data:', checkoutData);
-        navigate(checkoutUrl);
+        const paymentUrl = `/payment/gateway?${new URLSearchParams(paymentData as any).toString()}`;
+        console.log('Redirecting to payment gateway:', paymentUrl);
+        console.log('Payment data:', paymentData);
+        navigate(paymentUrl);
       }
     } catch (error: any) {
       console.error('Enrollment error:', error);
@@ -298,8 +300,8 @@ const CourseDetailsPage = () => {
             <div className="text-center">
               <div className="text-8xl mb-4">
                 {course.thumbnail ? (
-                  <img 
-                    src={`http://localhost:5000${course.thumbnail}`} 
+                  <img
+                    src={`http://localhost:4000${course.thumbnail}`} 
                     alt={course.title}
                     className="w-32 h-32 mx-auto object-cover rounded-lg shadow-lg"
                   />

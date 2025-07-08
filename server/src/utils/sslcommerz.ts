@@ -53,14 +53,22 @@ class SSLCommerzService {
 
   constructor() {
     this.config = {
-      store_id: process.env.SSLCOMMERZ_STORE_ID || '',
-      store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD || '',
+      store_id: process.env.SSLCOMMERZ_STORE_ID || 'testbox',
+      store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD || 'qwerty',
       is_live: process.env.NODE_ENV === 'production'
     };
 
     this.baseUrl = this.config.is_live 
       ? 'https://securepay.sslcommerz.com'
       : 'https://sandbox.sslcommerz.com';
+
+    // Add this debug log:
+    console.log('SSLCommerz ENV:', {
+      store_id: process.env.SSLCOMMERZ_STORE_ID,
+      store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD,
+      NODE_ENV: process.env.NODE_ENV
+    });
+    console.log('SSLCommerz CONFIG:', this.config);
   }
 
   private generateHash(data: string): string {

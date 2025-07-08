@@ -29,7 +29,7 @@ export interface User {
   profile?: UserProfile;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
 // Create axios instance
 const api = axios.create({
@@ -275,8 +275,15 @@ export const studentAPI = {
   getProfile: (studentId: string) => api.get(`/students/${studentId}/profile`),
 };
 
-// Payments API
+// Custom Payment API (replacing SSLCommerz)
 export const paymentsAPI = {
+  // New custom payment methods
+  createPayment: (data: any) => api.post('/payments/create', data),
+  createCartPayment: (data: any) => api.post('/payments/create-cart', data),
+  createFreeEnrollment: (data: any) => api.post('/payments/free-enrollment', data),
+  validatePayment: (data: any) => api.post('/payments/validate', data),
+  
+  // Existing payment management methods
   getAll: () => api.get('/payments'),
   getById: (id: string) => api.get(`/payments/${id}`),
   getByUser: (userId: string) => api.get(`/payments/user/${userId}`),
@@ -294,7 +301,7 @@ export const paymentsAPI = {
   markCompleted: (id: string, referenceId?: string) => api.patch(`/payments/${id}/complete`, { referenceId }),
 };
 
-// SSLCommerz API
+// SSLCommerz API (keeping for backward compatibility)
 export const sslCommerzAPI = {
   createPaymentSession: (data: any) => api.post('/payments/sslcommerz/create-session', data),
   validatePayment: (data: any) => api.post('/payments/sslcommerz/validate', data),

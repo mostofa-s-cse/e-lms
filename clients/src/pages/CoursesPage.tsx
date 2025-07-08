@@ -120,7 +120,6 @@ const CoursesPage = () => {
 
         if ((coursesResponse.data as any).success) {
           const coursesData = (coursesResponse.data as any).data || [];
-          console.log('Courses data:', coursesData);
           setCourses(coursesData);
           setFilteredCourses(coursesData);
         }
@@ -286,40 +285,26 @@ const CoursesPage = () => {
         amount = selectedCourse.price || 0;
       }
 
-      // If course is free, enroll directly
-      if (amount === 0) {
-        const enrollmentPayload = { courseId: selectedCourse.id };
-        const response = await enrollmentsAPI.create(enrollmentPayload);
 
-        if ((response.data as any).success) {
-          showSuccessAlert('Success', 'Successfully enrolled in course!');
-          setShowEnrollmentModal(false);
-          // Refresh enrollments
-          const enrollmentsResponse = await enrollmentsAPI.getByStudent(user?.id || '');
-          if ((enrollmentsResponse.data as any).success) {
-            setUserEnrollments((enrollmentsResponse.data as any).data);
-          }
-        }
-      } else {
-        // For paid courses, redirect to checkout with all necessary data
-        const checkoutData = {
+        // Redirect to custom payment gateway for all courses (including free ones)
+        const paymentData = {
           courseId: selectedCourse.id,
           courseTitle: selectedCourse.title,
           courseCode: selectedCourse.code,
           amount: amount,
-          intakeId: selectedIntake || undefined,
-          intakeName: selectedIntake ? selectedCourse.intakes.find(i => i.id === selectedIntake)?.name : undefined,
+          intakeId: selectedIntake && selectedIntake !== 'No Intake' && selectedIntake !== 'undefined' ? selectedIntake : null,
+          intakeName: selectedIntake ? selectedCourse.intakes.find(i => i.id === selectedIntake)?.name : null,
           userId: user.id,
           userEmail: user.email,
           userName: `${user.firstName} ${user.lastName}`
         };
+        
 
         // Debug log
-        const checkoutUrl = `/payment/checkout?${new URLSearchParams(checkoutData as any).toString()}`;
-        console.log('Redirecting to checkout:', checkoutUrl);
-        console.log('Checkout data:', checkoutData);
-        navigate(checkoutUrl);
-      }
+        const paymentUrl = `/payment/gateway?${new URLSearchParams(paymentData as any).toString()}`;
+        console.log('Redirecting to payment gateway:', paymentUrl);
+        console.log('Payment data:', paymentData);
+        navigate(paymentUrl);
     } catch (error: any) {
       console.error('Enrollment error:', error);
       const message = error.response?.data?.message || 'Failed to enroll in course';

@@ -105,24 +105,25 @@ model Intake {
 }
 
 model Enrollment {
-  id        String   @id @default(cuid())
-  enrolledAt DateTime @default(now())
-  status    EnrollmentStatus @default(ACTIVE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String             @id @default(cuid())
+  enrolledAt  DateTime           @default(now())
+  status      EnrollmentStatus   @default(ACTIVE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   // Relations
-  studentId String
-  student   User   @relation(fields: [studentId], references: [id])
-  courseId  String
-  course    Course @relation(fields: [courseId], references: [id])
-  intakeId  String
-  intake    Intake @relation(fields: [intakeId], references: [id])
-  payments  Payment[]
+  studentId   String
+  student     User               @relation(fields: [studentId], references: [id])
+  courseId    String
+  course      Course             @relation(fields: [courseId], references: [id])
+  intakeId    String?           
+  intake      Intake?            @relation(fields: [intakeId], references: [id])
+  payments    Payment[]
 
   @@unique([studentId, courseId, intakeId])
   @@map("enrollments")
 }
+
 
 model Payment {
   id           String   @id @default(cuid())
@@ -379,6 +380,8 @@ enum PaymentStatus {
 enum PaymentMethod {
   CREDIT_CARD
   DEBIT_CARD
+  MOBILE_BANKING
+  INTERNET_BANKING
   PAYPAL
   BANK_TRANSFER
   CASH

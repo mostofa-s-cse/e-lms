@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/database';
+import { EnrollmentStatus } from '@prisma/client';
 
 // Get all payments
 export const getAllPayments = async (req: Request, res: Response) => {
@@ -493,4 +494,386 @@ export const markPaymentCompleted = async (req: Request, res: Response) => {
       message: 'Failed to mark payment as completed',
     });
   }
-}; 
+};
+
+// Create custom payment for single course
+export const createCustomPayment = async (req: Request, res: Response) => {
+  try {
+    const {
+      courseId,
+      intakeId: rawIntakeId,
+      amount,
+      paymentMethod,
+      paymentDetails,
+      testStatus,
+    } = req.body;
+
+    const userId = (req as any).user?.id;
+
+    // Normalize intakeId strictly to either valid string or null
+    const intakeId =
+      rawIntakeId &&
+      rawIntakeId !== 'null' &&
+      rawIntakeId !== 'undefined' &&
+      rawIntakeId !== 'No Intake' &&
+      typeof rawIntakeId === 'string' &&
+      rawIntakeId.trim() !== ''
+        ? rawIntakeId.trim()
+        : null;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    if (!courseId || !amount) {
+      return res.status(400).json({ success: false, message: 'Course ID and amount are required' });
+    }
+
+    // Fetch user
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Fetch course with active intakes
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      include: { intakes: { where: { isActive: true } } },
+    });
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    // Validate intakeId if provided
+    if (intakeId) {
+      const intakeExists = course.intakes.some((i) => i.id === intakeId);
+      if (!intakeExists) {
+        return res.status(400).json({ success: false, message: 'Invalid intake selected' });
+      }
+    }
+
+    // OPTIONAL: Validate amount if needed (your existing validation here)
+
+    // Check existing enrollment for user + course + intake (or null)
+    const existingEnrollment = await prisma.enrollment.findFirst({
+      where: {
+        studentId: userId,
+        courseId,
+        ...(intakeId ? { intakeId } : { intakeId: null }),
+        status: { in: ['ACTIVE', 'PENDING', 'COMPLETED'] },
+      },
+    });
+
+    if (existingEnrollment) {
+      return res.status(400).json({ success: false, message: 'You are already enrolled in this course' });
+    }
+
+    // Prepare enrollment data
+    const enrollmentData: any = {
+      studentId: userId,
+      courseId,
+      status: 'ACTIVE',
+    };
+    if (intakeId !== null) {
+      enrollmentData.intakeId = intakeId;
+    }
+
+    // Create enrollment
+    const enrollment = await prisma.enrollment.create({ data: enrollmentData });
+
+    // Determine payment status and paidAt date
+    let paymentStatus: 'COMPLETED' | 'FAILED' | 'CANCELLED' = 'COMPLETED';
+    let paidAt: Date | null = new Date();
+
+    if (testStatus) {
+      switch (testStatus) {
+        case 'FAILED':
+          paymentStatus = 'FAILED';
+          paidAt = null;
+          break;
+        case 'CANCELLED':
+          paymentStatus = 'CANCELLED';
+          paidAt = null;
+          break;
+        default:
+          paymentStatus = 'COMPLETED';
+          paidAt = new Date();
+      }
+    }
+
+    // Create payment record
+    const payment = await prisma.payment.create({
+      data: {
+        userId,
+        enrollmentId: enrollment.id,
+        amount: parseFloat(amount),
+        currency: 'BDT',
+        method: paymentMethod,
+        status: paymentStatus,
+        referenceId: `RE_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+        paidAt,
+      },
+    });
+
+    // Rollback enrollment if payment failed or cancelled
+    if (paymentStatus !== 'COMPLETED') {
+      await prisma.enrollment.delete({ where: { id: enrollment.id } });
+      return res.json({
+        success: false,
+        data: { paymentId: payment.id, status: paymentStatus },
+        message: paymentStatus === 'FAILED' ? 'Payment failed' : 'Payment cancelled',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        paymentId: payment.id,
+        enrollmentId: enrollment.id,
+        amount: parseFloat(amount),
+      },
+      message: 'Payment processed successfully',
+    });
+  } catch (error) {
+    console.error('Error creating custom payment:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
+
+// Create custom payment for cart
+export const createCartPayment = async (req: Request, res: Response) => {
+  try {
+    const { items, total, userId, userEmail, userName, paymentMethod, paymentDetails, testStatus } = req.body;
+    const currentUserId = (req as any).user?.id;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    if (currentUserId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized access'
+      });
+    }
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No items in cart'
+      });
+    }
+
+    // Validate total amount
+    const calculatedTotal = items.reduce((sum: number, item: any) => sum + item.amount, 0);
+    if (Math.abs(calculatedTotal - total) > 0.01) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid total amount'
+      });
+    }
+
+    // Determine payment status based on test status
+    let paymentStatus: 'COMPLETED' | 'FAILED' | 'CANCELLED' = 'COMPLETED';
+    let paidAt: Date | null = new Date();
+    
+    if (testStatus) {
+      switch (testStatus) {
+        case 'SUCCESS':
+          paymentStatus = 'COMPLETED';
+          paidAt = new Date();
+          break;
+        case 'FAILED':
+          paymentStatus = 'FAILED';
+          paidAt = null;
+          break;
+        case 'CANCELLED':
+          paymentStatus = 'CANCELLED';
+          paidAt = null;
+          break;
+        default:
+          paymentStatus = 'COMPLETED';
+          paidAt = new Date();
+      }
+    }
+
+    const enrollments = [];
+    const payments = [];
+
+    // Process each item
+    for (const item of items) {
+      // Check if already enrolled
+      const existingEnrollment = await prisma.enrollment.findFirst({
+        where: {
+          studentId: userId,
+          courseId: item.courseId,
+          status: {
+            in: ['ACTIVE', 'PENDING', 'COMPLETED']
+          }
+        }
+      });
+
+      if (existingEnrollment) {
+        continue; // Skip if already enrolled
+      }
+
+      // Create enrollment
+      const enrollment = await prisma.enrollment.create({
+        data: {
+          studentId: userId,
+          courseId: item.courseId,
+          intakeId: item.intakeId || null,
+          status: 'ACTIVE'
+        }
+      });
+
+      enrollments.push(enrollment);
+
+      // Create payment record
+      const payment = await prisma.payment.create({
+        data: {
+          userId: userId,
+          enrollmentId: enrollment.id,
+          amount: item.amount,
+          currency: 'BDT',
+          method: paymentMethod,
+          status: paymentStatus,
+          referenceId: `CART_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          paidAt: paidAt
+        }
+      });
+
+      payments.push(payment);
+    }
+
+    // If payment failed or cancelled, delete enrollments and return failure
+    if (paymentStatus === 'FAILED' || paymentStatus === 'CANCELLED') {
+      // Delete all enrollments since payment failed
+      for (const enrollment of enrollments) {
+        await prisma.enrollment.delete({
+          where: { id: enrollment.id }
+        });
+      }
+
+      return res.json({
+        success: false,
+        data: {
+          payments: payments.map(p => p.id),
+          status: paymentStatus
+        },
+        message: paymentStatus === 'FAILED' ? 'Payment processing failed' : 'Payment was cancelled'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        enrollments: enrollments.map(e => e.id),
+        payments: payments.map(p => p.id),
+        total: calculatedTotal
+      },
+      message: 'Cart payment processed successfully'
+    });
+  } catch (error) {
+    console.error('Error creating cart payment:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+// Create free enrollment
+export const createFreeEnrollment = async (req: Request, res: Response) => {
+  try {
+    const { courseId } = req.body;
+    let intakeId: string | null = req.body.intakeId;
+
+    const userId = (req as any).user?.id;
+
+    // ✅ Normalize intakeId string values like "null", "undefined"
+    if (!intakeId || intakeId === 'null' || intakeId === 'undefined' || intakeId === 'No Intake' || intakeId.trim() === '') {
+      intakeId = null;
+    }
+
+    // ✅ Check authentication
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    // ✅ Check courseId
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Course ID is required'
+      });
+    }
+
+    // ✅ Check if already enrolled in this course (with or without intake)
+    const existingEnrollment = await prisma.enrollment.findFirst({
+      where: {
+        studentId: userId,
+        courseId,
+        intakeId,
+        status: {
+          in: ['ACTIVE', 'PENDING', 'COMPLETED']
+        }
+      }
+    });
+
+    if (existingEnrollment) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are already enrolled in this course'
+      });
+    }
+
+    // ✅ Create enrollment
+    const enrollment = await prisma.enrollment.create({
+      data: {
+        studentId: userId,
+        courseId,
+        status: 'ACTIVE',
+        ...(intakeId ? { intakeId } : {}) // only include intakeId if it's valid
+      }
+    });
+
+    // ✅ Create free payment record
+    const payment = await prisma.payment.create({
+      data: {
+        userId,
+        enrollmentId: enrollment.id,
+        amount: 0,
+        currency: 'BDT',
+        method: 'OTHER',
+        status: 'COMPLETED',
+        referenceId: `FREE_${enrollment.id}`,
+        paidAt: new Date()
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: 'Free course enrolled successfully',
+      data: {
+        enrollmentId: enrollment.id,
+        paymentId: payment.id
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating free enrollment:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};

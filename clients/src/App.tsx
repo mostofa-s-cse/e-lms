@@ -14,7 +14,7 @@ import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailPage from './pages/PaymentFailPage';
 import PaymentCancelPage from './pages/PaymentCancelPage';
 import PaymentCheckoutPage from './pages/PaymentCheckoutPage';
-import CartCheckoutPage from './pages/CartCheckoutPage';
+import CustomPaymentGateway from './pages/CustomPaymentGateway';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
 import StudentDashboard from './dashboard/student/StudentDashboard';
 import NotFoundPage from './pages/NotFoundPage';
@@ -104,12 +104,10 @@ const AppRoutes: React.FC = () => (
     
     {/* Payment Pages */}
     <Route path="/payment/checkout" element={<PaymentCheckoutPage />} />
+    <Route path="/payment/gateway" element={<CustomPaymentGateway />} />
     <Route path="/payment/success" element={<PaymentSuccessPage />} />
     <Route path="/payment/fail" element={<PaymentFailPage />} />
     <Route path="/payment/cancel" element={<PaymentCancelPage />} />
-    
-    {/* Cart Checkout Page */}
-    <Route path="/cart/checkout" element={<CartCheckoutPage />} />
     
     {/* Dashboard Routes */}
     <Route path="/dashboard" element={<DashboardRedirect />} />

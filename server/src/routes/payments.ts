@@ -1,4 +1,5 @@
 import express from 'express';
+import { authenticateToken } from '../middleware/auth';
 import {
   getAllPayments,
   getPaymentById,
@@ -8,36 +9,29 @@ import {
   updatePayment,
   deletePayment,
   markPaymentCompleted,
+  createCustomPayment,
+  createCartPayment,
+  createFreeEnrollment
 } from '../controllers/payments';
-import { authenticateToken, authorizeRoles } from '../middleware/auth';
 
 const router = express.Router();
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
-// Get all payments (Admin only)
-router.get('/', authorizeRoles(['ADMIN']), getAllPayments);
+// Custom payment routes (replacing SSLCommerz)
+router.post('/create', createCustomPayment);
+router.post('/create-cart', createCartPayment);
+router.post('/free-enrollment', createFreeEnrollment);
 
-// Get payment by ID (Admin only)
-router.get('/:id', authorizeRoles(['ADMIN']), getPaymentById);
-
-// Get payments by user ID (Admin or own user)
+// Existing payment routes
+router.get('/', getAllPayments);
+router.get('/:id', getPaymentById);
 router.get('/user/:userId', getPaymentsByUser);
-
-// Get payments by enrollment ID (Admin only)
-router.get('/enrollment/:enrollmentId', authorizeRoles(['ADMIN']), getPaymentsByEnrollment);
-
-// Create new payment (Admin only)
-router.post('/', authorizeRoles(['ADMIN']), createPayment);
-
-// Update payment (Admin only)
-router.put('/:id', authorizeRoles(['ADMIN']), updatePayment);
-
-// Delete payment (Admin only)
-router.delete('/:id', authorizeRoles(['ADMIN']), deletePayment);
-
-// Mark payment as completed (Admin only)
-router.patch('/:id/complete', authorizeRoles(['ADMIN']), markPaymentCompleted);
+router.get('/enrollment/:enrollmentId', getPaymentsByEnrollment);
+router.post('/', createPayment);
+router.put('/:id', updatePayment);
+router.delete('/:id', deletePayment);
+router.patch('/:id/complete', markPaymentCompleted);
 
 export default router; 

@@ -38,7 +38,7 @@ export const seedPayments = async () => {
       const randomCurrency = currencies[Math.floor(Math.random() * currencies.length)];
 
       // Generate random amount based on intake amount
-      const baseAmount = randomEnrollment.intake.amount || 1000;
+      const baseAmount = randomEnrollment.intake?.amount || 1000;
       const amount = baseAmount + Math.random() * 500;
 
       const payment = {

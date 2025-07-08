@@ -212,7 +212,7 @@ const DashboardLayout = ({
         <footer className="flex-shrink-0 w-full bg-white border-t border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              © 2024 LMS Dashboard. All rights reserved.
+              © 2025 LMS Dashboard. All rights reserved.
             </div>
             <div className="text-sm text-gray-600">
               Version 1.0.0

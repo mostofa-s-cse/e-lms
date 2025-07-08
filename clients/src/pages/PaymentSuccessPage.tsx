@@ -81,14 +81,14 @@ const PaymentSuccessPage = () => {
           
           <div className="space-y-4">
             <Link
-              to="/dashboard"
+              to="/dashboard?paymentStatus=success"
               className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
               Go to Dashboard
             </Link>
             <div>
               <Link
-                to="/courses"
+                to="/courses?paymentStatus=success"
                 className="text-blue-600 hover:text-blue-800 font-medium"
               >
                 Browse More Courses
