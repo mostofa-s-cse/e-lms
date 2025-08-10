@@ -52,6 +52,10 @@ const UsersPage = () => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    document.title = 'Users Management - Admin Dashboard | E-LMS';
+  }, []);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
@@ -21,6 +21,10 @@ import { IconType } from 'react-icons';
 
 const HomePage = () => {
   const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    document.title = 'E-LMS - Transform Your Learning Experience';
+  }, []);
 
   const features = [
     {

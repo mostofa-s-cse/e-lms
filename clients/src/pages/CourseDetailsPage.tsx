@@ -50,6 +50,7 @@ interface Enrollment {
 
 const CourseDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -59,7 +60,10 @@ const CourseDetailsPage = () => {
   const [userEnrollment, setUserEnrollment] = useState<Enrollment | null>(null);
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+
+  useEffect(() => {
+    document.title = 'Course Details - E-LMS';
+  }, []);
 
   // Fetch course details (public data - loads for everyone)
   useEffect(() => {
@@ -125,7 +129,7 @@ const CourseDetailsPage = () => {
     }
     
     // Check if already enrolled
-    if (enrolled) {
+    if (isEnrolled(course.id)) {
       // Redirect to dashboard if already enrolled
       navigate('/student/courses');
       return;

@@ -69,6 +69,10 @@ const CoursesPage = () => {
   const [cartIntake, setCartIntake] = useState<string>('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = 'Courses - E-LMS Learning Platform';
+  }, []);
+
   // Ensure cart persistence
   useEffect(() => {
     ensureCartPersistence();

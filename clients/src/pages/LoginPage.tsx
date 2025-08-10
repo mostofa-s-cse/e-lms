@@ -14,6 +14,10 @@ const LoginPage = () => {
   const location = useLocation();
 
   useEffect(() => {
+    document.title = 'Login - E-LMS';
+  }, []);
+
+  useEffect(() => {
     // Check for success message from registration
     if (location.state?.message) {
       showSuccessAlert('Registration Successful!', location.state.message);

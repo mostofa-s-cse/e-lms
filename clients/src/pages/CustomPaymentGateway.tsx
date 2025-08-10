@@ -55,6 +55,10 @@ const CustomPaymentGateway = () => {
   const [transactionId, setTransactionId] = useState('');
 
   useEffect(() => {
+    document.title = 'Payment Gateway - E-LMS';
+  }, []);
+
+  useEffect(() => {
     const cartDataParam = searchParams.get('cartData');
     const courseId = searchParams.get('courseId');
     const amount = searchParams.get('amount');

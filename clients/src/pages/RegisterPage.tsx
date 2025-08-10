@@ -39,6 +39,10 @@ const RegisterPage = () => {
   const { register, setOnRegisterSuccess } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = 'Register - E-LMS';
+  }, []);
+
   // Set up register success callback to handle cart merging
   useEffect(() => {
     setOnRegisterSuccess((userId: string) => {

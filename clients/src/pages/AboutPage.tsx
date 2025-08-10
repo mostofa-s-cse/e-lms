@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
@@ -19,6 +19,10 @@ import { IconType } from 'react-icons';
 
 const AboutPage = () => {
   const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    document.title = 'About E-LMS - Our Story and Mission';
+  }, []);
 
   const team = [
     {

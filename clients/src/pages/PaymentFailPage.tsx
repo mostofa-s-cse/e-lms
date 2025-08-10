@@ -5,6 +5,10 @@ import { Footer } from '../components';
 import { showErrorAlert } from '../utils/sweetAlert';
 
 const PaymentFailPage = () => {
+  useEffect(() => {
+    document.title = 'Payment Failed - E-LMS';
+  }, []);
+
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [paymentDetails, setPaymentDetails] = useState<any>(null);

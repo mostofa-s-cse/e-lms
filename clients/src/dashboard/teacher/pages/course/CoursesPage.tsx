@@ -74,6 +74,10 @@ const CoursesPage = () => {
     fetchCourses();
   }, [user]);
 
+  useEffect(() => {
+    document.title = 'My Courses - Teacher Dashboard | E-LMS';
+  }, []);
+
   const fetchCourses = async () => {
     try {
       setLoading(true);

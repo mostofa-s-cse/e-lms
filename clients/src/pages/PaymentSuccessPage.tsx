@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { Footer } from '../components';
 import { showSuccessAlert } from '../utils/sweetAlert';
 
 const PaymentSuccessPage = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
+
+  useEffect(() => {
+    document.title = 'Payment Successful - E-LMS';
+  }, []);
 
   useEffect(() => {
     const tran_id = searchParams.get('tran_id');

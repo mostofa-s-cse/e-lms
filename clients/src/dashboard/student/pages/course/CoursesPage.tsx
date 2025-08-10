@@ -55,6 +55,10 @@ const CoursesPage = () => {
     }
   }, [user?.id]);
 
+  useEffect(() => {
+    document.title = 'My Courses - Student Dashboard | E-LMS';
+  }, []);
+
   const fetchEnrolledCourses = async () => {
     try {
       setLoading(true);

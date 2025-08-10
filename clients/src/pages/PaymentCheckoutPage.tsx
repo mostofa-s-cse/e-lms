@@ -74,6 +74,10 @@ const PaymentCheckoutPage = () => {
   const [isCartPayment, setIsCartPayment] = useState(false);
 
   useEffect(() => {
+    document.title = 'Checkout - E-LMS';
+  }, []);
+
+  useEffect(() => {
     const courseId = searchParams.get('courseId');
     const intakeId = searchParams.get('intakeId');
     const amount = searchParams.get('amount');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
@@ -29,6 +29,10 @@ const ContactPage = () => {
     subject: '',
     message: ''
   });
+
+  useEffect(() => {
+    document.title = 'Contact E-LMS - Get in Touch';
+  }, []);
 
   const contactInfo = [
     {
@@ -476,4 +480,4 @@ const ContactPage = () => {
   );
 };
 
-export default ContactPage; 
+export default ContactPage;

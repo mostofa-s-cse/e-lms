@@ -4,6 +4,10 @@ import Navigation from '../components/Navigation';
 import { Footer } from '../components';
 
 const PaymentCancelPage = () => {
+  useEffect(() => {
+    document.title = 'Payment Cancelled - E-LMS';
+  }, []);
+
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
