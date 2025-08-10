@@ -24,7 +24,7 @@ export const seedPayments = async () => {
       return;
     }
 
-    const paymentMethods = ['CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'BANK_TRANSFER', 'CASH', 'SSLCOMMERZ'];
+    const paymentMethods = ['SSLCOMMERZ', 'CUSTOM', 'BANK_TRANSFER'];
     const paymentStatuses = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'];
     const currencies = ['BDT', 'USD', 'EUR'];
 
@@ -47,7 +47,7 @@ export const seedPayments = async () => {
         amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
         currency: randomCurrency,
         status: randomStatus as 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'CANCELLED',
-        method: randomMethod as 'CREDIT_CARD' | 'DEBIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' | 'CASH' | 'SSLCOMMERZ' | 'OTHER',
+        method: randomMethod as 'SSLCOMMERZ' | 'CUSTOM' | 'BANK_TRANSFER',
         referenceId: `REF-${Date.now()}-${i}`,
         paidAt: randomStatus === 'COMPLETED' ? new Date() : null,
       };

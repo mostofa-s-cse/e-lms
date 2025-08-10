@@ -109,8 +109,8 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
   }
 };
 
-// Set max file size (10MB by default)
-const maxSize = parseInt(process.env.MAX_FILE_SIZE || '10485760'); // 10MB
+// Set max file size (500MB by default)
+const maxSize = parseInt(process.env.MAX_FILE_SIZE || '524288000'); // 500MB
 
 // Configure base multer instance
 const upload = multer({
@@ -141,7 +141,7 @@ export const handleUploadError = (err: any, _req: any, res: any, next: any) => {
   if (err instanceof multer.MulterError) {
     switch (err.code) {
       case 'LIMIT_FILE_SIZE':
-        return res.status(400).json({ success: false, message: 'File too large. Maximum allowed size is 10MB.' });
+        return res.status(400).json({ success: false, message: 'File too large. Maximum allowed size is 500MB.' });
       case 'LIMIT_FILE_COUNT':
         return res.status(400).json({ success: false, message: 'Too many files. Max 5 allowed.' });
       default:
