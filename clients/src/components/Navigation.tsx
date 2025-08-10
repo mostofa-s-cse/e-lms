@@ -96,7 +96,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage = 'home' }) => {
             {/* Logo */}
             <div className="flex items-center">
               <Link to="/" className="text-2xl font-bold text-blue-600">
-                EduLMS
+                E-LMS
               </Link>
             </div>
 

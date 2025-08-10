@@ -377,13 +377,18 @@ const CoursesPage = () => {
       <Navigation currentPage="courses" />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Explore Our Courses
+      <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-black opacity-10"></div>
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white opacity-5 rounded-full"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white opacity-5 rounded-full"></div>
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+            About <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">Explore Our Courses</span>
           </h1>
-          <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto">
-            Discover a wide range of courses designed to help you advance your skills and achieve your goals.
+          <p className="text-xl md:text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
+          Discover a wide range of courses designed to help you advance your skills and achieve your goals.
           </p>
         </div>
       </section>

@@ -37,7 +37,7 @@ const LoginPage = () => {
       // Show success message after navigation
       setTimeout(() => {
         try {
-          showSuccessAlert('Login Successful!', 'Welcome back to EduLMS');
+          showSuccessAlert('Login Successful!', 'Welcome back to E-LMS');
         } catch (alertError) {
           console.error('LoginPage: Error showing success alert:', alertError);
         }

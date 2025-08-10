@@ -1,6 +1,6 @@
 # SweetAlert2 Integration Guide
 
-This guide shows how to use SweetAlert2 for all user interactions in the EduLMS application.
+This guide shows how to use SweetAlert2 for all user interactions in the E-LMS application.
 
 ## Installation
 
@@ -122,7 +122,7 @@ closeAlert();
 const handleLogin = async (email: string, password: string) => {
   try {
     await login(email, password);
-    showSuccessAlert('Login Successful!', 'Welcome back to EduLMS');
+    showSuccessAlert('Login Successful!', 'Welcome back to E-LMS');
     navigate('/dashboard');
   } catch (error) {
     showErrorAlert('Login Failed', error.message || 'Invalid credentials');
