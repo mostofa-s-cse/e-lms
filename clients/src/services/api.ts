@@ -8,6 +8,16 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
+// Paginated API Response for lists
+export interface PaginatedApiResponse<T = any> extends ApiResponse<T> {
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 // User types
 export interface UserProfile {
   id: string;
@@ -30,6 +40,26 @@ export interface User {
   approvedBy?: string;
   createdAt: string;
   profile?: UserProfile;
+}
+
+// Contact types
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  adminResponse?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactFormData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
 }
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
@@ -328,6 +358,18 @@ export const cartAPI = {
     api.delete('/carts/clear', { params }),
   mergeGuestCart: (data: { userId: string; sessionId: string }) => 
     api.post('/carts/merge', data),
+};
+
+// Contact API
+export const contactAPI = {
+  submit: (data: ContactFormData) => 
+    api.post<ApiResponse<ContactMessage>>('/contact/submit', data),
+  getMessages: (query?: string) => 
+    api.get<PaginatedApiResponse<ContactMessage[]>>(`/contact/messages${query || ''}`),
+  updateStatus: (id: string, data: { status: string; adminResponse?: string }) => 
+    api.put<ApiResponse<ContactMessage>>(`/contact/messages/${id}/status`, data),
+  delete: (id: string) => 
+    api.delete<ApiResponse<void>>(`/contact/messages/${id}`),
 };
 
 export default api; 

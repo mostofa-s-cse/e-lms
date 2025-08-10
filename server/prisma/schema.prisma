@@ -35,9 +35,9 @@ model User {
   videos     Video[]
   quizzes    Quiz[]
   questions  Question[]
-  evaluations Evaluation[]
+  studentEvaluations Evaluation[] @relation("StudentEvaluations")
+  evaluatorEvaluations Evaluation[] @relation("EvaluatorEvaluations")
   quizAttempts QuizAttempt[]
-  evaluationsGiven Evaluation[] @relation("Evaluations")
   payments   Payment[]
   carts      Cart[]
   approvedByUser User? @relation("UserApprovals", fields: [approvedBy], references: [id])
@@ -324,28 +324,43 @@ model QuizAnswer {
 }
 
 model Evaluation {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
-  description String?  @db.Text
+  description String?        @db.Text
   type        EvaluationType
-  score       Float?
+  score       Float
   maxScore    Float
-  feedback    String?  @db.Text
-  evaluatedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  feedback    String?        @db.Text
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   // Relations
-  studentId String
-  student   User @relation(fields: [studentId], references: [id])
+  courseId    String
+  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User           @relation("StudentEvaluations", fields: [studentId], references: [id], onDelete: Cascade)
   evaluatorId String
-  evaluator   User @relation("Evaluations", fields: [evaluatorId], references: [id])
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id])
+  evaluator   User           @relation("EvaluatorEvaluations", fields: [evaluatorId], references: [id], onDelete: Cascade)
 
   @@map("evaluations")
 }
 
+model ContactMessage {
+  id            String            @id @default(cuid())
+  name          String
+  email         String
+  subject       String
+  message       String            @db.Text
+  status        ContactStatus     @default(PENDING)
+  adminResponse String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("contact_messages")
+}
+
+// Enums
 enum UserRole {
   STUDENT
   TEACHER
@@ -363,7 +378,6 @@ enum EnrollmentStatus {
   ACTIVE
   COMPLETED
   DROPPED
-  SUSPENDED
 }
 
 enum QuestionType {
@@ -376,26 +390,27 @@ enum QuestionType {
 enum EvaluationType {
   ASSIGNMENT
   PROJECT
-  PRESENTATION
+  EXAM
   PARTICIPATION
-  OTHER
 }
+
 enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
-  REFUNDED
   CANCELLED
+  REFUNDED
 }
 
 enum PaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  MOBILE_BANKING
-  INTERNET_BANKING
-  PAYPAL
-  BANK_TRANSFER
-  CASH
   SSLCOMMERZ
-  OTHER
+  CUSTOM
+  BANK_TRANSFER
+}
+
+enum ContactStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }

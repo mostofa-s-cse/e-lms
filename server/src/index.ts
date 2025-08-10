@@ -21,6 +21,7 @@ import enrollmentRoutes from './routes/enrollments';
 import paymentRoutes from './routes/payments';
 import sslCommerzRoutes from './routes/sslcommerz';
 import cartRoutes from './routes/carts';
+import contactRoutes from './routes/contact';
 
 // Load environment variables
 dotenv.config();
@@ -128,6 +129,7 @@ app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/payments/sslcommerz', sslCommerzRoutes);
 app.use('/api/v1/carts', cartRoutes);
+app.use('/api/v1/contact', contactRoutes);
 
 // ===== 404 Fallback =====
 app.use('*', (req, res) => {

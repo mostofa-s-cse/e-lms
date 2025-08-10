@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/database';
-import { EnrollmentStatus } from '@prisma/client';
+import { EnrollmentStatus, PaymentMethod } from '@prisma/client';
 
 // Get all payments
 export const getAllPayments = async (req: Request, res: Response) => {
@@ -880,7 +880,7 @@ export const createFreeEnrollment = async (req: Request, res: Response) => {
         enrollmentId: enrollment.id,
         amount: 0,
         currency: 'BDT',
-        method: 'OTHER',
+        method: PaymentMethod.CUSTOM,
         status: 'COMPLETED',
         referenceId: `FREE_${enrollment.id}`,
         paidAt: new Date()

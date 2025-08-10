@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/database';
 import { sslCommerzService, PaymentRequest } from '../utils/sslcommerz';
+import { PaymentMethod } from '@prisma/client';
 
 // Create payment session for course enrollment
 export const createPaymentSession = async (req: Request, res: Response) => {
@@ -135,7 +136,7 @@ export const createPaymentSession = async (req: Request, res: Response) => {
           enrollmentId: enrollment.id,
           amount: 0,
           currency: 'BDT',
-          method: 'OTHER',
+          method: PaymentMethod.CUSTOM,
           status: 'COMPLETED',
           referenceId: `FREE_${enrollment.id}`,
           paidAt: new Date()

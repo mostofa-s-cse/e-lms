@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, EnrollmentStatus } from '@prisma/client';
+import { PrismaClient, EnrollmentStatus, PaymentMethod } from '@prisma/client';
 
 export const prisma = new PrismaClient();
 
@@ -431,7 +431,7 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
           enrollmentId: enrollment.id,
           amount: 0,
           currency: 'BDT',
-          method: 'OTHER',
+          method: PaymentMethod.CUSTOM,
           status: 'COMPLETED',
           referenceId: `FREE_${enrollment.id}`,
           paidAt: new Date(),

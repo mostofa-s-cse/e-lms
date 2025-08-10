@@ -10,7 +10,8 @@ import {
   BarChart3, 
   ShieldUser,
   CreditCard,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import UsersPage from './pages/users/UsersPage';
 import UserDetailsPage from './pages/users/UserDetailsPage';
@@ -29,6 +30,7 @@ import EvaluationsPage from './pages/evaluation/EvaluationsPage';
 import EvaluationDetailsPage from './pages/evaluation/EvaluationDetailsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import ContactMessagesPage from './pages/ContactMessagesPage';
 
 const AdminDashboard = () => {
   const navigationItems = [
@@ -41,6 +43,7 @@ const AdminDashboard = () => {
     { path: '/admin/quizzes', label: 'Quizzes', icon: <HelpCircle className="w-5 h-5" /> },
     { path: '/admin/evaluations', label: 'Evaluations', icon: <BarChart3 className="w-5 h-5" /> },
     { path: '/admin/payments', label: 'Payments', icon: <CreditCard className="w-5 h-5" /> },
+    { path: '/admin/contact-messages', label: 'Contact Messages', icon: <MessageSquare className="w-5 h-5" /> },
     { path: '/admin/profile', label: 'Profile', icon: <User className="w-5 h-5" /> }
   ];
 
@@ -62,6 +65,7 @@ const AdminDashboard = () => {
       <Route path="evaluations" element={<EvaluationsPage />} />
       <Route path="evaluations/:id" element={<EvaluationDetailsPage />} />
       <Route path="payments" element={<PaymentsPage />} />
+      <Route path="contact-messages" element={<ContactMessagesPage />} />
       <Route path="profile" element={<ProfilePage />} />
     </>
   );

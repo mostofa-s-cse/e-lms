@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
 import { Footer } from '../components';
+import { contactAPI, ContactFormData } from '../services/api';
 import {
   FaMapMarkerAlt,
   FaEnvelope,
@@ -23,7 +24,7 @@ import { applySweetAlert } from '../utils/applySweetAlert';
 const ContactPage = () => {
   const { isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     email: '',
     subject: '',
@@ -74,29 +75,37 @@ const ContactPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Submit form to API
+      const response = await contactAPI.submit(formData);
       
-      // Show success message
-      applySweetAlert({
-        title: "Message Sent!",
-        text: "Thank you for contacting us. We'll get back to you within 24 hours.",
-        icon: "success",
-        confirmButtonText: "Great!"
-      });
+      if (response.data.success) {
+        // Show success message
+        applySweetAlert({
+          title: "Message Sent Successfully!",
+          text: "Thank you for contacting us. We'll get back to you within 24 hours. You should also receive a confirmation email shortly.",
+          icon: "success",
+          confirmButtonText: "Great!"
+        });
 
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-    } catch (error) {
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        throw new Error(response.data.message || 'Failed to send message');
+      }
+    } catch (error: any) {
+      console.error('Contact form submission error:', error);
+      
       // Show error message
+      const errorMessage = error.response?.data?.message || error.message || 'Something went wrong. Please try again later.';
+      
       applySweetAlert({
         title: "Oops!",
-        text: "Something went wrong. Please try again later.",
+        text: errorMessage,
         icon: "error",
         confirmButtonText: "Try Again"
       });
@@ -129,24 +138,6 @@ const ContactPage = () => {
           <p className="text-xl md:text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
             Have questions? Need support? We're here to help you succeed in your educational journey.
           </p>
-        </div>
-      </section>
-
-      {/* Contact Information Section */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {contactInfo.map((info, index) => (
-              <div key={index} className="group text-center bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-6 group-hover:scale-110 transition-transform duration-300">
-                  {renderIcon(info.icon, "text-white text-2xl")}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{info.title}</h3>
-                <p className="text-blue-600 font-medium mb-3">{info.content}</p>
-                <p className="text-gray-500 text-sm">{info.description}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
