@@ -152,26 +152,47 @@ const QuizzesPage = () => {
     return Math.max(...completedAttempts.map(attempt => attempt.score));
   };
 
+  const getRemainingAttempts = (quiz: Quiz) => {
+    const attempts = getQuizAttempts(quiz.id);
+    const maxAttempts = quiz.maxAttempts || 1;
+    return Math.max(0, maxAttempts - attempts.length);
+  };
+
   const handleTakeQuiz = async (quiz: Quiz) => {
     console.log('Handling take quiz for:', quiz.id, quiz.title);
     
     // Check if student has already attempted this quiz
     const attempts = getQuizAttempts(quiz.id);
+    const maxAttempts = quiz.maxAttempts || 1; // Default to 1 if not specified
     
-    if (attempts.length > 0) {
-      // Student has already attempted this quiz
+    if (attempts.length >= maxAttempts) {
+      // Student has reached max attempts
       await showInfoAlert(
-        'Quiz Already Attempted', 
-        'You have already submitted this quiz. You cannot take it again.'
+        'Max Attempts Reached', 
+        `You have already attempted this quiz ${attempts.length} time(s). Maximum attempts allowed: ${maxAttempts}.`
       );
-      // Navigate to quiz results page to show their attempt
+      // Navigate to quiz results page to show their attempts
       navigate(`/student/quizzes/${quiz.id}/result`);
       return;
     }
     
-    console.log('First time taking this quiz, navigating to quiz taking page');
-    // Navigate to quiz taking page
-    navigate(`/student/quizzes/${quiz.id}/take`);
+    if (attempts.length > 0) {
+      // Student has attempted before but can retake
+      const lastAttempt = attempts[attempts.length - 1];
+      if (lastAttempt.completedAt) {
+        // Last attempt was completed, allow retake
+        console.log('Allowing retake of quiz, navigating to quiz taking page');
+        navigate(`/student/quizzes/${quiz.id}/take`);
+      } else {
+        // Last attempt was not completed, continue from where they left off
+        console.log('Continuing incomplete quiz attempt');
+        navigate(`/student/quizzes/${quiz.id}/take`);
+      }
+    } else {
+      // First time taking this quiz
+      console.log('First time taking this quiz, navigating to quiz taking page');
+      navigate(`/student/quizzes/${quiz.id}/take`);
+    }
   };
 
   const handleViewQuiz = async (quiz: Quiz) => {
@@ -258,7 +279,13 @@ const QuizzesPage = () => {
             
             {getQuizAttempts(quiz.id).length > 0 && (
               <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                Attempted
+                {getQuizAttempts(quiz.id).length} attempt(s)
+              </span>
+            )}
+            
+            {getRemainingAttempts(quiz) > 0 && (
+              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                {getRemainingAttempts(quiz)} remaining
               </span>
             )}
             
@@ -358,24 +385,26 @@ const QuizzesPage = () => {
       label: 'Actions',
       render: (_: any, quiz: Quiz) => {
         const attempts = getQuizAttempts(quiz.id);
+        const maxAttempts = quiz.maxAttempts || 1;
+        const canTakeQuiz = attempts.length < maxAttempts;
         
         return (
           <div className="flex space-x-2">
-            {attempts.length > 0 ? (
-              // Quiz has been attempted - show results button
+            {canTakeQuiz ? (
+              // Student can take/retake the quiz
+              <button
+                onClick={() => handleTakeQuiz(quiz)}
+                className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                {attempts.length > 0 ? 'Retake Quiz' : 'Take Quiz'}
+              </button>
+            ) : (
+              // Student has reached max attempts
               <button
                 onClick={() => navigate(`/student/quizzes/${quiz.id}/result`)}
                 className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
               >
                 View Results
-              </button>
-            ) : (
-              // Quiz has not been attempted - show take quiz button
-              <button
-                onClick={() => handleTakeQuiz(quiz)}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-              >
-                Take Quiz
               </button>
             )}
             

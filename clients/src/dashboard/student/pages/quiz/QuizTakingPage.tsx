@@ -207,12 +207,19 @@ const QuizTakingPage = () => {
       });
 
       console.log('Quiz submission response:', response);
+      console.log('Response data structure:', response.data);
       
       const attemptData = (response.data as any).data || response.data;
+      console.log('Attempt data:', attemptData);
       
       if (!attemptData || !attemptData.id) {
+        console.error('Missing attempt data:', attemptData);
         throw new Error('Invalid response from server: missing attempt data');
       }
+      
+      console.log('Quiz submitted successfully, navigating to result page...');
+      console.log('Attempt ID:', attemptData.id);
+      console.log('Navigation path:', `/student/quiz-attempts/${attemptData.id}/result`);
       
       await showSuccessAlert(
         'Quiz Submitted!',
@@ -220,7 +227,29 @@ const QuizTakingPage = () => {
       );
 
       // Navigate to quiz attempt result page
-      navigate(`/student/quiz-attempts/${attemptData.id}/result`);
+      console.log('Attempting navigation to result page...');
+      
+      // Use setTimeout to ensure the alert is closed before navigation
+      setTimeout(() => {
+        try {
+          console.log('Navigating to:', `/student/quiz-attempts/${attemptData.id}/result`);
+          navigate(`/student/quiz-attempts/${attemptData.id}/result`);
+        } catch (navError) {
+          console.error('Navigation error:', navError);
+          // Fallback navigation
+          navigate('/student/quizzes');
+        }
+      }, 100);
+
+      // Alternative navigation after a longer delay as backup
+      setTimeout(() => {
+        console.log('Backup navigation check...');
+        // Check if we're still on the quiz taking page
+        if (window.location.pathname.includes('/take')) {
+          console.log('Still on quiz page, forcing navigation...');
+          navigate('/student/quizzes');
+        }
+      }, 2000);
     } catch (error: any) {
       console.error('Error submitting quiz:', error);
       
@@ -493,6 +522,27 @@ const QuizTakingPage = () => {
             <li>• The quiz will be automatically submitted when time runs out</li>
             <li>• Do not refresh the page or navigate away during the quiz</li>
           </ul>
+        </div>
+
+        {/* Debug Navigation Test */}
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <span className="text-blue-800 font-medium">Debug:</span>
+          </div>
+          <div className="mt-2 space-x-2">
+            <button
+              onClick={() => navigate('/student/quizzes')}
+              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+            >
+              Test: Go to Quizzes
+            </button>
+            <button
+              onClick={() => navigate('/student/quiz-attempts/test-id/result')}
+              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+            >
+              Test: Go to Result Page
+            </button>
+          </div>
         </div>
       </div>
     </div>
