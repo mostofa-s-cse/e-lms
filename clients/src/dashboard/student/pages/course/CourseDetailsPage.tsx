@@ -54,7 +54,8 @@ interface Quiz {
   title: string;
   description: string;
   duration: number;
-  passingScore: number;
+  totalMarks: number;
+  passingMarks: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -507,7 +508,7 @@ const CourseDetailsPage = () => {
                           {quiz.duration} minutes
                         </span>
                         <span className="text-xs text-gray-500">
-                          Passing Score: {quiz.passingScore}%
+                          Passing Score: {quiz.passingMarks} out of {quiz.totalMarks}
                         </span>
                       </div>
                     </div>

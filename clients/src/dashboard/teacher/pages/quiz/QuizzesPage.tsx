@@ -11,7 +11,7 @@ import {
   handleApiError 
 } from '../../../../utils/sweetAlert';
 import { DataTable } from '../../../../components';
-
+import { useAuth } from '../../../../contexts/AuthContext';
 interface Quiz {
   id: string;
   title: string;
@@ -76,6 +76,7 @@ interface Question {
 
 const QuizzesPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +91,8 @@ const QuizzesPage = () => {
     isActive: true,
     courseId: '',
     startTime: '',
-    endTime: ''
+    endTime: '',
+    teacherId: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -106,7 +108,8 @@ const QuizzesPage = () => {
     correctAnswer: '',
     marks: 1,
     isActive: true,
-    quizId: ''
+    quizId: '',
+    authorId: ''
   });
   const [questionFormErrors, setQuestionFormErrors] = useState<Record<string, string>>({});
 
@@ -156,7 +159,8 @@ const QuizzesPage = () => {
       isActive: true,
       courseId: '',
       startTime: '',
-      endTime: ''
+      endTime: '',
+      teacherId: user?.id || ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -173,7 +177,8 @@ const QuizzesPage = () => {
       isActive: quiz.isActive,
       courseId: quiz.courseId,
       startTime: quiz.startTime ? quiz.startTime.split('T')[0] : '',
-      endTime: quiz.endTime ? quiz.endTime.split('T')[0] : ''
+      endTime: quiz.endTime ? quiz.endTime.split('T')[0] : '',
+      teacherId: user?.id || ''
     });
     setFormErrors({});
     setShowModal(true);
@@ -242,7 +247,8 @@ const QuizzesPage = () => {
       correctAnswer: '',
       marks: 1,
       isActive: true,
-      quizId: quiz.id
+      quizId: quiz.id,
+      authorId: user?.id || ''
     });
     setQuestionFormErrors({});
     setShowQuestionModal(true);
@@ -259,7 +265,8 @@ const QuizzesPage = () => {
       correctAnswer: question.correctAnswer,
       marks: question.marks,
       isActive: question.isActive,
-      quizId: question.quizId
+      quizId: question.quizId,
+      authorId: user?.id || ''
     });
     setQuestionFormErrors({});
     setShowQuestionModal(true);
@@ -330,7 +337,8 @@ const QuizzesPage = () => {
         correctAnswer: '',
         marks: 1,
         isActive: true,
-        quizId: ''
+        quizId: '',
+        authorId: user?.id || ''
       });
       setSelectedQuiz(null);
       setEditingQuestion(null);

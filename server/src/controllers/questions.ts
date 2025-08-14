@@ -124,8 +124,12 @@ export const getQuestionsByQuiz = async (req: Request, res: Response, next: Next
 
 export const createQuestion = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { question, type, options, correctAnswer, points, quizId } = req.body;
-    const teacherId = req.user!.id;
+    const { question, type, options, correctAnswer, points, quizId,authorId } = req.body;
+    const teacherId = authorId;
+    
+    console.log('Creating question with data:', { question, type, options, correctAnswer, points, quizId });
+    console.log('Teacher ID from token:', teacherId);
+    console.log('User role:', req.user!.role);
     
     const marks = points || 1; // Map points to marks
     
@@ -139,10 +143,25 @@ export const createQuestion = async (req: AuthRequest, res: Response, next: Next
       return;
     }
     
+    console.log('Quiz found:', { id: quiz.id, authorId: quiz.authorId });
+    
     if (quiz.authorId !== teacherId && req.user!.role !== 'ADMIN') {
       res.status(403).json({ success: false, message: 'You can only create questions for your own quizzes' });
       return;
     }
+    
+    // Verify that the teacherId exists in the database
+    const teacher = await prisma.user.findUnique({
+      where: { id: teacherId }
+    });
+    
+    if (!teacher) {
+      console.log('Teacher not found in database:', teacherId);
+      res.status(400).json({ success: false, message: 'Teacher not found' });
+      return;
+    }
+    
+    console.log('Teacher verified in database:', { id: teacher.id, email: teacher.email });
     
     const questionData = await prisma.question.create({
       data: {

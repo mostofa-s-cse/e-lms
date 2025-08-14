@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { quizzesAPI, coursesAPI, questionsAPI } from '../../../../services/api';
+import { quizzesAPI, coursesAPI, questionsAPI, usersAPI } from '../../../../services/api';
 import Modal from '../../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../../components/Form';
 import SearchableDropdown from '../../../../components/SearchableDropdown';
@@ -43,12 +43,23 @@ interface Course {
   code: string;
 }
 
+interface Teacher {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 interface QuizzesResponse {
   data: Quiz[];
 }
 
 interface CoursesResponse {
   data: Course[];
+}
+
+interface TeachersResponse {
+  data: Teacher[];
 }
 
 // Question interface for type safety
@@ -78,7 +89,10 @@ const QuizzesPage = () => {
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [courseTeachers, setCourseTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
+  const [teachersLoading, setTeachersLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [formData, setFormData] = useState({
@@ -89,6 +103,7 @@ const QuizzesPage = () => {
     passingMarks: 70,
     isActive: true,
     courseId: '',
+    teacherId: '',
     startTime: '',
     endTime: ''
   });
@@ -113,6 +128,7 @@ const QuizzesPage = () => {
   useEffect(() => {
     fetchQuizzes();
     fetchCourses();
+    fetchTeachers();
   }, []);
 
   const fetchQuizzes = async () => {
@@ -136,6 +152,18 @@ const QuizzesPage = () => {
     }
   };
 
+  const fetchTeachers = async () => {
+    try {
+      setTeachersLoading(true);
+      const response = await usersAPI.getTeachers();
+      setTeachers((response.data as TeachersResponse).data);
+    } catch (error) {
+      handleApiError(error, 'Failed to fetch teachers');
+    } finally {
+      setTeachersLoading(false);
+    }
+  };
+
   const fetchQuestionsForQuiz = async (quizId: string) => {
     try {
       const response = await questionsAPI.getByQuiz(quizId);
@@ -155,14 +183,16 @@ const QuizzesPage = () => {
       passingMarks: 70,
       isActive: true,
       courseId: '',
+      teacherId: '',
       startTime: '',
       endTime: ''
     });
     setFormErrors({});
+    setCourseTeachers([]); // Reset course-specific teachers
     setShowModal(true);
   };
 
-  const handleEdit = (quiz: Quiz) => {
+  const handleEdit = async (quiz: Quiz) => {
     setEditingQuiz(quiz);
     setFormData({
       title: quiz.title,
@@ -172,10 +202,26 @@ const QuizzesPage = () => {
       passingMarks: quiz.passingMarks,
       isActive: quiz.isActive,
       courseId: quiz.courseId,
+      teacherId: quiz.author?.id || '',
       startTime: quiz.startTime ? quiz.startTime.split('T')[0] : '',
       endTime: quiz.endTime ? quiz.endTime.split('T')[0] : ''
     });
     setFormErrors({});
+    
+    // Fetch teachers for the selected course
+    if (quiz.courseId) {
+      try {
+        setTeachersLoading(true);
+        const response = await usersAPI.getTeachersForCourse(quiz.courseId);
+        setCourseTeachers((response.data as TeachersResponse).data || []);
+      } catch (error) {
+        console.error('Failed to fetch teachers for course:', error);
+        setCourseTeachers(teachers);
+      } finally {
+        setTeachersLoading(false);
+      }
+    }
+    
     setShowModal(true);
   };
 
@@ -192,6 +238,46 @@ const QuizzesPage = () => {
     }
   };
 
+  const handleCourseChange = async (courseId: string) => {
+    setFormData({ ...formData, courseId, teacherId: '' });
+    // Reset teacher selection when course changes
+    
+    if (courseId) {
+      try {
+        setTeachersLoading(true);
+        const response = await usersAPI.getTeachersForCourse(courseId);
+        setCourseTeachers((response.data as TeachersResponse).data || []);
+      } catch (error) {
+        console.error('Failed to fetch teachers for course:', error);
+        // Fallback to all teachers if course-specific fetch fails
+        setCourseTeachers(teachers);
+      } finally {
+        setTeachersLoading(false);
+      }
+    } else {
+      setCourseTeachers([]);
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setEditingQuiz(null);
+    setFormData({
+      title: '',
+      description: '',
+      duration: 30,
+      totalMarks: 100,
+      passingMarks: 70,
+      isActive: true,
+      courseId: '',
+      teacherId: '',
+      startTime: '',
+      endTime: ''
+    });
+    setFormErrors({});
+    setCourseTeachers([]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
@@ -200,6 +286,7 @@ const QuizzesPage = () => {
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = 'Title is required';
     if (!formData.courseId) errors.courseId = 'Course is required';
+    if (!formData.teacherId) errors.teacherId = 'Teacher is required';
     if (formData.duration < 1) errors.duration = 'Duration must be at least 1 minute';
     if (formData.totalMarks < 1) errors.totalMarks = 'Total marks must be at least 1';
     if (formData.passingMarks < 0 || formData.passingMarks > formData.totalMarks) {
@@ -447,7 +534,7 @@ const QuizzesPage = () => {
 
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={handleModalClose}
         title={editingQuiz ? 'Edit Quiz' : 'Create Quiz'}
         size="lg"
       >
@@ -464,7 +551,7 @@ const QuizzesPage = () => {
           <SearchableDropdown
             label="Course"
             value={formData.courseId}
-            onChange={(value) => setFormData({ ...formData, courseId: value })}
+            onChange={(value) => handleCourseChange(value as string)}
             options={courses.map(course => ({
               value: course.id,
               label: `${course.code} - ${course.title}`
@@ -473,6 +560,26 @@ const QuizzesPage = () => {
             error={formErrors.courseId}
             required
           />
+
+          <SearchableDropdown
+            label="Teacher"
+            value={formData.teacherId}
+            onChange={(value) => setFormData({ ...formData, teacherId: value as string })}
+            options={courseTeachers.map(teacher => ({
+              value: teacher.id,
+              label: `${teacher.firstName} ${teacher.lastName} (${teacher.email})`
+            }))}
+            placeholder={teachersLoading ? 'Loading teachers...' : 'Select a teacher...'}
+            error={formErrors.teacherId}
+            required
+            disabled={!formData.courseId || teachersLoading}
+          />
+          
+          {formData.courseId && !teachersLoading && courseTeachers.length === 0 && (
+            <p className="text-sm text-amber-600 bg-amber-50 p-2 rounded-md">
+              ⚠️ No teachers found for this course. Please select a different course or contact an administrator.
+            </p>
+          )}
 
           <FormField
             label="Description"
@@ -551,7 +658,7 @@ const QuizzesPage = () => {
           </div>
 
           <FormActions
-            onCancel={() => setShowModal(false)}
+            onCancel={handleModalClose}
             submitText={editingQuiz ? 'Update' : 'Create'}
           />
         </Form>

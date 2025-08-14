@@ -121,6 +121,23 @@ export const getAllQuizAttempts = async (req: Request, res: Response, next: Next
             totalMarks: true,
             passingMarks: true
           }
+        },
+        answers: {
+          include: {
+            question: {
+              select: {
+                id: true,
+                question: true,
+                type: true,
+                options: true,
+                correctAnswer: true,
+                marks: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
         }
       },
       orderBy: { completedAt: 'desc' }
@@ -142,9 +159,17 @@ export const createQuizAttempt = async (req: AuthRequest, res: Response, next: N
     const { quizId, answers } = req.body;
     const studentId = req.user!.id;
     
+    console.log('Creating quiz attempt:', { quizId, studentId, answersCount: answers?.length });
+    
     // Check if user is a student
     if (req.user!.role !== 'STUDENT') {
       res.status(403).json({ success: false, message: 'Only students can take quizzes' });
+      return;
+    }
+    
+    // Validate input
+    if (!quizId || !answers || !Array.isArray(answers) || answers.length === 0) {
+      res.status(400).json({ success: false, message: 'Invalid input: quizId and answers array are required' });
       return;
     }
     
@@ -158,6 +183,8 @@ export const createQuizAttempt = async (req: AuthRequest, res: Response, next: N
       return;
     }
     
+    console.log('Quiz found:', { quizId: quiz.id, totalMarks: quiz.totalMarks, passingMarks: quiz.passingMarks });
+    
     // Check if student has already attempted this quiz
     const existingAttempt = await prisma.quizAttempt.findFirst({
       where: {
@@ -167,7 +194,11 @@ export const createQuizAttempt = async (req: AuthRequest, res: Response, next: N
     });
     
     if (existingAttempt) {
-      res.status(400).json({ success: false, message: 'You have already attempted this quiz' });
+      console.log('Student has already attempted this quiz:', existingAttempt.id);
+      res.status(400).json({ 
+        success: false, 
+        message: 'You have already submitted this quiz. You cannot submit it again.' 
+      });
       return;
     }
     
@@ -176,6 +207,13 @@ export const createQuizAttempt = async (req: AuthRequest, res: Response, next: N
     const questions = await prisma.question.findMany({
       where: { quizId, isActive: true }
     });
+    
+    console.log('Questions found:', questions.length);
+    
+    if (questions.length === 0) {
+      res.status(400).json({ success: false, message: 'No questions found for this quiz' });
+      return;
+    }
     
     // Create quiz answers and calculate score
     const quizAnswers = [];
@@ -197,6 +235,9 @@ export const createQuizAttempt = async (req: AuthRequest, res: Response, next: N
     
     const isPassed = totalScore >= quiz.passingMarks;
     
+    console.log('Quiz attempt calculation:', { totalScore, totalMarks: quiz.totalMarks, isPassed });
+    
+    // Create the quiz attempt with all answers
     const attempt = await prisma.quizAttempt.create({
       data: {
         studentId,
@@ -230,12 +271,15 @@ export const createQuizAttempt = async (req: AuthRequest, res: Response, next: N
       }
     });
     
+    console.log('Quiz attempt created successfully:', attempt.id);
+    
     res.status(201).json({ 
       success: true, 
       message: 'Quiz attempt submitted successfully', 
       data: attempt 
     } as ApiResponse);
   } catch (error) {
+    console.error('Error creating quiz attempt:', error);
     next(error);
   }
 };
@@ -267,6 +311,134 @@ export const deleteQuizAttempt = async (req: AuthRequest, res: Response, next: N
     res.json({ 
       success: true, 
       message: 'Quiz attempt deleted successfully' 
+    } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+}; 
+
+// Get quiz attempts for the authenticated student
+export const getStudentQuizAttempts = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const studentId = req.user!.id;
+    
+    // Check if user is a student
+    if (req.user!.role !== 'STUDENT') {
+      res.status(403).json({ success: false, message: 'Only students can access their quiz attempts' });
+      return;
+    }
+    
+    const attempts = await prisma.quizAttempt.findMany({
+      where: { studentId },
+      include: {
+        quiz: {
+          select: {
+            id: true,
+            title: true,
+            totalMarks: true,
+            passingMarks: true,
+            duration: true,
+            isActive: true,
+            course: {
+              select: {
+                id: true,
+                title: true,
+                code: true
+              }
+            }
+          }
+        },
+        answers: {
+          include: {
+            question: {
+              select: {
+                id: true,
+                question: true,
+                type: true,
+                options: true,
+                correctAnswer: true,
+                marks: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Student quiz attempts fetched successfully', 
+      data: attempts 
+    } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get quiz attempts for a specific quiz by the authenticated student
+export const getStudentQuizAttemptsByQuiz = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { quizId } = req.params;
+    const studentId = req.user!.id;
+    
+    // Check if user is a student
+    if (req.user!.role !== 'STUDENT') {
+      res.status(403).json({ success: false, message: 'Only students can access their quiz attempts' });
+      return;
+    }
+    
+    const attempts = await prisma.quizAttempt.findMany({
+      where: { 
+        quizId,
+        studentId 
+      },
+      include: {
+        quiz: {
+          select: {
+            id: true,
+            title: true,
+            totalMarks: true,
+            passingMarks: true,
+            duration: true,
+            isActive: true,
+            course: {
+              select: {
+                id: true,
+                title: true,
+                code: true
+              }
+            }
+          }
+        },
+        answers: {
+          include: {
+            question: {
+              select: {
+                id: true,
+                question: true,
+                type: true,
+                options: true,
+                correctAnswer: true,
+                marks: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Student quiz attempts for specific quiz fetched successfully', 
+      data: attempts 
     } as ApiResponse);
   } catch (error) {
     next(error);

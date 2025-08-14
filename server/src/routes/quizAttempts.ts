@@ -4,6 +4,8 @@ import {
   getQuizAttemptsByQuiz,
   getQuizAttemptById,
   getAllQuizAttempts,
+  getStudentQuizAttempts,
+  getStudentQuizAttemptsByQuiz,
   createQuizAttempt,
   deleteQuizAttempt
 } from '../controllers/quizAttempts';
@@ -15,6 +17,12 @@ router.use(authenticateToken);
 
 // GET /api/quizAttempts - Get all quiz attempts (admin/teacher only)
 router.get('/', authorizeRoles(['ADMIN', 'TEACHER']), getAllQuizAttempts);
+
+// GET /api/quizAttempts/student - Get quiz attempts for authenticated student
+router.get('/student', authorizeRoles(['STUDENT']), getStudentQuizAttempts);
+
+// GET /api/quizAttempts/student/quiz/:quizId - Get quiz attempts for specific quiz by authenticated student
+router.get('/student/quiz/:quizId', authorizeRoles(['STUDENT']), getStudentQuizAttemptsByQuiz);
 
 // GET /api/quizAttempts/quiz/:quizId - Get all attempts for a specific quiz
 router.get('/quiz/:quizId', authorizeRoles(['ADMIN', 'TEACHER']), getQuizAttemptsByQuiz);

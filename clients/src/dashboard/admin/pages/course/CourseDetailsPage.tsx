@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { coursesAPI, videosAPI, notesAPI, quizzesAPI, usersAPI } from '../../../../services/api';
+import { coursesAPI, videosAPI, notesAPI, quizzesAPI, usersAPI, questionsAPI } from '../../../../services/api';
 import { handleApiError, showDeleteConfirmDialog, showSuccessAlert } from '../../../../utils/sweetAlert';
 import Modal from '../../../../components/Modal';
 import { Form, FormField, FormActions } from '../../../../components/Form';
@@ -35,6 +35,7 @@ const CourseDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
+  console.log("-course",course)
   const [videos, setVideos] = useState<Video[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -61,6 +62,7 @@ const CourseDetailsPage = () => {
     teacherId: ''
   });
   const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState<string | null>(null);
+  const [quizQuestions, setQuizQuestions] = useState<Record<string, any[]>>({});
   
   const [formData, setFormData] = useState({
     title: '',
@@ -85,9 +87,11 @@ const CourseDetailsPage = () => {
     title: '',
     description: '',
     duration: 30,
-    passingScore: 70,
+    totalMarks: 100,
+    passingMarks: 70,
     isActive: true,
-    courseId: ''
+    courseId: '',
+    teacherId: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const handleDelete = async (video: Video) => {
@@ -399,7 +403,7 @@ const CourseDetailsPage = () => {
     if (!quizFormData.description.trim()) errors.description = 'Description is required';
     if (!quizFormData.courseId) errors.courseId = 'Course is required';
     if (quizFormData.duration < 0) errors.duration = 'Duration must be positive';
-    if (quizFormData.passingScore < 0 || quizFormData.passingScore > 100) errors.passingScore = 'Passing score must be between 0 and 100';
+    if (quizFormData.passingMarks < 0 || quizFormData.passingMarks > quizFormData.totalMarks) errors.passingMarks = 'Passing score must be between 0 and total marks';
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -411,9 +415,11 @@ const CourseDetailsPage = () => {
       submitData.append('title', quizFormData.title);
       submitData.append('description', quizFormData.description);
       submitData.append('duration', quizFormData.duration.toString());
-      submitData.append('passingScore', quizFormData.passingScore.toString());
+      submitData.append('totalMarks', quizFormData.totalMarks.toString());
+      submitData.append('passingMarks', quizFormData.passingMarks.toString());
       submitData.append('isActive', quizFormData.isActive.toString());
       submitData.append('courseId', course?.id!);
+      submitData.append('teacherId', course?.teacher?.id!);
 
       if (editingQuiz) {
         await quizzesAPI.update(editingQuiz.id, submitData);
@@ -555,6 +561,24 @@ const CourseDetailsPage = () => {
       navigate('/admin/courses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchQuizQuestions = async (quizId: string) => {
+    try {
+      const response = await questionsAPI.getByQuiz(quizId);
+      const questionsData = (response.data as any).data || response.data || [];
+      setQuizQuestions(prev => ({
+        ...prev,
+        [quizId]: questionsData
+      }));
+    } catch (error) {
+      console.error('Error fetching quiz questions:', error);
+      // Set empty array if failed to fetch
+      setQuizQuestions(prev => ({
+        ...prev,
+        [quizId]: []
+      }));
     }
   };
 
@@ -777,9 +801,11 @@ const CourseDetailsPage = () => {
               title: quiz.title,
               description: quiz.description,
               duration: quiz.duration,
-              passingScore: quiz.passingScore,
+              totalMarks: quiz.totalMarks,
+              passingMarks: quiz.passingMarks,
               isActive: quiz.isActive,
-              courseId: course?.id || ''
+              courseId: course?.id || '',
+              teacherId: course?.teacher?.id || ''
             });
             setShowQuizModal(true);
           }}
@@ -801,11 +827,23 @@ const CourseDetailsPage = () => {
               title: '',
               description: '',
               duration: 30,
-              passingScore: 70,
+              totalMarks: 100,
+              passingMarks: 70,
               isActive: true,
-              courseId: course?.id || ''
+              courseId: course?.id || '',
+              teacherId: course?.teacher?.id || ''
             });
             setShowQuizModal(true);
+          }}
+          onQuestions={(quiz: Quiz) => {
+            // Fetch questions for this quiz if not already loaded
+            if (!quizQuestions[quiz.id]) {
+              fetchQuizQuestions(quiz.id);
+            }
+          }}
+          quizQuestions={quizQuestions}
+          onQuestionsUpdated={(quizId: string) => {
+            fetchQuizQuestions(quizId);
           }}
         />
       )}
@@ -1112,12 +1150,22 @@ const CourseDetailsPage = () => {
             />
 
             <FormField
-              label="Passing Score (%)"
-              name="passingScore"
+              label="Total Marks"
+              name="totalMarks"
               type="number"
-              value={quizFormData.passingScore}
-              onChange={(value) => setQuizFormData({ ...quizFormData, passingScore: value as number })}
-              error={formErrors.passingScore}
+              value={quizFormData.totalMarks}
+              onChange={(value) => setQuizFormData({ ...quizFormData, totalMarks: value as number })}
+              error={formErrors.totalMarks}
+              required
+            />
+
+            <FormField
+              label="Passing Marks"
+              name="passingMarks"
+              type="number"
+              value={quizFormData.passingMarks}
+              onChange={(value) => setQuizFormData({ ...quizFormData, passingMarks: value as number })}
+              error={formErrors.passingMarks}
               required
             />
           </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { quizzesAPI, quizAttemptsAPI } from '../../../../services/api';
+import { quizzesAPI, quizAttemptsAPI, questionsAPI } from '../../../../services/api';
 import { handleApiError, showSuccessAlert, showConfirmDialog } from '../../../../utils/sweetAlert';
 import { checkPaymentAccess } from '../../../../utils/paymentVerification';
 import PaymentRequired from '../../../../components/PaymentRequired';
@@ -87,9 +87,23 @@ const QuizTakingPage = () => {
       
       setPaymentVerified(true);
       
-      // Fetch quiz details
+      // Fetch quiz details with questions
       const quizResponse = await quizzesAPI.getById(id!);
       const quizData = (quizResponse.data as any).data || quizResponse.data;
+      
+      // If quiz doesn't have questions, fetch them separately
+      if (!quizData.questions || quizData.questions.length === 0) {
+        console.log('Quiz has no questions, fetching questions separately');
+        try {
+          const questionsResponse = await questionsAPI.getByQuiz(id!);
+          const questionsData = (questionsResponse.data as any).data || questionsResponse.data;
+          quizData.questions = questionsData;
+        } catch (error) {
+          console.error('Failed to fetch questions:', error);
+        }
+      }
+      
+      console.log('Quiz data with questions:', quizData);
       setQuiz(quizData as Quiz);
       
       if (quizData.duration) {
@@ -138,6 +152,22 @@ const QuizTakingPage = () => {
 
   const handleSubmitQuiz = async () => {
     if (!quiz) return;
+    
+    if (answers.length === 0) {
+      await handleApiError(new Error('No answers provided'), 'Please answer at least one question before submitting');
+      return;
+    }
+    
+    const unansweredQuestions = quiz.questions?.filter(q => !answers.find(a => a.questionId === q.id));
+    if (unansweredQuestions && unansweredQuestions.length > 0) {
+      const confirmed = await showConfirmDialog(
+        'Unanswered Questions',
+        `You have ${unansweredQuestions.length} unanswered question(s). Are you sure you want to submit the quiz?`,
+        'Submit Anyway',
+        'Continue Answering'
+      );
+      if (!confirmed.isConfirmed) return;
+    }
 
     const confirmed = await showConfirmDialog(
       'Submit Quiz',
@@ -164,22 +194,44 @@ const QuizTakingPage = () => {
     try {
       setSubmitting(true);
       
+      // Validate that all questions have answers
+      if (answers.length === 0) {
+        throw new Error('No answers provided');
+      }
+      
+      console.log('Submitting quiz with answers:', answers);
+      
       const response = await quizAttemptsAPI.create({
         quizId: quiz.id,
         answers: answers
       });
 
+      console.log('Quiz submission response:', response);
+      
       const attemptData = (response.data as any).data || response.data;
+      
+      if (!attemptData || !attemptData.id) {
+        throw new Error('Invalid response from server: missing attempt data');
+      }
       
       await showSuccessAlert(
         'Quiz Submitted!',
         `Your quiz has been submitted successfully. Score: ${attemptData.score}/${attemptData.totalMarks}`
       );
 
-      navigate(`/student/quizzes/${quiz.id}`);
-    } catch (error) {
+      // Navigate to quiz attempt result page
+      navigate(`/student/quiz-attempts/${attemptData.id}/result`);
+    } catch (error: any) {
       console.error('Error submitting quiz:', error);
-      handleApiError(error, 'Failed to submit quiz');
+      
+      // Check if it's the "already submitted" error
+      if (error.response?.data?.message?.includes('already submitted')) {
+        await handleApiError(error, 'You have already submitted this quiz. You cannot submit it again.');
+        // Navigate back to quizzes page
+        navigate('/student/quizzes');
+      } else {
+        handleApiError(error, 'Failed to submit quiz');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -227,6 +279,16 @@ const QuizTakingPage = () => {
     return (
       <div className="text-center py-8">
         <p className="text-gray-600">Quiz not found</p>
+      </div>
+    );
+  }
+
+  // Check if questions are loaded
+  if (!quiz.questions || quiz.questions.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading quiz questions...</p>
       </div>
     );
   }

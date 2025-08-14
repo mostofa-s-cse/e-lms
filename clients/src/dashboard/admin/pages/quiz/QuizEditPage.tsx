@@ -132,6 +132,11 @@ const QuizEditPage = () => {
     }
   };
 
+  const handleCourseChange = (courseId: string) => {
+    setFormData({ ...formData, courseId, teacherId: '' });
+    // Reset teacher selection when course changes
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
@@ -213,7 +218,7 @@ const QuizEditPage = () => {
           <SearchableDropdown
             label="Course"
             value={formData.courseId}
-            onChange={(value) => setFormData({ ...formData, courseId: value })}
+            onChange={(value) => handleCourseChange(value as string)}
             options={courses.map(course => ({
               value: course.id,
               label: `${course.code} - ${course.title}`
@@ -234,6 +239,7 @@ const QuizEditPage = () => {
             placeholder="Select a teacher..."
             error={formErrors.teacherId}
             required
+            disabled={!formData.courseId}
           />
 
           <FormField

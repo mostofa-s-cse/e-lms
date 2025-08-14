@@ -188,7 +188,7 @@ export const getEvaluationsByCourse = async (req: Request, res: Response, next: 
 };
 
 // Create new evaluation
-export const createEvaluation = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+export const createEvaluation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 };
 
 // Update evaluation

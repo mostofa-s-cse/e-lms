@@ -301,7 +301,6 @@ model QuizAttempt {
   quiz      Quiz @relation(fields: [quizId], references: [id])
   answers   QuizAnswer[]
 
-  @@unique([studentId, quizId])
   @@map("quiz_attempts")
 }
 

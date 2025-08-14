@@ -40,9 +40,9 @@ interface QuizAttempt {
   id: string;
   quizId: string;
   studentId: string;
-  score?: number;
-  maxScore?: number;
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  score: number;
+  totalMarks: number;
+  isPassed: boolean;
   startedAt: string;
   completedAt?: string;
 }
@@ -128,12 +128,10 @@ const QuizzesPage = () => {
 
   const fetchQuizAttempts = async () => {
     try {
-      const response = await quizAttemptsAPI.getAll();
+      const response = await quizAttemptsAPI.getStudentAttempts();
       const data = response.data as QuizAttemptsResponse;
       if (data.success) {
-        // Filter attempts for current student
-        const studentAttempts = data.data.filter(attempt => attempt.studentId === user!.id);
-        setQuizAttempts(studentAttempts);
+        setQuizAttempts(data.data);
       }
     } catch (error) {
       console.error('Failed to fetch quiz attempts:', error);
@@ -148,31 +146,30 @@ const QuizzesPage = () => {
     const attempts = getQuizAttempts(quizId);
     if (attempts.length === 0) return null;
     
-    const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED' && attempt.score !== undefined);
+    const completedAttempts = attempts.filter(attempt => attempt.isPassed);
     if (completedAttempts.length === 0) return null;
     
-    return Math.max(...completedAttempts.map(attempt => attempt.score!));
+    return Math.max(...completedAttempts.map(attempt => attempt.score));
   };
 
   const handleTakeQuiz = async (quiz: Quiz) => {
+    console.log('Handling take quiz for:', quiz.id, quiz.title);
+    
     // Check if student has already attempted this quiz
     const attempts = getQuizAttempts(quiz.id);
-    const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED');
     
-    if (completedAttempts.length > 0) {
-      await showInfoAlert('Quiz Already Attempted', 'You have already completed this quiz. You can view your results in the quiz details.');
-      navigate(`/student/quizzes/${quiz.id}`);
+    if (attempts.length > 0) {
+      // Student has already attempted this quiz
+      await showInfoAlert(
+        'Quiz Already Attempted', 
+        'You have already submitted this quiz. You cannot take it again.'
+      );
+      // Navigate to quiz results page to show their attempt
+      navigate(`/student/quizzes/${quiz.id}/result`);
       return;
     }
     
-    // Check if there's an in-progress attempt
-    const inProgressAttempt = attempts.find(attempt => attempt.status === 'IN_PROGRESS');
-    if (inProgressAttempt) {
-      await showInfoAlert('Quiz In Progress', 'You have an unfinished attempt for this quiz. Please complete it first.');
-      navigate(`/student/quizzes/${quiz.id}`);
-      return;
-    }
-    
+    console.log('First time taking this quiz, navigating to quiz taking page');
     // Navigate to quiz taking page
     navigate(`/student/quizzes/${quiz.id}/take`);
   };
@@ -203,7 +200,7 @@ const QuizzesPage = () => {
       if (paymentResult.hasAccess) {
         // Find the best completed attempt for this quiz
         const attempts = getQuizAttempts(quiz.id);
-        const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED');
+        const completedAttempts = attempts.filter(attempt => attempt.isPassed);
         
         if (completedAttempts.length > 0) {
           // Navigate to the most recent completed attempt
@@ -251,7 +248,24 @@ const QuizzesPage = () => {
       render: (title: string, quiz: Quiz) => (
         <div>
           <div className="text-sm font-medium text-gray-900">{title}</div>
-          <div className="text-sm text-gray-500">{quiz.duration} minutes</div>
+          {/* Quiz Status */}
+          <div className="flex items-center space-x-2 text-sm">
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+              quiz.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {quiz.isActive ? 'Available' : 'Unavailable'}
+            </span>
+            
+            {getQuizAttempts(quiz.id).length > 0 && (
+              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                Attempted
+              </span>
+            )}
+            
+            <span className="text-gray-500">
+              {quiz.duration} min • {quiz.totalMarks} marks
+            </span>
+          </div>
         </div>
       )
     },
@@ -302,7 +316,7 @@ const QuizzesPage = () => {
           return (
             <div>
               <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                {bestScore}%
+                {Math.round((bestScore / quiz.totalMarks) * 100)}%
               </span>
               <div className="text-xs text-gray-500">{attempts.length} attempts</div>
             </div>
@@ -344,33 +358,33 @@ const QuizzesPage = () => {
       label: 'Actions',
       render: (_: any, quiz: Quiz) => {
         const attempts = getQuizAttempts(quiz.id);
-        const completedAttempts = attempts.filter(attempt => attempt.status === 'COMPLETED');
-        const hasCompletedAttempts = completedAttempts.length > 0;
         
         return (
           <div className="flex space-x-2">
-            <button
-              onClick={() => handleViewQuiz(quiz)}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              View Details
-            </button>
-            {hasCompletedAttempts && (
+            {attempts.length > 0 ? (
+              // Quiz has been attempted - show results button
               <button
-                onClick={() => handleViewResults(quiz)}
-                className="text-green-600 hover:text-green-800 text-sm font-medium"
+                onClick={() => navigate(`/student/quizzes/${quiz.id}/result`)}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
               >
                 View Results
               </button>
-            )}
-            {/* {hasCompletedAttempts && ( */}
+            ) : (
+              // Quiz has not been attempted - show take quiz button
               <button
-                onClick={() => handleViewQuizResult(quiz)}
-                className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                onClick={() => handleTakeQuiz(quiz)}
+                className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
-                View Result
+                Take Quiz
               </button>
-            {/* )} */}
+            )}
+            
+            <button
+              onClick={() => handleViewQuiz(quiz)}
+              className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
+            >
+              View Details
+            </button>
           </div>
         );
       }

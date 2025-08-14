@@ -33,7 +33,7 @@ const StudentDashboard = () => {
     { path: '/student/notes', label: 'Course Notes', icon: <FileText className="w-5 h-5" /> },
     { path: '/student/videos', label: 'Course Videos', icon: <Video className="w-5 h-5" /> },
     { path: '/student/quizzes', label: 'My Quizzes', icon: <HelpCircle className="w-5 h-5" /> },
-    { path: '/student/evaluations', label: 'My Evaluations', icon: <BarChart3 className="w-5 h-5" /> },
+    //{ path: '/student/evaluations', label: 'My Evaluations', icon: <BarChart3 className="w-5 h-5" /> },
     { path: '/student/payments', label: 'My Payments', icon: <CreditCard className="w-5 h-5" /> },
     { path: '/student/profile', label: 'My Profile', icon: <User className="w-5 h-5" /> }
   ];
@@ -51,7 +51,7 @@ const StudentDashboard = () => {
       <Route path="quizzes/:id" element={<QuizDetailsPage />} />
       <Route path="quizzes/:id/take" element={<QuizTakingPage />} />
       <Route path="quizzes/:id/result" element={<QuizResultPage />} />
-      <Route path="evaluations" element={<EvaluationsPage />} />
+      {/* <Route path="evaluations" element={<EvaluationsPage />} /> */}
       <Route path="payments" element={<PaymentsPage />} />
       <Route path="profile" element={<ProfilePage />} />
     </>

@@ -99,7 +99,8 @@ export interface Quiz {
   description: string;
   courseId: string;
   duration: number;
-  passingScore: number;
+  totalMarks: number;
+  passingMarks: number;
   isActive: boolean;
   author?: {
     id: string;

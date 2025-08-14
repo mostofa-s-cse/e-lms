@@ -126,6 +126,7 @@ export const usersAPI = {
   getAll: (query?: string) => api.get<ApiResponse<User[]>>(`/users${query || ''}`),
   getById: (id: string) => api.get<ApiResponse<User>>(`/users/${id}?includeProfile=true`),
   getTeachers: () => api.get<ApiResponse<User[]>>('/users/teachers'),
+  getTeachersForCourse: (courseId: string) => api.get<ApiResponse<User[]>>(`/users/teachers/course/${courseId}`),
   getStudents: () => api.get<ApiResponse<User[]>>('/users/students'),
   create: (data: any) => {
     const isFormData = data instanceof FormData;
@@ -266,6 +267,8 @@ export const evaluationsAPI = {
 // Quiz Attempts API
 export const quizAttemptsAPI = {
   getAll: () => api.get('/quizAttempts'),
+  getStudentAttempts: () => api.get('/quizAttempts/student'),
+  getStudentAttemptsByQuiz: (quizId: string) => api.get(`/quizAttempts/student/quiz/${quizId}`),
   getById: (id: string) => api.get(`/quizAttempts/${id}`),
   getByQuiz: (quizId: string) => api.get(`/quizAttempts/quiz/${quizId}`),
   create: (attemptData: any) => api.post('/quizAttempts', attemptData),

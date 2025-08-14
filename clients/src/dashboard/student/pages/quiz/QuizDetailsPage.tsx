@@ -46,15 +46,24 @@ interface QuizAttempt {
   id: string;
   quizId: string;
   studentId: string;
-  score?: number;
-  maxScore?: number;
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  score: number;
+  totalMarks: number;
+  isPassed: boolean;
   startedAt: string;
   completedAt?: string;
   answers?: Array<{
-    questionId: string;
+    id: string;
     answer: string;
     isCorrect: boolean;
+    marksEarned: number;
+    question: {
+      id: string;
+      question: string;
+      type: string;
+      options?: string[];
+      correctAnswer?: string;
+      marks: number;
+    };
   }>;
 }
 
@@ -106,12 +115,9 @@ const QuizDetailsPage = () => {
 
       // Fetch quiz attempts for this student
       try {
-        const attemptsResponse = await quizAttemptsAPI.getAll();
+        const attemptsResponse = await quizAttemptsAPI.getStudentAttemptsByQuiz(id!);
         const attemptsData = (attemptsResponse.data as any).data || attemptsResponse.data;
-        const studentAttempts = attemptsData.filter((attempt: QuizAttempt) => 
-          attempt.quizId === id && attempt.studentId === user!.id
-        );
-        setQuizAttempts(studentAttempts);
+        setQuizAttempts(attemptsData);
       } catch (error) {
         console.error('Failed to fetch quiz attempts:', error);
         setQuizAttempts([]);
@@ -150,7 +156,7 @@ const QuizDetailsPage = () => {
     if (quizAttempts.length === 0) return null;
     
     const completedAttempts = quizAttempts.filter(attempt => 
-      attempt.status === 'COMPLETED' && attempt.score !== undefined
+      attempt.isPassed === true && attempt.score !== undefined
     );
     if (completedAttempts.length === 0) return null;
     
@@ -173,17 +179,10 @@ const QuizDetailsPage = () => {
     }
     
     // Check if student has already attempted this quiz
-    const completedAttempts = quizAttempts.filter(attempt => attempt.status === 'COMPLETED');
+    const completedAttempts = quizAttempts.filter(attempt => attempt.isPassed === true);
     
     if (completedAttempts.length > 0) {
       showInfoAlert('Quiz Already Attempted', 'You have already completed this quiz. You can view your results below.');
-      return;
-    }
-    
-    // Check if there's an in-progress attempt
-    const inProgressAttempt = quizAttempts.find(attempt => attempt.status === 'IN_PROGRESS');
-    if (inProgressAttempt) {
-      showInfoAlert('Quiz In Progress', 'You have an unfinished attempt for this quiz. Please complete it first.');
       return;
     }
     
@@ -202,32 +201,22 @@ const QuizDetailsPage = () => {
   };
 
   const handleViewResult = (attemptId: string) => {
-    navigate(`/student/quiz-attempts/${attemptId}`);
+    navigate(`/student/quiz-attempts/${attemptId}/result`);
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'FAILED':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'IN_PROGRESS':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+  const getStatusIcon = (isPassed: boolean) => {
+    if (isPassed) {
+      return <CheckCircle className="w-4 h-4 text-green-500" />;
+    } else {
+      return <XCircle className="w-4 h-4 text-red-500" />;
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
-      case 'FAILED':
-        return 'bg-red-100 text-red-800';
-      case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const getStatusColor = (isPassed: boolean) => {
+    if (isPassed) {
+      return 'bg-green-100 text-green-800';
+    } else {
+      return 'bg-red-100 text-red-800';
     }
   };
 
@@ -368,7 +357,7 @@ const QuizDetailsPage = () => {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        {getStatusIcon(attempt.status)}
+                        {getStatusIcon(attempt.isPassed)}
                         <div>
                           <p className="font-medium text-gray-900">
                             Attempt #{quizAttempts.indexOf(attempt) + 1}
@@ -379,16 +368,16 @@ const QuizDetailsPage = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(attempt.status)}`}>
-                          {attempt.status}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(attempt.isPassed)}`}>
+                          {attempt.isPassed ? 'Passed' : 'Failed'}
                         </span>
                         {attempt.score !== undefined && (
                           <div className="mt-1">
                             <p className="text-sm font-medium text-gray-900">
-                              {attempt.score}/{attempt.maxScore || quiz.totalMarks} marks
+                              {attempt.score}/{attempt.totalMarks} marks
                             </p>
-                            <p className={`text-xs font-medium ${getScoreColor(getScorePercentage(attempt.score, attempt.maxScore || quiz.totalMarks))}`}>
-                              {getScorePercentage(attempt.score, attempt.maxScore || quiz.totalMarks)}%
+                            <p className={`text-xs font-medium ${getScoreColor(getScorePercentage(attempt.score, attempt.totalMarks))}`}>
+                              {getScorePercentage(attempt.score, attempt.totalMarks)}%
                             </p>
                           </div>
                         )}
@@ -397,7 +386,7 @@ const QuizDetailsPage = () => {
                     
                     {/* Action Buttons */}
                     <div className="mt-3 flex space-x-2">
-                      {attempt.status === 'COMPLETED' && (
+                      {attempt.isPassed && (
                         <button
                           onClick={() => handleViewResult(attempt.id)}
                           className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
