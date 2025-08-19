@@ -6,35 +6,21 @@ import { Footer } from '../components';
 import { paymentsAPI } from '../services/api';
 import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
 import { useCart } from '../contexts/CartContext';
+import { 
+  PaymentMethod, 
+  PaymentDetails, 
+  CartPaymentDetails, 
+  PaymentMethodDetails,
+  CreatePaymentRequest,
+  CreateCartPaymentRequest,
+  CreditCardDetails,
+  MobileBankingDetails,
+  InternetBankingDetails,
+  CashDetails,
+  OtherDetails
+} from '../types/payment';
 
-interface PaymentDetails {
-  courseId: string;
-  courseTitle: string;
-  courseCode: string;
-  amount: number;
-  intakeId?: string;
-  intakeName?: string;
-  userId: string;
-  userEmail: string;
-  userName: string;
-}
 
-interface CartPaymentDetails {
-  items: Array<{
-    courseId: string;
-    courseTitle: string;
-    courseCode: string;
-    amount: number;
-    intakeId?: string;
-    intakeName?: string;
-  }>;
-  total: number;
-  userId: string;
-  userEmail: string;
-  userName: string;
-}
-
-type PaymentMethod = 'CREDIT_CARD' | 'DEBIT_CARD' | 'MOBILE_BANKING' | 'INTERNET_BANKING' | 'CASH' | 'OTHER';
 
 const CustomPaymentGateway = () => {
   const [searchParams] = useSearchParams();
@@ -435,7 +421,7 @@ const CustomPaymentGateway = () => {
     return true;
   };
 
-  const getPaymentDetails = () => {
+  const getPaymentDetails = (): PaymentMethodDetails => {
     switch (selectedPaymentMethod) {
       case 'CREDIT_CARD':
       case 'DEBIT_CARD':
@@ -444,17 +430,17 @@ const CustomPaymentGateway = () => {
           cardHolderName,
           expiryDate,
           cvv
-        };
+        } as CreditCardDetails;
       case 'MOBILE_BANKING':
-        return { mobileNumber };
+        return { mobileNumber } as MobileBankingDetails;
       case 'INTERNET_BANKING':
-        return { bankName };
+        return { bankName } as InternetBankingDetails;
       case 'CASH':
-        return { method: 'CASH' };
+        return { method: 'CASH' } as CashDetails;
       case 'OTHER':
-        return { transactionId };
+        return { transactionId } as OtherDetails;
       default:
-        return {};
+        return { method: 'CASH' } as CashDetails;
     }
   };
 

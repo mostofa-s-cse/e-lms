@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { CreatePaymentRequest, CreateCartPaymentRequest, CreateFreeEnrollmentRequest } from '../types/payment';
 
 // API Response types
 export interface ApiResponse<T = any> {
@@ -317,9 +318,9 @@ export const studentAPI = {
 // Custom Payment API (replacing SSLCommerz)
 export const paymentsAPI = {
   // New custom payment methods
-  createPayment: (data: any) => api.post('/payments/create', data),
-  createCartPayment: (data: any) => api.post('/payments/create-cart', data),
-  createFreeEnrollment: (data: any) => api.post('/payments/free-enrollment', data),
+  createPayment: (data: CreatePaymentRequest) => api.post('/payments/create', data),
+  createCartPayment: (data: CreateCartPaymentRequest) => api.post('/payments/create-cart', data),
+  createFreeEnrollment: (data: CreateFreeEnrollmentRequest) => api.post('/payments/free-enrollment', data),
   validatePayment: (data: any) => api.post('/payments/validate', data),
   
   // Existing payment management methods

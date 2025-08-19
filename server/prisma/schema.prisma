@@ -405,6 +405,12 @@ enum PaymentMethod {
   SSLCOMMERZ
   CUSTOM
   BANK_TRANSFER
+  CREDIT_CARD
+  DEBIT_CARD
+  MOBILE_BANKING
+  INTERNET_BANKING
+  CASH
+  OTHER
 }
 
 enum ContactStatus {

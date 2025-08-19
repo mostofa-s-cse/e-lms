@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import { Footer } from '../components';
 import { coursesAPI, paymentsAPI, enrollmentsAPI } from '../services/api';
 import { showSuccessAlert, showErrorAlert } from '../utils/sweetAlert';
+import { PaymentDetails, CartPaymentDetails } from '../types/payment';
 
 interface Course {
   id: string;
@@ -32,17 +33,6 @@ interface Intake {
   endDate: string;
   amount: number;
   isActive: boolean;
-}
-
-interface PaymentDetails {
-  courseId: string;
-  courseCode: string;
-  intakeId?: string;
-  amount: number;
-  courseTitle: string;
-  intakeName?: string;
-  originalPrice?: number;
-  discount?: number;
 }
 
 interface CartItem {
@@ -201,6 +191,9 @@ const PaymentCheckoutPage = () => {
           amount: expectedAmount, // Use validated amount
           courseTitle: courseData.title,
           intakeName: selectedIntake?.name,
+          userId: user?.id || '',
+          userEmail: user?.email || '',
+          userName: user ? `${user.firstName} ${user.lastName}` : '',
           originalPrice: courseData.price,
           discount: selectedIntake ? courseData.price - selectedIntake.amount : 0
         };
