@@ -478,7 +478,7 @@ const CoursesPage = () => {
                   />
                 </div>
                 <div className="text-xs text-gray-500">
-                  ${priceRange[0]} - ${priceRange[1]}
+                  ৳{priceRange[0]} - ৳{priceRange[1]}
                 </div>
                 <div className="flex items-center">
                   <input
@@ -592,15 +592,15 @@ const CoursesPage = () => {
                           {course.intakes?.length > 0 ? (
                             <>
                               <span className="text-lg font-bold text-green-600">
-                                From ${Math.min(...course.intakes.map(i => i.amount))}
+                                From ৳{Math.min(...course.intakes.map(i => i.amount))}
                               </span>
                               <span className="text-sm text-gray-500 line-through">
-                                ${course.price}
+                                ৳{course.price}
                               </span>
                             </>
                           ) : (
                             <span className="text-2xl font-bold text-blue-600">
-                              {course.isFree ? 'Free' : `$${course.price}`}
+                              {course.isFree ? 'Free' : `৳${course.price}`}
                             </span>
                           )}
                         </div>
@@ -634,10 +634,10 @@ const CoursesPage = () => {
                           ) : (
                             <div className="flex flex-col space-y-1">
                               <Link 
-                                to="/register" 
+                                to="/login" 
                                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-center text-sm"
                               >
-                                Get Started
+                                Login to Enroll
                               </Link>
                               <button
                                 onClick={() => handleAddToCartClick(course)}
@@ -693,7 +693,7 @@ const CoursesPage = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-green-600">${intake.amount}</div>
+                            <div className="font-bold text-green-600">৳${intake.amount}</div>
                             <div className="text-xs text-gray-500">Special Offer</div>
                           </div>
                         </div>
@@ -711,7 +711,7 @@ const CoursesPage = () => {
                         <option value="">Choose an intake (optional)...</option>
                         {selectedCourse.intakes.map((intake) => (
                           <option key={intake.id} value={intake.id}>
-                            {intake.name} - ${intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
+                            {intake.name} - ৳{intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
                           </option>
                         ))}
                       </select>
@@ -736,7 +736,7 @@ const CoursesPage = () => {
               ) : (
                 <div className="space-y-3">
                   <div className="text-blue-700 font-semibold p-3 bg-blue-50 rounded-md border border-blue-200">
-                    💳 Course Price: ${selectedCourse.price}
+                    💳 Course Price: ৳{selectedCourse.price}
                   </div>
                   
                   {/* Payment Checkout Info */}
@@ -795,7 +795,7 @@ const CoursesPage = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-green-600">${intake.amount}</div>
+                            <div className="font-bold text-green-600">৳${intake.amount}</div>
                             <div className="text-xs text-gray-500">Special Offer</div>
                           </div>
                         </div>
@@ -813,7 +813,7 @@ const CoursesPage = () => {
                         <option value="">Choose an intake (optional)...</option>
                         {selectedCourse.intakes.map((intake) => (
                           <option key={intake.id} value={intake.id}>
-                            {intake.name} - ${intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
+                            {intake.name} - ৳{intake.amount} ({new Date(intake.startDate).toLocaleDateString()})
                           </option>
                         ))}
                       </select>

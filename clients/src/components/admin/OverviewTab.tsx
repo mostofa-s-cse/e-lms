@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
+  Users, 
   BookOpen, 
-  GraduationCap, 
-  User, 
-  Calendar,
-  Video,
+  Video, 
+  FileText, 
+  TrendingUp, 
   Clock,
-  Users,
-  FileText,
-  HelpCircle,
-  DollarSign
+  CreditCard,
+  GraduationCap,
+  User,
+  Calendar,
+  HelpCircle
 } from 'lucide-react';
 import { Course, Video as VideoType, Enrollment, Note, Quiz } from './types';
 
@@ -41,6 +42,21 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   const getTotalVideoDuration = () => {
     return videos.reduce((total, video) => total + video.duration, 0);
   };
+
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  useEffect(() => {
+    const calculateTotalRevenue = () => {
+      const total = enrollments.reduce((sum, enrollment) => {
+        // Fallback to course.price if enrollment does not have coursePrice
+        // Or just use course.price * enrollments.length if all enrollments are for this course
+        return sum + (course.price || 0);
+      }, 0);
+      setTotalRevenue(total);
+    };
+
+    calculateTotalRevenue();
+  }, [enrollments, course.price]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -83,10 +99,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
 
             <div className="flex items-center space-x-3">
-              <DollarSign className="w-5 h-5 text-gray-500" />
+              <CreditCard className="w-5 h-5 text-gray-500" />
               <div>
                 <p className="text-sm text-gray-600">Price</p>
-                <p className="font-medium">${course.price.toFixed(2)}</p>
+                <p className="font-medium">৳{course.price.toFixed(2)}</p>
               </div>
             </div>
 
@@ -182,6 +198,26 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 <span className="text-sm text-gray-600">Quizzes</span>
               </div>
               <span className="font-semibold">{course._count?.quizzes || quizzes.length}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CreditCard className="w-5 h-5 text-gray-500" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Total Revenue
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    ৳{totalRevenue.toFixed(2)}
+                  </dd>
+                </dl>
+              </div>
             </div>
           </div>
         </div>

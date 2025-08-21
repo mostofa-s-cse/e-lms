@@ -7,10 +7,10 @@ export async function seedUserProfiles(prisma: PrismaClient) {
 
   const profileData = users.map((user, index) => ({
     userId: user.id,
-    phone: `+1-555-${String(index + 1).padStart(4, '0')}`,
-    address: `${1000 + index} ${user.role === 'ADMIN' ? 'Admin' : user.role === 'TEACHER' ? 'Faculty' : 'Student'} St`,
-    city: index % 2 === 0 ? 'Boston' : 'Cambridge',
-    state: 'MA',
+    phone: `+880-1${String(index + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 900000) + 100000)}`,
+    address: `${1000 + index} ${user.role === 'ADMIN' ? 'Admin' : user.role === 'TEACHER' ? 'Faculty' : 'Student'} Road`,
+    city: index % 3 === 0 ? 'Dhaka' : index % 3 === 1 ? 'Chittagong' : 'Sylhet',
+    state: 'Bangladesh',
     profilePicture: `/uploads/profile/default-${index + 1}.jpg`
   }));
 

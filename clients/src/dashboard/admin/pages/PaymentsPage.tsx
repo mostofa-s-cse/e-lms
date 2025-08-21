@@ -44,15 +44,15 @@ const PaymentsPage = () => {
     userId: '',
     enrollmentId: '',
     amount: 0,
-    currency: 'USD',
-    method: 'CREDIT_CARD',
+    currency: 'BDT',
+    method: 'BANK_TRANSFER',
     status: 'PENDING',
     referenceId: '',
   });
   const [editFormData, setEditFormData] = useState({
     amount: 0,
-    currency: 'USD',
-    method: 'CREDIT_CARD',
+    currency: 'BDT',
+    method: 'BANK_TRANSFER',
     status: 'PENDING',
     referenceId: '',
   });
@@ -90,8 +90,8 @@ const PaymentsPage = () => {
           userId: '',
           enrollmentId: '',
           amount: 0,
-          currency: 'USD',
-          method: 'CREDIT_CARD',
+          currency: 'BDT',
+          method: 'BANK_TRANSFER',
           status: 'PENDING',
           referenceId: '',
         });
@@ -116,8 +116,8 @@ const PaymentsPage = () => {
         setEditingPayment(null);
         setEditFormData({
           amount: 0,
-          currency: 'USD',
-          method: 'CREDIT_CARD',
+          currency: 'BDT',
+          method: 'BANK_TRANSFER',
           status: 'PENDING',
           referenceId: '',
         });
@@ -339,10 +339,9 @@ const PaymentsPage = () => {
             value={createFormData.currency}
             onChange={(value) => setCreateFormData({ ...createFormData, currency: value as string })}
             options={[
+              { value: 'BDT', label: 'BDT' },
               { value: 'USD', label: 'USD' },
               { value: 'EUR', label: 'EUR' },
-              { value: 'GBP', label: 'GBP' },
-              { value: 'BDT', label: 'BDT' },
             ]}
             required
           />
@@ -418,10 +417,9 @@ const PaymentsPage = () => {
               value={editFormData.currency}
               onChange={(value) => setEditFormData({ ...editFormData, currency: value as string })}
               options={[
+                { value: 'BDT', label: 'BDT' },
                 { value: 'USD', label: 'USD' },
                 { value: 'EUR', label: 'EUR' },
-                { value: 'GBP', label: 'GBP' },
-                { value: 'BDT', label: 'BDT' },
               ]}
               required
             />

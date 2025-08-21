@@ -653,7 +653,7 @@ const CourseDetailsPage = () => {
           {course.isActive ? 'Active' : 'Inactive'}
         </span>
         <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
-          {course.isFree ? 'Free' : `$${course.price.toFixed(2)}`}
+          {course.isFree ? 'Free' : `৳${course.price.toFixed(2)}`}
         </span>
       </div>
 

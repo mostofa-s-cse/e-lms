@@ -91,6 +91,31 @@ const LoginPage = () => {
             <p className="mt-2 text-center text-sm text-gray-600">
               Welcome to the E-Learning Management System
             </p>
+            
+            {/* Test Account Information */}
+            <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+                Test Account Credentials
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Admin:</span>
+                  <span className="text-gray-600">admin@university.edu / Password123</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Teacher:</span>
+                  <span className="text-gray-600">prof.ali@university.edu / Password123</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Student:</span>
+                  <span className="text-gray-600">student.bilal@university.edu / Password123</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                All test accounts use the same password: Password123
+              </p>
+            </div>
+            
             {/* <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <div className="flex items-center">
                 <div className="text-blue-600 mr-2">ℹ️</div>
