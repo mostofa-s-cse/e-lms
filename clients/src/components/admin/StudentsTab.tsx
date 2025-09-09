@@ -1,5 +1,5 @@
 import React from 'react';
-import DataTable from '../../pages/DataTable';
+import DataTable from '../DataTable';
 import { Enrollment } from './types';
 
 interface StudentsTabProps {

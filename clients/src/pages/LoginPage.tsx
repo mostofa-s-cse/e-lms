@@ -14,6 +14,10 @@ const LoginPage = () => {
   const location = useLocation();
 
   useEffect(() => {
+    document.title = 'Login - E-LMS';
+  }, []);
+
+  useEffect(() => {
     // Check for success message from registration
     if (location.state?.message) {
       showSuccessAlert('Registration Successful!', location.state.message);
@@ -27,11 +31,46 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
+      console.log('LoginPage: Attempting login with email:', email);
       await login(email, password);
-      showSuccessAlert('Login Successful!', 'Welcome back to EduLMS');
+      console.log('LoginPage: Login successful, navigating to home page');
+      
+      // Navigate immediately without showing alert first
       navigate('/');
+      
+      // Show success message after navigation
+      setTimeout(() => {
+        try {
+          showSuccessAlert('Login Successful!', 'Welcome back to E-LMS');
+        } catch (alertError) {
+          console.error('LoginPage: Error showing success alert:', alertError);
+        }
+      }, 500);
     } catch (error: any) {
-      showErrorAlert('Login Failed', error.message || 'Invalid email or password');
+      console.error('LoginPage: Login error:', error);
+      console.error('LoginPage: Error message:', error.message);
+      console.error('LoginPage: Error response:', error.response);
+      
+      // Handle specific approval status errors
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.message;
+        
+        if (errorMessage.includes('pending admin approval')) {
+          showErrorAlert(
+            'Registration Pending', 
+            'Your registration request is pending admin approval. Please wait for approval or contact support at contact@edulms.com for assistance.'
+          );
+        } else if (errorMessage.includes('rejected by admin')) {
+          showErrorAlert(
+            'Account Rejected', 
+            'Your account has been rejected by admin. Please contact support at contact@edulms.com for more information.'
+          );
+        } else {
+          showErrorAlert('Access Denied', errorMessage);
+        }
+      } else {
+        showErrorAlert('Login Failed', error.message || 'Invalid email or password');
+      }
     } finally {
       setLoading(false);
     }
@@ -52,6 +91,39 @@ const LoginPage = () => {
             <p className="mt-2 text-center text-sm text-gray-600">
               Welcome to the E-Learning Management System
             </p>
+            
+            {/* Test Account Information */}
+            <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+                Test Account Credentials
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Admin:</span>
+                  <span className="text-gray-600">admin@university.edu / Password123</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Teacher:</span>
+                  <span className="text-gray-600">prof.ali@university.edu / Password123</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Student:</span>
+                  <span className="text-gray-600">student.bilal@university.edu / Password123</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                All test accounts use the same password: Password123
+              </p>
+            </div>
+            
+            {/* <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex items-center">
+                <div className="text-blue-600 mr-2">ℹ️</div>
+                <div className="text-sm text-blue-800">
+                  <strong>New users:</strong> After registration, your account requires admin approval before you can log in. You'll receive a notification once approved.
+                </div>
+              </div>
+            </div> */}
           </div>
 
           <Form onSubmit={handleSubmit}>

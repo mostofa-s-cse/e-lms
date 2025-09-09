@@ -4,6 +4,9 @@ export interface Course {
   description: string;
   code: string;
   credits: number;
+  price: number;
+  isFree: boolean;
+  thumbnail: string | null;
   isActive: boolean;
   teacher?: {
     id: string;
@@ -69,8 +72,18 @@ export interface Enrollment {
 export interface Note {
   id: string;
   title: string;
-  content: string;
+  description?: string;
+  attachment?: string;
+  isImage?: boolean;
+  attachmentSize?: number;
+  attachmentType?: string;
+  isActive: boolean;
   courseId: string;
+  course?: {
+    id: string;
+    title: string;
+    code: string;
+  };
   author?: {
     id: string;
     firstName: string;
@@ -86,7 +99,8 @@ export interface Quiz {
   description: string;
   courseId: string;
   duration: number;
-  passingScore: number;
+  totalMarks: number;
+  passingMarks: number;
   isActive: boolean;
   author?: {
     id: string;

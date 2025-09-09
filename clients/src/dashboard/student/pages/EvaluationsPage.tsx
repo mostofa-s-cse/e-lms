@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { evaluationsAPI } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import { studentAPI, evaluationsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
 
@@ -32,22 +33,31 @@ interface Evaluation {
 }
 
 interface EvaluationsResponse {
+  success: boolean;
   data: Evaluation[];
 }
 
 const EvaluationsPage = () => {
+  const { user } = useAuth();
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEvaluations();
-  }, []);
+    if (user?.id) {
+      fetchStudentEvaluations();
+    }
+  }, [user?.id]);
 
-  const fetchEvaluations = async () => {
+  const fetchStudentEvaluations = async () => {
     try {
       setLoading(true);
       const response = await evaluationsAPI.getAll();
-      setEvaluations((response.data as EvaluationsResponse).data);
+      const data = response.data as EvaluationsResponse;
+      if (data.success) {
+        // Filter evaluations for current student
+        const studentEvaluations = data.data.filter(evaluation => evaluation.studentId === user!.id);
+        setEvaluations(studentEvaluations);
+      }
     } catch (error) {
       handleApiError(error, 'Failed to fetch evaluations');
     } finally {
@@ -142,7 +152,7 @@ const EvaluationsPage = () => {
       <DataTable
         columns={columns}
         data={evaluations}
-        title="Evaluations"
+        title="My Evaluations"
         subtitle="View your course evaluations and feedback"
         loading={loading}
       />

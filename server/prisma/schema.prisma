@@ -21,21 +21,47 @@ model User {
   lastName  String
   role      UserRole @default(STUDENT)
   isActive  Boolean  @default(true)
+  approvalStatus ApprovalStatus @default(PENDING)
+  approvedAt DateTime?
+  approvedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
+  profile    UserProfile?
   courses    Course[]    @relation("TeacherCourses")
   enrollments Enrollment[]
   notes      Note[]
   videos     Video[]
   quizzes    Quiz[]
   questions  Question[]
-  evaluations Evaluation[]
+  studentEvaluations Evaluation[] @relation("StudentEvaluations")
+  evaluatorEvaluations Evaluation[] @relation("EvaluatorEvaluations")
   quizAttempts QuizAttempt[]
-  evaluationsGiven Evaluation[] @relation("Evaluations")
+  payments   Payment[]
+  carts      Cart[]
+  approvedByUser User? @relation("UserApprovals", fields: [approvedBy], references: [id])
+  approvedUsers User[] @relation("UserApprovals")
+  approvedEnrollments Enrollment[] @relation("EnrollmentApprovals")
 
   @@map("users")
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  phone           String
+  address         String?
+  city            String?
+  state           String?
+  profilePicture  String?
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("user_profiles")
 }
 
 model Course {
@@ -44,9 +70,13 @@ model Course {
   description String   @db.Text
   code        String   @unique
   credits     Int      @default(0)
+  price       Float?   @default(0.0)
+  isFree      Boolean  @default(false)
+  thumbnail   String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
 
   // Relations
   teacherId   String
@@ -56,6 +86,8 @@ model Course {
   videos      Video[]
   quizzes     Quiz[]
   enrollments Enrollment[]
+  cartItems   CartItem[]
+  evaluations Evaluation[]
 
   @@map("courses")
 }
@@ -65,6 +97,7 @@ model Intake {
   name      String
   startDate DateTime
   endDate   DateTime
+  amount    Float?    @default(0.0)  // 0.0 means free course
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -78,31 +111,107 @@ model Intake {
 }
 
 model Enrollment {
-  id        String   @id @default(cuid())
-  enrolledAt DateTime @default(now())
-  status    EnrollmentStatus @default(ACTIVE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String             @id @default(cuid())
+  enrolledAt  DateTime           @default(now())
+  status      EnrollmentStatus   @default(PENDING)
+  approvedAt  DateTime?
+  approvedBy  String?
+  rejectedAt  DateTime?
+  rejectionReason String?        @db.Text
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   // Relations
-  studentId String
-  student   User   @relation(fields: [studentId], references: [id])
-  courseId  String
-  course    Course @relation(fields: [courseId], references: [id])
-  intakeId  String
-  intake    Intake @relation(fields: [intakeId], references: [id])
+  studentId   String
+  student     User               @relation(fields: [studentId], references: [id])
+  courseId    String
+  course      Course             @relation(fields: [courseId], references: [id])
+  intakeId    String?           
+  intake      Intake?            @relation(fields: [intakeId], references: [id])
+  payments    Payment[]
+  approver    User?              @relation("EnrollmentApprovals", fields: [approvedBy], references: [id])
 
   @@unique([studentId, courseId, intakeId])
   @@map("enrollments")
 }
 
+
+model Payment {
+  id           String   @id @default(cuid())
+  amount       Float
+  currency     String   @default("BDT")
+  status       PaymentStatus @default(PENDING)
+  method       PaymentMethod @default(SSLCOMMERZ)
+  referenceId  String?  @unique // SSLCommerz tran_id
+  validationId String?         // SSLCommerz val_id
+  gatewayUrl   String?         // URL for redirection or gateway callback
+  cardType     String?         // e.g., VISA, MasterCard
+  cardIssuer   String?         // e.g., City Bank
+  cardBrand    String?         // e.g., Mastercard
+  bankTranId   String?         // SSLCommerz bank transaction ID
+  errorReason  String?         // for logging failure reasons
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  enrollmentId String
+  enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id])
+
+  @@map("payments")
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String?  // null for guest users
+  sessionId String?  // for guest users
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+
+  @@unique([userId, sessionId])
+  @@map("carts")
+}
+
+model CartItem {
+  id          String   @id @default(cuid())
+  cartId      String
+  courseId    String
+  title       String
+  price       Float
+  isFree      Boolean  @default(false)
+  thumbnail   String?
+  teacherName String   // Store teacher name for cart items
+  courseCode  String?
+  intakeId    String?
+  intakeName  String?
+  intakeAmount Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  course      Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([cartId, courseId])
+  @@map("cart_items")
+}
+
+
 model Note {
   id          String   @id @default(cuid())
   title       String
   description String?  @db.Text
-  fileUrl     String
-  fileSize    Int
-  fileType    String
+  attachment        String?
+  isImage     Boolean?  @default(false)
+  attachmentSize    Int?
+  attachmentType    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -176,6 +285,7 @@ model Question {
   quiz   Quiz @relation(fields: [quizId], references: [id])
   authorId String
   author   User @relation(fields: [authorId], references: [id])
+  answers    QuizAnswer[]
 
   @@map("questions")
 }
@@ -195,43 +305,84 @@ model QuizAttempt {
   student   User @relation(fields: [studentId], references: [id])
   quizId    String
   quiz      Quiz @relation(fields: [quizId], references: [id])
+  answers   QuizAnswer[]
 
-  @@unique([studentId, quizId])
   @@map("quiz_attempts")
 }
 
-model Evaluation {
-  id          String   @id @default(cuid())
-  title       String
-  description String?  @db.Text
-  type        EvaluationType
-  score       Float?
-  maxScore    Float
-  feedback    String?  @db.Text
-  evaluatedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model QuizAnswer {
+  id        String   @id @default(cuid())
+  answer    String   @db.Text
+  isCorrect Boolean
+  marksEarned Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  studentId String
-  student   User @relation(fields: [studentId], references: [id])
+  attemptId String
+  attempt   QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@map("quiz_answers")
+}
+
+model Evaluation {
+  id          String         @id @default(cuid())
+  title       String
+  description String?        @db.Text
+  type        EvaluationType
+  score       Float
+  maxScore    Float
+  feedback    String?        @db.Text
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  courseId    String
+  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User           @relation("StudentEvaluations", fields: [studentId], references: [id], onDelete: Cascade)
   evaluatorId String
-  evaluator   User @relation("Evaluations", fields: [evaluatorId], references: [id])
+  evaluator   User           @relation("EvaluatorEvaluations", fields: [evaluatorId], references: [id], onDelete: Cascade)
 
   @@map("evaluations")
 }
 
+model ContactMessage {
+  id            String            @id @default(cuid())
+  name          String
+  email         String
+  subject       String
+  message       String            @db.Text
+  status        ContactStatus     @default(PENDING)
+  adminResponse String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("contact_messages")
+}
+
+// Enums
 enum UserRole {
   STUDENT
   TEACHER
   ADMIN
 }
 
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum EnrollmentStatus {
+  PENDING
   ACTIVE
   COMPLETED
   DROPPED
-  SUSPENDED
 }
 
 enum QuestionType {
@@ -244,7 +395,33 @@ enum QuestionType {
 enum EvaluationType {
   ASSIGNMENT
   PROJECT
-  PRESENTATION
+  EXAM
   PARTICIPATION
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  SSLCOMMERZ
+  CUSTOM
+  BANK_TRANSFER
+  CREDIT_CARD
+  DEBIT_CARD
+  MOBILE_BANKING
+  INTERNET_BANKING
+  CASH
   OTHER
+}
+
+enum ContactStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }

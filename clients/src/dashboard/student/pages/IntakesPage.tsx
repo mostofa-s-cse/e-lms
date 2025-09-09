@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { intakesAPI } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import { studentAPI, enrollmentsAPI } from '../../../services/api';
 import DataTable from '../../../pages/DataTable';
 import { handleApiError } from '../../../utils/sweetAlert';
 
@@ -14,25 +15,46 @@ interface Intake {
   createdAt: string;
 }
 
-interface IntakesResponse {
-  data: Intake[];
+interface Enrollment {
+  id: string;
+  status: string;
+  enrolledAt: string;
+  intake: Intake;
+  course: {
+    id: string;
+    title: string;
+    code: string;
+  };
+}
+
+interface EnrollmentsResponse {
+  success: boolean;
+  data: Enrollment[];
 }
 
 const IntakesPage = () => {
-  const [intakes, setIntakes] = useState<Intake[]>([]);
+  const { user } = useAuth();
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchIntakes();
-  }, []);
+    if (user?.id) {
+      fetchEnrolledIntakes();
+    }
+  }, [user?.id]);
 
-  const fetchIntakes = async () => {
+  const fetchEnrolledIntakes = async () => {
     try {
       setLoading(true);
-      const response = await intakesAPI.getAll();
-      setIntakes((response.data as IntakesResponse).data);
+      const response = await enrollmentsAPI.getByStudent(user!.id);
+      const data = response.data as EnrollmentsResponse;
+      if (data.success) {
+        // Filter enrollments that have intakes
+        const enrollmentsWithIntakes = data.data.filter(enrollment => enrollment.intake);
+        setEnrollments(enrollmentsWithIntakes);
+      }
     } catch (error) {
-      handleApiError(error, 'Failed to fetch intakes');
+      handleApiError(error, 'Failed to fetch enrolled intakes');
     } finally {
       setLoading(false);
     }
@@ -40,57 +62,73 @@ const IntakesPage = () => {
 
   const columns = [
     {
-      key: 'name',
+      key: 'intake',
       label: 'Intake',
-      render: (name: string, intake: Intake) => (
+      render: (_: any, enrollment: Enrollment) => (
         <div>
-          <div className="text-sm font-medium text-gray-900">{name}</div>
-          <div className="text-sm text-gray-500">{intake.description}</div>
+          <div className="text-sm font-medium text-gray-900">{enrollment.intake.name}</div>
+          <div className="text-sm text-gray-500">{enrollment.intake.description}</div>
+        </div>
+      )
+    },
+    {
+      key: 'course',
+      label: 'Course',
+      render: (_: any, enrollment: Enrollment) => (
+        <div>
+          <div className="text-sm font-medium text-gray-900">{enrollment.course.title}</div>
+          <div className="text-sm text-gray-500">{enrollment.course.code}</div>
         </div>
       )
     },
     {
       key: 'startDate',
       label: 'Start Date',
-      render: (date: string) => (
+      render: (_: any, enrollment: Enrollment) => (
         <span className="text-sm text-gray-900">
-          {new Date(date).toLocaleDateString()}
+          {new Date(enrollment.intake.startDate).toLocaleDateString()}
         </span>
       )
     },
     {
       key: 'endDate',
       label: 'End Date',
-      render: (date: string) => (
+      render: (_: any, enrollment: Enrollment) => (
         <span className="text-sm text-gray-900">
-          {new Date(date).toLocaleDateString()}
+          {new Date(enrollment.intake.endDate).toLocaleDateString()}
         </span>
       )
     },
     {
       key: 'maxStudents',
       label: 'Max Students',
-      render: (maxStudents: number) => (
+      render: (_: any, enrollment: Enrollment) => (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-          {maxStudents} students
+          {enrollment.intake.maxStudents} students
         </span>
       )
     },
     {
-      key: 'isActive',
-      label: 'Status',
-      render: (isActive: boolean) => (
+      key: 'status',
+      label: 'Enrollment Status',
+      render: (_: any, enrollment: Enrollment) => (
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          enrollment.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+          enrollment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-red-100 text-red-800'
         }`}>
-          {isActive ? 'Active' : 'Inactive'}
+          {enrollment.status}
         </span>
       )
     },
     {
-      key: 'createdAt',
-      label: 'Created',
-      render: (date: string) => new Date(date).toLocaleDateString()
+      key: 'enrolledAt',
+      label: 'Enrolled',
+      render: (_: any, enrollment: Enrollment) => (
+        <span className="text-sm text-gray-900">
+          {new Date(enrollment.enrolledAt).toLocaleDateString()}
+        </span>
+      )
     }
   ];
 
@@ -103,9 +141,9 @@ const IntakesPage = () => {
 
       <DataTable
         columns={columns}
-        title="Intakes"
+        title="Enrolled Intakes"
         subtitle="View all your enrolled intakes and their details"
-        data={intakes}
+        data={enrollments}
         loading={loading}
       />
     </div>

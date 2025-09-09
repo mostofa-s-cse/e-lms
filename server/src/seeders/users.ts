@@ -1,190 +1,279 @@
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient, UserRole, ApprovalStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 export async function seedUsers(prisma: PrismaClient) {
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const hashedPassword = await bcrypt.hash('Password123', 10);
 
   const usersData = [
     // Admin users
     {
       email: 'admin@university.edu',
       password: hashedPassword,
-      firstName: 'John',
-      lastName: 'Admin',
+      firstName: 'Ahmed',
+      lastName: 'Hossain',
       role: UserRole.ADMIN,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null // Self-approved or system-approved
     },
     {
       email: 'admin2@university.edu',
       password: hashedPassword,
-      firstName: 'Sarah',
-      lastName: 'Director',
+      firstName: 'Fatima',
+      lastName: 'Rahman',
       role: UserRole.ADMIN,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null // Self-approved or system-approved
     },
 
     // Teacher users
     {
-      email: 'prof.smith@university.edu',
+      email: 'prof.ali@university.edu',
       password: hashedPassword,
-      firstName: 'Dr. Michael',
-      lastName: 'Smith',
+      firstName: 'Dr. Mohammad',
+      lastName: 'Ali',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'prof.johnson@university.edu',
+      email: 'prof.ayesha@university.edu',
       password: hashedPassword,
-      firstName: 'Dr. Emily',
-      lastName: 'Johnson',
+      firstName: 'Dr. Ayesha',
+      lastName: 'Begum',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'prof.williams@university.edu',
+      email: 'prof.kamal@university.edu',
       password: hashedPassword,
-      firstName: 'Prof. David',
-      lastName: 'Williams',
+      firstName: 'Prof. Kamal',
+      lastName: 'Uddin',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'prof.brown@university.edu',
+      email: 'prof.nasreen@university.edu',
       password: hashedPassword,
-      firstName: 'Dr. Lisa',
-      lastName: 'Brown',
+      firstName: 'Dr. Nasreen',
+      lastName: 'Khan',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'prof.davis@university.edu',
+      email: 'prof.rahim@university.edu',
       password: hashedPassword,
-      firstName: 'Prof. Robert',
-      lastName: 'Davis',
+      firstName: 'Prof. Rahim',
+      lastName: 'Chowdhury',
       role: UserRole.TEACHER,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
 
     // Student users
     {
-      email: 'student1@university.edu',
+      email: 'student.bilal@university.edu',
       password: hashedPassword,
-      firstName: 'Alice',
-      lastName: 'Johnson',
+      firstName: 'Bilal',
+      lastName: 'Ahmed',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student2@university.edu',
+      email: 'student.aisha@university.edu',
       password: hashedPassword,
-      firstName: 'Bob',
-      lastName: 'Smith',
+      firstName: 'Aisha',
+      lastName: 'Islam',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student3@university.edu',
+      email: 'student.chowdhury@university.edu',
       password: hashedPassword,
-      firstName: 'Carol',
-      lastName: 'Williams',
+      firstName: 'Chowdhury',
+      lastName: 'Zaman',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student4@university.edu',
+      email: 'student.dina@university.edu',
       password: hashedPassword,
-      firstName: 'David',
-      lastName: 'Brown',
+      firstName: 'Dina',
+      lastName: 'Begum',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student5@university.edu',
+      email: 'student.emon@university.edu',
       password: hashedPassword,
-      firstName: 'Emma',
-      lastName: 'Davis',
+      firstName: 'Emon',
+      lastName: 'Das',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student6@university.edu',
+      email: 'student.farhana@university.edu',
       password: hashedPassword,
-      firstName: 'Frank',
-      lastName: 'Miller',
+      firstName: 'Farhana',
+      lastName: 'Miah',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student7@university.edu',
+      email: 'student.golam@university.edu',
       password: hashedPassword,
-      firstName: 'Grace',
-      lastName: 'Wilson',
+      firstName: 'Golam',
+      lastName: 'Rasul',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student8@university.edu',
+      email: 'student.habiba@university.edu',
       password: hashedPassword,
-      firstName: 'Henry',
-      lastName: 'Taylor',
+      firstName: 'Habiba',
+      lastName: 'Sultana',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student9@university.edu',
+      email: 'student.imran@university.edu',
       password: hashedPassword,
-      firstName: 'Ivy',
-      lastName: 'Anderson',
+      firstName: 'Imran',
+      lastName: 'Haque',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student10@university.edu',
+      email: 'student.jannat@university.edu',
       password: hashedPassword,
-      firstName: 'Jack',
-      lastName: 'Thomas',
+      firstName: 'Jannat',
+      lastName: 'Ferdous',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student11@university.edu',
+      email: 'student.karim@university.edu',
       password: hashedPassword,
-      firstName: 'Kate',
-      lastName: 'Jackson',
+      firstName: 'Karim',
+      lastName: 'Mollah',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student12@university.edu',
+        email: 'student.lamia@university.edu',
       password: hashedPassword,
-      firstName: 'Liam',
-      lastName: 'White',
+      firstName: 'Lamia',
+      lastName: 'Nahar',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student13@university.edu',
+      email: 'student.mahmud@university.edu',
       password: hashedPassword,
-      firstName: 'Mia',
-      lastName: 'Harris',
+      firstName: 'Mahmud',
+      lastName: 'Omar',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student14@university.edu',
+      email: 'student.nadia@university.edu',
       password: hashedPassword,
-      firstName: 'Noah',
-      lastName: 'Martin',
+      firstName: 'Nadia',
+      lastName: 'Parvin',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
     },
     {
-      email: 'student15@university.edu',
+      email: 'student.omar@university.edu',
       password: hashedPassword,
-      firstName: 'Olivia',
-      lastName: 'Thompson',
+      firstName: 'Omar',
+      lastName: 'Qureshi',
       role: UserRole.STUDENT,
-      isActive: true
+      isActive: true,
+      approvalStatus: ApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: null
+    },
+    // Test pending user for admin approval testing
+    {
+      email: 'pending.student.aisha@university.edu',
+      password: hashedPassword,
+      firstName: 'Test',
+      lastName: 'PendingStudent',
+      role: UserRole.STUDENT,
+      isActive: true,
+      approvalStatus: ApprovalStatus.PENDING,
+      approvedAt: null,
+      approvedBy: null
+    },
+    {
+      email: 'pending.teacher.ali@university.edu',
+      password: hashedPassword,
+      firstName: 'Dr. Test',
+      lastName: 'PendingTeacher',
+      role: UserRole.TEACHER,
+      isActive: true,
+      approvalStatus: ApprovalStatus.PENDING,
+      approvedAt: null,
+      approvedBy: null
     }
   ];
 

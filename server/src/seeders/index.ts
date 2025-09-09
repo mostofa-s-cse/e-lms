@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { seedUsers } from './users';
+import { seedUserProfiles } from './userProfiles';
 import { seedCourses } from './courses';
 import { seedIntakes } from './intakes';
 import { seedEnrollments } from './enrollments';
@@ -9,6 +10,7 @@ import { seedQuizzes } from './quizzes';
 import { seedQuestions } from './questions';
 import { seedQuizAttempts } from './quizAttempts';
 import { seedEvaluations } from './evaluations';
+import { seedPayments } from './payments';
 
 const prisma = new PrismaClient();
 
@@ -27,6 +29,7 @@ async function main() {
       
       // Clear existing data (optional - comment out if you want to keep existing data)
       console.log('🧹 Clearing existing data...');
+      await prisma.payment.deleteMany();
       await prisma.evaluation.deleteMany();
       await prisma.quizAttempt.deleteMany();
       await prisma.question.deleteMany();
@@ -36,6 +39,7 @@ async function main() {
       await prisma.enrollment.deleteMany();
       await prisma.intake.deleteMany();
       await prisma.course.deleteMany();
+      await prisma.userProfile.deleteMany();
       await prisma.user.deleteMany();
     } catch (error: any) {
       if (error.code === 'P2021') {
@@ -60,6 +64,9 @@ async function main() {
     console.log('👥 Seeding users...');
     const users = await seedUsers(prisma);
 
+    console.log('👤 Seeding user profiles...');
+    const profiles = await seedUserProfiles(prisma);
+
     console.log('📚 Seeding courses...');
     const courses = await seedCourses(prisma, users);
 
@@ -82,13 +89,16 @@ async function main() {
     await seedQuestions(prisma, users, quizzes);
 
     console.log('📊 Seeding quiz attempts...');
-    await seedQuizAttempts(prisma, users, quizzes);
+    await seedQuizAttempts();
 
     console.log('📈 Seeding evaluations...');
     await seedEvaluations(prisma, users);
 
+    console.log('💳 Seeding payments...');
+    await seedPayments();
+
     console.log('✅ Database seeding completed successfully!');
-    console.log(`📊 Seeded ${users.length} users, ${courses.length} courses, ${intakes.length} intakes`);
+    console.log(`📊 Seeded ${users.length} users, ${profiles.length} profiles, ${courses.length} courses, ${intakes.length} intakes`);
 
   } catch (error) {
     console.error('❌ Error during seeding:', error);

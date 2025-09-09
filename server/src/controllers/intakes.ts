@@ -22,6 +22,35 @@ export const getAllIntakes = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const getIntakesByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    // Get intakes for courses that the teacher teaches
+    const intakes = await prisma.intake.findMany({
+      where: { 
+        isActive: true,
+        course: {
+          teacherId: teacherId
+        }
+      },
+      include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        _count: {
+          select: { enrollments: true }
+        }
+      },
+      orderBy: { startDate: 'desc' }
+    });
+    
+    res.json({ success: true, message: 'Teacher intakes fetched successfully', data: intakes } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getIntakeById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const intake = await prisma.intake.findUnique({
@@ -56,7 +85,7 @@ export const getIntakeById = async (req: Request, res: Response, next: NextFunct
 
 export const createIntake = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, startDate, endDate, courseId } = req.body;
+    const { name, startDate, endDate, courseId, amount } = req.body;
     const teacherId = req.user!.id;
     
     // Check if user is the teacher of this course or admin
@@ -79,7 +108,8 @@ export const createIntake = async (req: AuthRequest, res: Response, next: NextFu
         name,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
-        courseId
+        courseId,
+        amount: amount ? parseFloat(amount) : 0.0
       },
       include: {
         course: {
@@ -96,7 +126,7 @@ export const createIntake = async (req: AuthRequest, res: Response, next: NextFu
 
 export const updateIntake = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, startDate, endDate, isActive } = req.body;
+    const { name, startDate, endDate, isActive, amount } = req.body;
     const intakeId = req.params.id;
     const teacherId = req.user!.id;
     
@@ -124,7 +154,8 @@ export const updateIntake = async (req: AuthRequest, res: Response, next: NextFu
         name,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
-        isActive
+        isActive,
+        amount: amount !== undefined ? parseFloat(amount) : undefined
       },
       include: {
         course: {

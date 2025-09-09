@@ -32,6 +32,9 @@ export const getVideosByCourse = async (req: Request, res: Response, next: NextF
         isActive: true 
       },
       include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
         author: {
           select: { id: true, firstName: true, lastName: true }
         }
@@ -65,6 +68,32 @@ export const getVideoById = async (req: Request, res: Response, next: NextFuncti
     }
     
     res.json({ success: true, message: 'Video fetched successfully', data: video } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getVideosByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    const videos = await prisma.video.findMany({
+      where: { 
+        authorId: teacherId,
+        isActive: true 
+      },
+      include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        author: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ success: true, message: 'Teacher videos fetched successfully', data: videos } as ApiResponse);
   } catch (error) {
     next(error);
   }

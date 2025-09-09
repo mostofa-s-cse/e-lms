@@ -7,6 +7,7 @@ const router = Router();
 
 // Public endpoints (for authenticated users)
 router.get('/', authenticateToken, videoController.getAllVideos);
+router.get('/teacher', authenticateToken, requireTeacher, videoController.getVideosByTeacher);
 router.get('/course/:courseId', authenticateToken, videoController.getVideosByCourse);
 router.get('/:id', authenticateToken, videoController.getVideoById);
 

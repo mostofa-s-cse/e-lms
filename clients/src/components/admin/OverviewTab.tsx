@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
+  Users, 
   BookOpen, 
-  GraduationCap, 
-  User, 
-  Calendar,
-  Video,
+  Video, 
+  FileText, 
+  TrendingUp, 
   Clock,
-  Users,
-  FileText,
+  CreditCard,
+  GraduationCap,
+  User,
+  Calendar,
   HelpCircle
 } from 'lucide-react';
 import { Course, Video as VideoType, Enrollment, Note, Quiz } from './types';
@@ -41,13 +43,44 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
     return videos.reduce((total, video) => total + video.duration, 0);
   };
 
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  useEffect(() => {
+    const calculateTotalRevenue = () => {
+      const total = enrollments.reduce((sum, enrollment) => {
+        // Fallback to course.price if enrollment does not have coursePrice
+        // Or just use course.price * enrollments.length if all enrollments are for this course
+        return sum + (course.price || 0);
+      }, 0);
+      setTotalRevenue(total);
+    };
+
+    calculateTotalRevenue();
+  }, [enrollments, course.price]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Course Information */}
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4">Course Information</h2>
-          
+          {/* Course Thumbnail */}
+          <div className="flex-shrink-0">
+            {course.thumbnail ? (
+              <img
+                src={`${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${course.thumbnail}`}
+                alt={`${course.title} thumbnail`}
+                className="w-full h-auto rounded-lg object-cover border-2 border-gray-200 mb-4"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-full h-auto bg-gray-200 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                <span className="text-sm text-gray-500">No image</span>
+              </div>
+            )}
+          </div>
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <BookOpen className="w-5 h-5 text-gray-500" />
@@ -62,6 +95,14 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               <div>
                 <p className="text-sm text-gray-600">Credits</p>
                 <p className="font-medium">{course.credits} credits</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <CreditCard className="w-5 h-5 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-600">Price</p>
+                <p className="font-medium">৳{course.price.toFixed(2)}</p>
               </div>
             </div>
 
@@ -157,6 +198,26 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 <span className="text-sm text-gray-600">Quizzes</span>
               </div>
               <span className="font-semibold">{course._count?.quizzes || quizzes.length}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CreditCard className="w-5 h-5 text-gray-500" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Total Revenue
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    ৳{totalRevenue.toFixed(2)}
+                  </dd>
+                </dl>
+              </div>
             </div>
           </div>
         </div>

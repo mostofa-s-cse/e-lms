@@ -72,10 +72,10 @@ const VideoDetailsPage = () => {
       setVideo(videoData as Video);
       
       // Debug video URL
-      const videoUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:4000'}${videoData.videoUrl}`;
+      const videoUrl = `${process.env.REACT_APP_IMG_URL || 'http://localhost:4000'}${videoData.videoUrl}`;
       console.log('Video URL:', videoUrl);
       console.log('Video data:', videoData);
-      console.log('Environment API URL:', process.env.REACT_APP_API_URL);
+      console.log('Environment API URL:', process.env.REACT_APP_IMG_URL);
       console.log('Video URL from database:', videoData.videoUrl);
       console.log('Thumbnail from database:', videoData.thumbnail);
       

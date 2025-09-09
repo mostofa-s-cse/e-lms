@@ -19,20 +19,20 @@ const VideoPlayer = ({ videoUrl = "", thumbnailUrl }: VideoProps) => {
 
   const fullUrl = videoUrl?.startsWith("http")
     ? videoUrl
-    : `${process.env.REACT_APP_API_URL || "http://localhost:4000"}${videoUrl}`;
+    : `${process.env.REACT_APP_IMG_URL || "http://localhost:4000"}${videoUrl}`;
 
   const fullThumbnailUrl = thumbnailUrl?.startsWith("http")
     ? thumbnailUrl
     : thumbnailUrl && thumbnailUrl.trim() !== ""
-    ? `${process.env.REACT_APP_API_URL || "http://localhost:4000"}${thumbnailUrl}`
+    ? `${process.env.REACT_APP_IMG_URL || "http://localhost:4000"}${thumbnailUrl}`
     : undefined;
 
   // Debug thumbnail URL
-  console.log('Thumbnail debug:', {
-    thumbnailUrl,
-    fullThumbnailUrl,
-    apiUrl: process.env.REACT_APP_API_URL || "http://localhost:4000"
-  });
+  // console.log('Thumbnail debug:', {
+  //   thumbnailUrl,
+  //   fullThumbnailUrl,
+  //   apiUrl: process.env.REACT_APP_IMG_URL || "http://localhost:4000"
+  // });
   // Generate a fallback thumbnail if none provided
   const generateFallbackThumbnail = (): string | undefined => {
     if (!videoUrl) return undefined;

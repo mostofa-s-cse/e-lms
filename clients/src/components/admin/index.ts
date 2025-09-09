@@ -3,4 +3,6 @@ export { default as VideosTab } from './VideosTab';
 export { default as StudentsTab } from './StudentsTab';
 export { default as NotesTab } from './NotesTab';
 export { default as QuizzesTab } from './QuizzesTab';
+export { default as QuestionModal } from './QuestionModal';
+export { default as QuestionsTab } from './QuestionsTab';
 export * from './types'; 

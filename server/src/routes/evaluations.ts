@@ -6,13 +6,15 @@ import {
   createEvaluation, 
   updateEvaluation, 
   deleteEvaluation,
-  getEvaluationsByCourse
+  getEvaluationsByCourse,
+  getEvaluationsByTeacher
 } from '../controllers/evaluations';
 
 const router = express.Router();
 
 // Public routes (for students to view evaluations)
 router.get('/', authenticateToken, getAllEvaluations);
+router.get('/teacher', authenticateToken, authorizeRoles(['TEACHER', 'ADMIN']), getEvaluationsByTeacher);
 router.get('/course/:courseId', authenticateToken, getEvaluationsByCourse);
 router.get('/:id', authenticateToken, getEvaluationById);
 

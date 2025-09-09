@@ -23,6 +23,33 @@ export const getAllQuizzes = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+// Get quizzes by teacher
+export const getQuizzesByTeacher = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const teacherId = req.user!.id;
+    
+    const quizzes = await prisma.quiz.findMany({
+      where: { 
+        authorId: teacherId,
+        isActive: true 
+      },
+      include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        author: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ success: true, message: 'Teacher quizzes fetched successfully', data: quizzes } as ApiResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get quiz by ID
 export const getQuizById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -55,8 +82,17 @@ export const getQuizzesByCourse = async (req: Request, res: Response, next: Next
     const { courseId } = req.params;
 
     const quizzes = await prisma.quiz.findMany({
-      where: { courseId },
+      where: { 
+        courseId,
+        isActive: true 
+      },
       include: {
+        course: {
+          select: { id: true, title: true, code: true }
+        },
+        author: {
+          select: { id: true, firstName: true, lastName: true }
+        },
         questions: {
           select: {
             id: true,
@@ -65,6 +101,7 @@ export const getQuizzesByCourse = async (req: Request, res: Response, next: Next
           },
         },
       },
+      orderBy: { createdAt: 'desc' }
     });
 
     res.json({
@@ -79,8 +116,29 @@ export const getQuizzesByCourse = async (req: Request, res: Response, next: Next
 // Create new quiz
 export const createQuiz = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, description, duration, totalMarks, passingMarks, courseId } = req.body;
-    const teacherId = req.user!.id;
+    const { title, description, duration, totalMarks, passingMarks, courseId ,teacherId} = req.body;
+  
+    console.log('createQuiz: Request body:', req.body);
+    console.log('createQuiz: Teacher ID from token:', teacherId);
+    console.log('createQuiz: User object:', req.user);
+    
+    // Parse numeric fields from FormData strings
+    const parsedDuration = parseInt(duration) || 30;
+    const parsedTotalMarks = parseInt(totalMarks) || 100;
+    const parsedPassingMarks = parseInt(passingMarks) || 70;
+    
+    // Verify that the user exists in the database
+    const user = await prisma.user.findUnique({
+      where: { id: teacherId }
+    });
+    
+    if (!user) {
+      console.log('createQuiz: User not found in database:', teacherId);
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+    
+    console.log('createQuiz: User found:', user.email, user.role);
     
     // Check if user is the teacher of this course or admin
     const course = await prisma.course.findUnique({
@@ -92,6 +150,8 @@ export const createQuiz = async (req: AuthRequest, res: Response, next: NextFunc
       return;
     }
     
+    console.log('createQuiz: Course found:', course.title, 'Teacher ID:', course.teacherId);
+    
     if (course.teacherId !== teacherId && req.user!.role !== 'ADMIN') {
       res.status(403).json({ success: false, message: 'You can only create quizzes for your own courses' });
       return;
@@ -101,9 +161,9 @@ export const createQuiz = async (req: AuthRequest, res: Response, next: NextFunc
       data: {
         title,
         description,
-        duration: duration || 30,
-        totalMarks: totalMarks || 100,
-        passingMarks: passingMarks || 70,
+        duration: parsedDuration,
+        totalMarks: parsedTotalMarks,
+        passingMarks: parsedPassingMarks,
         courseId,
         authorId: teacherId
       },
@@ -119,6 +179,7 @@ export const createQuiz = async (req: AuthRequest, res: Response, next: NextFunc
     
     res.status(201).json({ success: true, message: 'Quiz created successfully', data: quiz } as ApiResponse);
   } catch (error) {
+    console.error('createQuiz: Error creating quiz:', error);
     next(error);
   }
 };
@@ -129,6 +190,11 @@ export const updateQuiz = async (req: AuthRequest, res: Response, next: NextFunc
     const { title, description, duration, totalMarks, passingMarks, isActive } = req.body;
     const quizId = req.params.id;
     const teacherId = req.user!.id;
+    
+    // Parse numeric fields from FormData strings
+    const parsedDuration = duration ? parseInt(duration) : undefined;
+    const parsedTotalMarks = totalMarks ? parseInt(totalMarks) : undefined;
+    const parsedPassingMarks = passingMarks ? parseInt(passingMarks) : undefined;
     
     // Check if user is the author of this quiz or admin
     const existingQuiz = await prisma.quiz.findUnique({
@@ -147,7 +213,14 @@ export const updateQuiz = async (req: AuthRequest, res: Response, next: NextFunc
     
     const quiz = await prisma.quiz.update({
       where: { id: quizId },
-      data: { title, description, duration, totalMarks, passingMarks, isActive },
+      data: { 
+        title, 
+        description, 
+        duration: parsedDuration, 
+        totalMarks: parsedTotalMarks, 
+        passingMarks: parsedPassingMarks, 
+        isActive 
+      },
       include: {
         course: {
           select: { id: true, title: true, code: true }

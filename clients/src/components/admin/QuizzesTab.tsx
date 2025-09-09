@@ -1,5 +1,7 @@
-import React from 'react';
-import DataTable from '../../pages/DataTable';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import DataTable from '../DataTable';
+import QuestionsTab from './QuestionsTab';
 import { Quiz } from './types';
 
 interface QuizzesTabProps {
@@ -8,6 +10,9 @@ interface QuizzesTabProps {
   onEdit: (quiz: Quiz) => void;
   onDelete: (quiz: Quiz) => void;
   onCreate: () => void;
+  onQuestions?: (quiz: Quiz) => void;
+  quizQuestions?: Record<string, any[]>;
+  onQuestionsUpdated?: (quizId: string) => void;
 }
 
 const QuizzesTab: React.FC<QuizzesTabProps> = ({ 
@@ -15,17 +20,71 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
   loading, 
   onEdit, 
   onDelete, 
-  onCreate 
+  onCreate,
+  onQuestions,
+  quizQuestions = {},
+  onQuestionsUpdated
 }) => {
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+  const [activeTab, setActiveTab] = useState<'quizzes' | 'questions'>('quizzes');
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const navigate = useNavigate();
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
     
     if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+      return `${hours}h ${mins}m`;
     }
-    return `${minutes}m`;
+    return `${mins}m`;
   };
+
+  const handleQuestionsClick = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setActiveTab('questions');
+    // Trigger questions fetch if not already loaded
+    if (onQuestions) {
+      onQuestions(quiz);
+    }
+  };
+
+  const handleView = (quiz: Quiz) => {
+    navigate(`/admin/quizzes/${quiz.id}`);
+  };
+
+  const handleBackToQuizzes = () => {
+    setActiveTab('quizzes');
+    setSelectedQuiz(null);
+  };
+
+  const handleQuestionsUpdated = () => {
+    if (selectedQuiz && onQuestionsUpdated) {
+      onQuestionsUpdated(selectedQuiz.id);
+    }
+  };
+
+  if (activeTab === 'questions' && selectedQuiz) {
+    return (
+      <div>
+        <div className="mb-4">
+          <button
+            onClick={handleBackToQuizzes}
+            className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 mb-4"
+          >
+            <span>←</span>
+            <span>Back to Quizzes</span>
+          </button>
+        </div>
+        <QuestionsTab
+          quizId={selectedQuiz.id}
+          authorId={selectedQuiz.author?.id || ''}
+          quizTitle={selectedQuiz.title}
+          questions={quizQuestions[selectedQuiz.id] || []}
+          onQuestionsUpdated={handleQuestionsUpdated}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -61,11 +120,20 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
             )
           },
           {
-            key: 'passingScore',
-            label: 'Passing Score',
-            render: (passingScore: number) => (
+            key: 'totalMarks',
+            label: 'Total Marks',
+            render: (totalMarks: number) => (
               <span className="text-sm text-gray-900">
-                {passingScore}%
+                {totalMarks} marks
+              </span>
+            )
+          },
+          {
+            key: 'passingMarks',
+            label: 'Passing Marks',
+            render: (passingMarks: number, quiz: Quiz) => (
+              <span className="text-sm text-gray-900">
+                {passingMarks}/{quiz.totalMarks} ({Math.round((passingMarks / quiz.totalMarks) * 100)}%)
               </span>
             )
           },
@@ -88,6 +156,23 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                 {new Date(date).toLocaleDateString()}
               </span>
             )
+          },
+          {
+            key: 'actions',
+            label: 'Add Questions',
+            render: (_, quiz: Quiz) => (
+              <div className="flex space-x-2">
+                
+                
+                <button
+                  onClick={() => handleQuestionsClick(quiz)}
+                  className="text-green-600 hover:text-green-800 text-sm font-medium"
+                >
+                  Add Questions
+                </button>
+                
+              </div>
+            )
           }
         ]}
         data={quizzes}
@@ -95,6 +180,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
         title="Course Quizzes"
         onEdit={onEdit}
         onDelete={onDelete}
+        onView={handleView}
       />
     </div>
   );

@@ -1,0 +1,90 @@
+import React, { useEffect, useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import Navigation from '../components/Navigation';
+import { Footer } from '../components';
+
+const PaymentCancelPage = () => {
+  useEffect(() => {
+    document.title = 'Payment Cancelled - E-LMS';
+  }, []);
+
+  const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+
+  useEffect(() => {
+    const tran_id = searchParams.get('tran_id');
+
+    if (tran_id) {
+      setPaymentDetails({
+        tran_id
+      });
+    }
+    
+    setLoading(false);
+  }, [searchParams]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navigation currentPage="courses" />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-yellow-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Navigation currentPage="courses" />
+      
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="text-center">
+          <div className="text-8xl mb-6">⚠️</div>
+          <h1 className="text-4xl font-bold text-yellow-600 mb-4">
+            Payment Cancelled
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Your payment was cancelled. You can try again anytime.
+          </p>
+          
+          {paymentDetails && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-4">
+                Payment Details
+              </h3>
+              <div className="space-y-2 text-left">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Transaction ID:</span>
+                  <span className="font-mono text-sm">{paymentDetails.tran_id}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="space-y-4">
+            <Link
+              to="/courses"
+              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Browse Courses
+            </Link>
+            <div>
+              <Link
+                to="/"
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Back to Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <Footer />
+    </div>
+  );
+};
+
+export default PaymentCancelPage; 
